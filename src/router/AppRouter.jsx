@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
-import CreateMenu from "../pages/Menu/CreateMenu";
-import EditMenu from "../pages/Menu/EditMenu";
-import MenuHistory from "../pages/Menu/MenuHistory";
-import DishesList from "../pages/Dishes/DishesList";
+import CreateMenu from "../pages/menu/CreateMenu";
+import EditMenu from "../pages/menu/EditMenu";
+import MenuHistory from "../pages/menu/MenuHistory";
+import DishesList from "../pages/dishes/DishesList";
 
 export default function AppRouter() {
   return (

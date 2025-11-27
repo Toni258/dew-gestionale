@@ -1,0 +1,25 @@
+import Header from "./Header";
+import Sidebar from "./Sidebar";
+
+export default function AppLayout({ title, username, children }) {
+  return (
+    <div className="flex flex-col h-screen">
+
+      {/* Header */}
+      <Header title={title} username={username} />
+
+      {/* Layout principale */}
+      <div className="flex flex-row flex-grow pt-16">
+
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Contenuto */}
+        <main className="flex-grow p-6 bg-white">
+          {children}
+        </main>
+        
+      </div>
+    </div>
+  );
+}
