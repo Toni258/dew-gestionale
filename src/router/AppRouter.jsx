@@ -1,10 +1,18 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+/*    IMPORT PAGES    */
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
+
 import CreateMenu from "../pages/menu/CreateMenu";
 import EditMenu from "../pages/menu/EditMenu";
 import MenuHistory from "../pages/menu/MenuHistory";
+
 import DishesList from "../pages/dishes/DishesList";
+import CreateDish from "../pages/dishes/CreateDish";
+import EditDish from "../pages/dishes/EditDish";
+
+
 
 export default function AppRouter() {
   return (
@@ -19,7 +27,8 @@ export default function AppRouter() {
         <Route path="/menu/history" element={<MenuHistory />} />
 
         <Route path="/dishes" element={<DishesList />} />
-
+        <Route path="/dishes/create" element={<CreateDish />} />
+        <Route path="/dishes/edit/:dishId" element={<EditDish />} />
       </Routes>
     </BrowserRouter>
   );
