@@ -1,7 +1,9 @@
-export default function DishesList() {
+import AppLayout from "../components/layout/AppLayout";
+
+export default function Dashboard() {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">Dashboard Page</h1>
-    </div>
+    <AppLayout title="DASHBOARD" username="Antonio">
+      <h1 className="text-3xl font-bold">Dashboard Page</h1>
+    </AppLayout>
   );
 }

@@ -12,6 +12,9 @@ import DishesList from "../pages/dishes/DishesList";
 import CreateDish from "../pages/dishes/CreateDish";
 import EditDish from "../pages/dishes/EditDish";
 
+import Report from "../pages/Report";
+import UserManager from "../pages/UserManager";
+
 
 
 export default function AppRouter() {
@@ -29,6 +32,9 @@ export default function AppRouter() {
         <Route path="/dishes" element={<DishesList />} />
         <Route path="/dishes/create" element={<CreateDish />} />
         <Route path="/dishes/edit/:dishId" element={<EditDish />} />
+
+        <Route path="/statistics" element={<Report />} />
+        <Route path="/user-manager" element={<UserManager />} />
       </Routes>
     </BrowserRouter>
   );
