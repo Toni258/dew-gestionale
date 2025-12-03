@@ -1,26 +1,37 @@
-import { NavLink } from "react-router-dom";
-import SidebarItem from "./SidebarItem";
-import SidebarSection from "./SidebarSection";
+import { NavLink } from 'react-router-dom';
+import SidebarItem from './SidebarItem';
+import SidebarSection from './SidebarSection';
 
 export default function Sidebar() {
     return (
-        <aside className="w-[290px] bg-brand-sidebar p-6 flex flex-col gap-6 border-r border-brand-divider shadow-sm">
-            
+        <aside className="fixed top-16 left-0 w-[290px] h-[calc(100vh-4rem)] bg-brand-sidebar p-6 flex flex-col gap-6 border-r border-brand-divider shadow-sidebar z-40">
+            {/* SEZIONE DASHBOARD */}
+            <SidebarSection title="Dashboard">
+                <SidebarItem to="/dashboard" label="Homepage" />
+            </SidebarSection>
+
             {/* SEZIONE PIATTI */}
             <SidebarSection title="Gestione Piatti">
-                <SidebarItem 
-                    to="/dishes" 
-                    label="Visualizza / Modifica piatti" 
+                <SidebarItem
+                    to="/dishes"
+                    label="Visualizza / Modifica piatti"
                     isActiveOverride={(pathname) =>
-                        pathname.startsWith("/dishes") && !pathname.startsWith("/dishes/create")
+                        pathname.startsWith('/dishes') &&
+                        !pathname.startsWith('/dishes/create')
                     }
                 />
-                <SidebarItem to="/dishes/create" label="Aggiungi nuovo piatto" />
+                <SidebarItem
+                    to="/dishes/create"
+                    label="Aggiungi nuovo piatto"
+                />
             </SidebarSection>
 
             {/* SEZIONE MENU */}
             <SidebarSection title="Gestione Menù">
-                <SidebarItem to="/menu/edit" label="Visualizza / Modifica menù" />
+                <SidebarItem
+                    to="/menu/edit"
+                    label="Visualizza / Modifica menù"
+                />
                 <SidebarItem to="/menu/history" label="Menù archiviati" />
             </SidebarSection>
 
@@ -36,7 +47,7 @@ export default function Sidebar() {
 
             {/* ---- LOGOUT IN FONDO ---- */}
             <div className="mt-auto pt-6">
-                <NavLink 
+                <NavLink
                     to="/logout"
                     className="text-brand-error font-bold text-xl flex items-center gap-2 hover:opacity-75 transition"
                 >
