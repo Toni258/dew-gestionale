@@ -47,8 +47,8 @@ export default {
 
             boxShadow: {
                 sidebar: '4px 0px 20px rgba(0, 0, 0, 0.25)',
-                textField: '0px 0px 20px rgba(0, 0, 0, 0.25)',
-                textFieldHover: '0px 0px 20px rgba(0, 0, 0, 0.40)',
+                textField: '0px 0px 15px rgba(0, 0, 0, 0.15)',
+                textFieldHover: '0px 0px 15px rgba(0, 0, 0, 0.20)',
                 card: '0px 0px 40px rgba(0,0,0,0.25)',
             },
         },

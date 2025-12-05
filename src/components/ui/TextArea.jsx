@@ -1,27 +1,34 @@
 import { useFormContext } from './Form';
 
-export default function Input({ name, className = '', ...props }) {
+export default function TextArea({ name, className = '', rows = 4, ...props }) {
     const form = useFormContext();
 
-    // FALLBACK: nessun form
     if (!form || !name) {
-        return <input className={`input-default ${className}`} {...props} />;
+        return (
+            <textarea
+                rows={rows}
+                className={`input-default resize-none ${className}`}
+                {...props}
+            />
+        );
     }
 
-    // Registrazione nel form
     const field = form.registerField(name);
+
     const showError = form.touched[name] || form.submitting;
     const error = showError ? form.errors[name] : null;
 
     return (
         <div className={`flex flex-col ${className}`}>
-            <input
+            <textarea
                 {...field}
                 {...props}
-                className={`input-default ${
+                rows={rows}
+                className={`input-default resize-none ${
                     error ? 'border-brand-error' : 'border-brand-divider'
                 }`}
             />
+
             {error && (
                 <span className="text-brand-error text-sm mt-1 animate-fadeIn">
                     {error}
