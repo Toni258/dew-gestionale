@@ -46,14 +46,16 @@ export default function Test() {
                             : null;
                     },
                 }}
+                validateOnBlur
+                validateOnSubmit
                 onSubmit={(values) => console.log(values)}
             >
                 <FormGroup label="Nome piatto" required>
-                    <Input name="name" />
+                    <Input name="name" asyncValidate />
                 </FormGroup>
 
                 <FormGroup label="Email" required className="mt-4">
-                    <Input name="email" type="email" />
+                    <Input name="email" type="email" asyncValidate />
                 </FormGroup>
 
                 <FormGroup label="Categoria" required className="mt-4">
