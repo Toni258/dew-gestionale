@@ -100,13 +100,11 @@ export default function CustomSelect({
                 e.preventDefault();
                 if (!open) {
                     openDropdown();
-                } else {
-                    if (
-                        highlightedIndex >= 0 &&
-                        highlightedIndex < options.length
-                    ) {
-                        handleSelect(options[highlightedIndex].value);
-                    }
+                } else if (
+                    highlightedIndex >= 0 &&
+                    highlightedIndex < options.length
+                ) {
+                    handleSelect(options[highlightedIndex].value);
                 }
                 break;
 
@@ -130,65 +128,75 @@ export default function CustomSelect({
         ? options.find((o) => o.value === selectedValue)?.label
         : null;
 
+    // Classe base del bottone con radius che cambia se open
+    const buttonRadiusClasses = open
+        ? // sopra arrotondato, sotto dritto
+          'rounded-t-textField rounded-b-none'
+        : 'rounded-textField';
+
     return (
-        <div className={`flex flex-col relative ${className}`} ref={wrapperRef}>
-            {/* BUTTON PRINCIPALE */}
-            <button
-                type="button"
-                ref={buttonRef}
-                onClick={() => (open ? closeDropdown() : openDropdown())}
-                onKeyDown={handleKeyDown}
-                className={`
+        <div className={`flex flex-col ${className}`} ref={wrapperRef}>
+            <div className="relative h-[38px]">
+                {/* BUTTON PRINCIPALE */}
+                <button
+                    type="button"
+                    ref={buttonRef}
+                    onClick={() => (open ? closeDropdown() : openDropdown())}
+                    onKeyDown={handleKeyDown}
+                    className={`
                     input-default w-full text-left flex items-center justify-between 
                     pr-10 transition-all duration-300 
                     ${error ? 'border-brand-error' : 'border-brand-divider'}
                     ${open ? 'shadow-ios-strong' : ''}
+                    ${buttonRadiusClasses}
                 `}
-                {...props}
-            >
-                {/* Testo */}
-                <span
-                    className={`${
-                        !selectedLabel ? 'text-brand-textSecondary' : ''
-                    }`}
+                    {...props}
                 >
-                    {selectedLabel || placeholder}
-                </span>
+                    {/* Testo */}
+                    <span
+                        className={`${
+                            !selectedLabel ? 'text-brand-textSecondary' : ''
+                        }`}
+                    >
+                        {selectedLabel || placeholder}
+                    </span>
 
-                {/* Freccia o Spinner */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    {isLoading ? (
-                        <div className="ios-spinner" />
-                    ) : (
-                        <img
-                            src="/chevron-down-primary.png"
-                            className={`w-4 h-4 opacity-70 transition-transform duration-200 ${
-                                open ? 'rotate-180' : 'rotate-0'
-                            }`}
-                        />
-                    )}
-                </div>
-            </button>
+                    {/* Freccia o Spinner */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        {isLoading ? (
+                            <div className="ios-spinner" />
+                        ) : (
+                            <img
+                                src="/chevron-down-primary.png"
+                                className={`w-4 h-4 opacity-70 transition-transform duration-200 ${
+                                    open ? 'rotate-180' : 'rotate-0'
+                                }`}
+                            />
+                        )}
+                    </div>
+                </button>
 
-            {/* DROPDOWN */}
-            {open && !isLoading && (
-                <div
-                    className="
-                        absolute left-0 right-0 mt-2 z-50 
-                        bg-white border border-brand-divider 
-                        rounded-lg shadow-ios-strong 
+                {/* DROPDOWN */}
+                {open && !isLoading && (
+                    <div
+                        className="
+                        absolute left-0 right-0 top-full z-50 
+                        bg-white border border-brand-divider border-t-0
+                        rounded-b-textField rounded-t-none
+                        shadow-ios-strong 
                         animate-fadeScale overflow-hidden
                     "
-                >
-                    {options.map((opt, index) => {
-                        const active = selectedValue === opt.value;
-                        const highlighted = highlightedIndex === index;
+                    >
+                        {options.map((opt, index) => {
+                            const active = selectedValue === opt.value;
+                            const highlighted = highlightedIndex === index;
+                            const isLast = index === options.length - 1;
 
-                        return (
-                            <div
-                                key={opt.value}
-                                onClick={() => handleSelect(opt.value)}
-                                className={`
+                            return (
+                                <div
+                                    key={opt.value}
+                                    onClick={() => handleSelect(opt.value)}
+                                    className={`
                                     px-4 py-2 cursor-pointer select-none
                                     transition-all duration-150
                                     ${
@@ -198,16 +206,18 @@ export default function CustomSelect({
                                             ? 'bg-brand-primary/10 text-brand-primary font-semibold'
                                             : 'hover:bg-black/5'
                                     }
+                                    ${isLast ? 'rounded-b-textField' : ''}
                                 `}
-                            >
-                                {opt.label}
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                                >
+                                    {opt.label}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
 
-            {/* ERRORE */}
+            {/* ERRORE sotto il campo */}
             {error && (
                 <span className="text-brand-error text-sm mt-1 animate-fadeIn">
                     {error}
