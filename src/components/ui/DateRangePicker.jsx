@@ -29,11 +29,15 @@ export default function DateRangePicker({
 
     const base = startValue ? new Date(startValue) : today;
 
-    // Stato UNIFICATO
+    // Stato UNIFICATO (mese principale)
     const [current, setCurrent] = useState({
         year: base.getFullYear(),
         month: base.getMonth(),
     });
+
+    // start / end come Date (o null)
+    const startDate = startValue ? new Date(startValue) : null;
+    const endDate = endValue ? new Date(endValue) : null;
 
     // =========== CLOSE ON CLICK OUTSIDE =============
     useEffect(() => {
@@ -48,47 +52,18 @@ export default function DateRangePicker({
     }, []);
 
     // =========== HELPERS ===========
-    const toISO = (d) => d.toISOString().split('T')[0];
+
+    const toISO = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     const dateObj = (year, month, day) => new Date(year, month, day);
 
-    const isPast = (year, month, day) => {
-        const d = dateObj(year, month, day);
-        return d < todayStart;
-    };
-
-    const isStart = (day) =>
-        startValue &&
-        new Date(startValue).getTime() ===
-            dateObj(current.year, current.month, day).getTime();
-
-    const isEnd = (day) =>
-        endValue &&
-        new Date(endValue).getTime() ===
-            dateObj(current.year, current.month, day).getTime();
-
-    const isBetween = (day) => {
-        if (!startValue) return false;
-
-        const d = dateObj(current.year, current.month, day);
-        const start = new Date(startValue);
-        const end = endValue ? new Date(endValue) : hoverDate;
-
-        if (!end) return false;
-        return d > start && d < end;
-    };
-
-    const isHover = (day) => {
-        if (selecting !== 'end') return false;
-        if (!startValue) return false;
-        if (endValue) return false;
-        if (!hoverDate) return false;
-
-        const d = dateObj(current.year, current.month, day);
-        return d > new Date(startValue) && d < hoverDate;
-    };
-
     // =========== CALENDAR GEN ===========
+
     const generateCalendar = (year, month) => {
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
@@ -122,6 +97,7 @@ export default function DateRangePicker({
     const nextCalendar = generateCalendar(nextYear, nextMonthIndex);
 
     // =========== MONTH CHANGE ===========
+
     const nextMonth = () => {
         setCurrent((prev) => {
             if (prev.month === 11) {
@@ -143,6 +119,7 @@ export default function DateRangePicker({
     };
 
     // =========== DAY CLICK ===========
+
     const handleSelectDay = (year, month, day) => {
         if (!day) return;
 
@@ -155,8 +132,8 @@ export default function DateRangePicker({
             setSelecting('end');
             setHoverDate(null);
         } else {
-            const start = new Date(startValue);
-            if (d <= start) return;
+            if (!startDate) return;
+            if (d <= startDate) return;
 
             form?.setFieldValue(endName, toISO(d));
             setSelecting('start');
@@ -168,8 +145,14 @@ export default function DateRangePicker({
     // ===================================
     // UI
     // ===================================
+    // ===================================
+    // UI
+    // ===================================
     return (
-        <div className={`flex flex-col gap-3 ${className}`} ref={wrapperRef}>
+        <div
+            className={`relative flex flex-col gap-3 ${className}`}
+            ref={wrapperRef}
+        >
             {/* INPUT ROW */}
             <div className="grid grid-cols-2 gap-3">
                 {/* START */}
@@ -177,8 +160,14 @@ export default function DateRangePicker({
                     <button
                         type="button"
                         onClick={() => {
-                            setOpen(true);
-                            setSelecting('start');
+                            // toggle: se sto già aprendo "start" e open è true, chiudo
+                            if (open && selecting === 'start') {
+                                setOpen(false);
+                                setHoverDate(null);
+                            } else {
+                                setOpen(true);
+                                setSelecting('start');
+                            }
                         }}
                         className={`input-default h-full w-full pr-10 text-left ${
                             errorStart
@@ -202,8 +191,14 @@ export default function DateRangePicker({
                     <button
                         type="button"
                         onClick={() => {
-                            setOpen(true);
-                            setSelecting('end');
+                            // toggle: se sto già aprendo "end" e open è true, chiudo
+                            if (open && selecting === 'end') {
+                                setOpen(false);
+                                setHoverDate(null);
+                            } else {
+                                setOpen(true);
+                                setSelecting('end');
+                            }
                         }}
                         className={`input-default h-full w-full pr-10 text-left ${
                             errorEnd
@@ -229,34 +224,44 @@ export default function DateRangePicker({
                 </span>
             )}
 
-            {/* CALENDAR PANEL */}
+            {/* CALENDAR PANEL (overlay, non spinge il layout) */}
             {open && (
                 <div
                     className="
-                        bg-white border border-brand-divider shadow-ios-strong
-                        rounded-textField p-4 animate-fadeScale z-50
-                    "
+                    absolute left-0 top-full mt-2
+                    w-full
+                    bg-white border border-brand-divider shadow-ios-strong
+                    rounded-textField p-4 animate-fadeScale z-50
+                "
                 >
-                    {/* HEADER */}
-                    <div className="flex justify-between items-center mb-4">
+                    {/* HEADER UNICO con frecce agli estremi e mesi centrati */}
+                    <div className="relative mb-4">
+                        {/* Freccia sinistra agli estremi */}
                         <button
                             type="button"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={prevMonth}
-                            className="px-2 py-1 hover:bg-black/10 rounded-md"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
                         >
                             ◀
                         </button>
 
-                        <div className="font-semibold text-brand-text">
-                            {current.month + 1}/{current.year}
+                        {/* Grid centrale: 2 mesi sopra ai due calendari */}
+                        <div className="grid grid-cols-2 text-center font-semibold text-brand-text">
+                            <div>
+                                {current.month + 1}/{current.year}
+                            </div>
+                            <div>
+                                {nextMonthIndex + 1}/{nextYear}
+                            </div>
                         </div>
 
+                        {/* Freccia destra agli estremi */}
                         <button
                             type="button"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={nextMonth}
-                            className="px-2 py-1 hover:bg-black/10 rounded-md"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
                         >
                             ▶
                         </button>
@@ -271,11 +276,11 @@ export default function DateRangePicker({
                             weeks={thisMonth}
                             disablePast={disablePast}
                             todayStart={todayStart}
-                            isStart={isStart}
-                            isEnd={isEnd}
-                            isBetween={isBetween}
-                            isHover={isHover}
-                            onHover={setHoverDate}
+                            startDate={startDate}
+                            endDate={endDate}
+                            hoverDate={hoverDate}
+                            selecting={selecting}
+                            setHoverDate={setHoverDate}
                             handleSelectDay={handleSelectDay}
                         />
 
@@ -286,11 +291,11 @@ export default function DateRangePicker({
                             weeks={nextCalendar}
                             disablePast={disablePast}
                             todayStart={todayStart}
-                            isStart={isStart}
-                            isEnd={isEnd}
-                            isBetween={isBetween}
-                            isHover={isHover}
-                            onHover={setHoverDate}
+                            startDate={startDate}
+                            endDate={endDate}
+                            hoverDate={hoverDate}
+                            selecting={selecting}
+                            setHoverDate={setHoverDate}
                             handleSelectDay={handleSelectDay}
                         />
                     </div>
@@ -309,26 +314,31 @@ function CalendarGrid({
     weeks,
     disablePast,
     todayStart,
-    isStart,
-    isEnd,
-    isBetween,
-    isHover,
-    onHover,
+    startDate,
+    endDate,
+    hoverDate,
+    selecting,
+    setHoverDate,
     handleSelectDay,
 }) {
-    const dateObj = (d) => new Date(year, month, d);
+    const dateObj = (day) => new Date(year, month, day);
 
     const isPast = (day) => {
         const d = dateObj(day);
         return d < todayStart;
     };
 
+    const sameDay = (a, b) => {
+        if (!a || !b) return false;
+        return (
+            a.getFullYear() === b.getFullYear() &&
+            a.getMonth() === b.getMonth() &&
+            a.getDate() === b.getDate()
+        );
+    };
+
     return (
         <div className="flex flex-col items-center">
-            <div className="font-semibold mb-2">
-                {month + 1}/{year}
-            </div>
-
             {/* Giorni settimana */}
             <div className="grid grid-cols-7 gap-[4px] w-full text-center text-sm font-semibold text-brand-textSecondary mb-1">
                 <div>L</div>
@@ -345,19 +355,55 @@ function CalendarGrid({
                 {weeks.flat().map((day, idx) => {
                     if (!day) return <div key={idx} />;
 
+                    const cellDate = dateObj(day);
+
                     const disabled = disablePast && isPast(day);
-                    const start = isStart(day);
-                    const end = isEnd(day);
-                    const inside = isBetween(day);
-                    const hovering = isHover(day);
+                    const isStart = sameDay(cellDate, startDate);
+                    const isEnd = sameDay(cellDate, endDate);
+
+                    let inRange = false;
+                    let inHoverRange = false;
+
+                    if (startDate) {
+                        const rangeEnd = endDate || hoverDate;
+                        if (rangeEnd) {
+                            inRange =
+                                cellDate > startDate && cellDate < rangeEnd;
+                        }
+                    }
+
+                    if (
+                        selecting === 'end' &&
+                        startDate &&
+                        !endDate &&
+                        hoverDate
+                    ) {
+                        inHoverRange =
+                            cellDate > startDate && cellDate < hoverDate;
+                    }
 
                     return (
                         <div
                             key={idx}
                             onMouseEnter={() => {
-                                if (!disabled) onHover(dateObj(day));
+                                if (
+                                    selecting === 'end' &&
+                                    startDate &&
+                                    !endDate &&
+                                    !disabled
+                                ) {
+                                    setHoverDate(cellDate);
+                                }
                             }}
-                            onMouseLeave={() => onHover(null)}
+                            onMouseLeave={() => {
+                                if (
+                                    selecting === 'end' &&
+                                    startDate &&
+                                    !endDate
+                                ) {
+                                    setHoverDate(null);
+                                }
+                            }}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() =>
                                 !disabled && handleSelectDay(year, month, day)
@@ -372,9 +418,9 @@ function CalendarGrid({
                                         : ''
                                 }
                                 ${
-                                    start || end
+                                    isStart || isEnd
                                         ? 'bg-brand-primary text-white font-semibold'
-                                        : inside || hovering
+                                        : inRange || inHoverRange
                                         ? 'bg-brand-primary/20 text-brand-primary font-semibold'
                                         : !disabled
                                         ? 'hover:bg-brand-primary/10 hover:scale-[1.08]'
