@@ -136,7 +136,7 @@ export default function CustomSelect({
 
     return (
         <div className={`flex flex-col ${className}`} ref={wrapperRef}>
-            <div className="relative h-[38px]">
+            <div className={`relative ${props.height || 'h-[38px]'}`}>
                 {/* BUTTON PRINCIPALE */}
                 <button
                     type="button"
@@ -144,7 +144,7 @@ export default function CustomSelect({
                     onClick={() => (open ? closeDropdown() : openDropdown())}
                     onKeyDown={handleKeyDown}
                     className={`
-                    input-default w-full text-left flex items-center justify-between 
+                    input-default w-full h-full text-left flex items-center justify-between 
                     pr-10 transition-all duration-300 
                     ${error ? 'border-brand-error' : 'border-brand-divider'}
                     ${open ? 'shadow-ios-strong' : ''}
