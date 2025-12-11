@@ -21,7 +21,7 @@ export default function SearchInput({
             // così Enter scatena SOLO questa ricerca
         >
             {/* Icona lente */}
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none text-base">
                 🔍
             </span>
 
@@ -31,7 +31,7 @@ export default function SearchInput({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 className="
-                    input-default h-[45px] w-full pl-10 pr-10
+                    input-default h-[45px] w-full pl-11 pr-10
                 "
                 placeholder={placeholder}
             />
@@ -45,7 +45,7 @@ export default function SearchInput({
                         if (onSearch) onSearch(''); // reset filtro
                     }}
                     className="
-                        absolute right-3 top-1/2 -translate-y-1/2
+                        absolute right-5 top-1/2 -translate-y-1/2
                         text-sm text-brand-textSecondary hover:text-brand-text
                     "
                 >

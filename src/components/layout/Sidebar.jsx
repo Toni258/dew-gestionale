@@ -32,6 +32,7 @@ export default function Sidebar() {
                     to="/menu/edit"
                     label="Visualizza / Modifica menù"
                 />
+                <SidebarItem to="/menu/create" label="Aggiungi nuovo menù" />
                 <SidebarItem to="/menu/history" label="Menù archiviati" />
             </SidebarSection>
 

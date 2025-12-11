@@ -4,33 +4,49 @@ import { useState } from 'react';
 
 import SearchInput from '../../components/ui/SearchInput';
 import CustomSelect from '../../components/ui/CustomSelect';
+import MultiSelectCheckbox from '../../components/ui/MultiSelectCheckbox';
 import Form from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
-import MultiSelectCheckbox from '../../components/ui/MultiSelectCheckbox';
+import Button from '../../components/ui/Button';
 
 export default function DishesList() {
     const [query, setQuery] = useState('');
+
+    // 👉 Questo sarà il tuo handler finale per inviare i filtri al backend
+    const handleFilters = (values) => {
+        const payload = {
+            name: query,
+            stato: values.stato || '',
+            allergeni: values.allergeni || [],
+            tipologia: values.tipologia || '',
+        };
+
+        console.log('FILTRI APPLICATI:', payload);
+
+        // Qui farai la chiamata API vera:
+        // fetch("/api/dishes/filter", { method: "POST", body: JSON.stringify(payload) })
+    };
 
     return (
         <AppLayout title="GESTIONE PIATTI" username="Antonio">
             <h1 className="text-3xl font-semibold">Elenco piatti</h1>
 
             {/* BARRA FILTRI */}
-            <div className="my-4 bg-brand-primary h-[45px] flex justify-between items-center px-2">
-                {/* SEARCH */}
+            <div className="mt-1 mb-2 h-[60px] flex justify-between items-center">
+                {/* SEARCH INPUT */}
                 <SearchInput
                     placeholder="Cerca un piatto per nome..."
                     onSearch={setQuery}
-                    className="w-[300px]"
+                    className="w-[400px] [&>input]:rounded-full"
                 />
 
-                {/* SELECTS */}
+                {/* FILTRI */}
                 <Form
                     initialValues={{ stato: '', allergeni: [], tipologia: '' }}
-                    onSubmit={() => {}}
+                    onSubmit={handleFilters}
                 >
-                    <div className="flex items-center gap-3">
-                        {/* STATO */}
+                    <div className="flex items-center gap-5">
+                        {/* STATO PIATTO */}
                         <FormGroup name="stato" className="w-[145px]">
                             <CustomSelect
                                 name="stato"
@@ -42,7 +58,7 @@ export default function DishesList() {
                                     { value: 'inattivo', label: 'Inattivo' },
                                 ]}
                                 height="h-[45px]"
-                                className="w-full"
+                                className="w-full [&>div>button]:rounded-full"
                             />
                         </FormGroup>
 
@@ -79,10 +95,11 @@ export default function DishesList() {
                                     { value: 'lupini', label: 'Lupini' },
                                 ]}
                                 height="h-[45px]"
+                                className="[&>div>button]:rounded-full"
                             />
                         </FormGroup>
 
-                        {/* TIPI DI PIATTO */}
+                        {/* TIPOLOGIA PIATTO */}
                         <FormGroup name="tipologia" className="w-[145px]">
                             <CustomSelect
                                 name="tipologia"
@@ -94,17 +111,28 @@ export default function DishesList() {
                                     { value: 'contorno', label: 'Contorno' },
                                     { value: 'ultimo', label: 'Ultimo' },
                                     { value: 'speciale', label: 'Speciale' },
-                                    { value: 'coperto', label: 'coperto' },
+                                    { value: 'coperto', label: 'Coperto' },
                                 ]}
                                 height="h-[45px]"
-                                className="w-full"
+                                className="w-full [&>div>button]:rounded-full"
                             />
                         </FormGroup>
+
+                        {/* APPLY FILTER BUTTON */}
+                        <Button
+                            type="submit"
+                            size="md"
+                            variant="primary"
+                            className="px-4 py-2 rounded-full"
+                        >
+                            Applica filtri
+                        </Button>
                     </div>
                 </Form>
             </div>
 
             <p>Elenco dei piatti qui.</p>
+
             <NavLink
                 to={`/dishes/edit/18`}
                 className="px-3 py-1 bg-brand-primary text-white rounded-md hover:bg-brand-primaryHover transition"
