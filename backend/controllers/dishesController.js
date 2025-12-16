@@ -10,7 +10,6 @@ export async function getFilteredDishes(req, res) {
             pageSize = '30',
         } = req.query;
 
-        // allergeni può arrivare come: allergeni[]=uova&allergeni[]=latte
         let allergeni = req.query.allergeni ?? [];
         if (!Array.isArray(allergeni)) allergeni = [allergeni];
         allergeni = allergeni.filter(Boolean);
@@ -22,54 +21,113 @@ export async function getFilteredDishes(req, res) {
         );
         const offset = (pageNum - 1) * sizeNum;
 
-        // Colonne richieste
-        const selectCols = `
-            name, type, grammage_tot, kcal_tot, proteins, carbs, fats, allergy_notes
-        `;
-
-        // Base WHERE
+        // ===============================
+        // BASE WHERE
+        // ===============================
         let where = ` WHERE 1=1 `;
         const params = [];
 
-        // NOME
         if (search.trim()) {
-            where += ` AND name LIKE ? `;
+            where += ` AND f.name LIKE ? `;
             params.push(`%${search.trim()}%`);
         }
 
-        // STATO (se esiste davvero la colonna)
-        if (stato) {
-            where += ` AND status = ? `;
-            params.push(stato);
-        }
-
-        // TIPOLOGIA
         if (tipologia) {
-            where += ` AND type = ? `;
+            where += ` AND f.type = ? `;
             params.push(tipologia);
         }
 
-        // ALLERGENI ESCLUSI: se allergy_notes contiene uno degli allergeni -> lo escludo
-        // (se la tua logica è diversa, adattiamo)
+        if (stato === 'sospeso') {
+            where += ` AND susp.id_food IS NOT NULL `;
+        }
+
+        if (stato === 'attivo') {
+            where += `
+                AND susp.id_food IS NULL
+                AND act.id_food IS NOT NULL
+            `;
+        }
+
+        if (stato === 'non_attivo') {
+            where += `
+                AND susp.id_food IS NULL
+                AND act.id_food IS NULL
+            `;
+        }
+
         for (const a of allergeni) {
-            where += ` AND (allergy_notes IS NULL OR allergy_notes NOT LIKE ?) `;
+            where += ` AND (f.allergy_notes IS NULL OR f.allergy_notes NOT LIKE ?) `;
             params.push(`%${a}%`);
         }
 
-        // 1) COUNT totale (per paginazione)
-        const countSql = `SELECT COUNT(*) AS total FROM food ${where}`;
-        const [countRows] = await pool.query(countSql, params);
-        const total = countRows?.[0]?.total ?? 0;
+        // ===============================
+        // QUERY BASE CON STATO CALCOLATO
+        // ===============================
+        const baseQuery = `
+            FROM food f
 
-        // 2) Riga dati paginata
-        const dataSql = `
-            SELECT ${selectCols}
-            FROM food
+            -- SOSPESI oggi (1 riga per id_food)
+            LEFT JOIN (
+                SELECT DISTINCT id_food
+                FROM food_availability
+                WHERE CURDATE() BETWEEN valid_from AND valid_to
+            ) susp
+                ON susp.id_food = f.id_food
+
+            -- ATTIVI oggi (1 riga per id_food)
+            LEFT JOIN (
+                SELECT DISTINCT dp.id_food
+                FROM dish_pairing dp
+                JOIN season s
+                    ON s.season_type = dp.season_type
+                AND CURDATE() BETWEEN s.start_date AND s.end_date
+                WHERE dp.used = 1
+            ) act
+                ON act.id_food = f.id_food
+        `;
+
+        // ===============================
+        // COUNT
+        // ===============================
+        const countSql = `
+            SELECT COUNT(DISTINCT f.id_food) AS total
+            ${baseQuery}
             ${where}
-            ORDER BY name ASC
+        `;
+
+        const [countRows] = await pool.query(countSql, params);
+        const total = countRows[0]?.total ?? 0;
+
+        // ===============================
+        // DATA
+        // ===============================
+        const dataSql = `
+            SELECT
+                f.id_food,
+                f.name,
+                f.type,
+                f.grammage_tot,
+                f.kcal_tot,
+                f.proteins,
+                f.carbs,
+                f.fats,
+                f.allergy_notes,
+
+                CASE
+                    WHEN susp.id_food IS NOT NULL THEN 'sospeso'
+                    WHEN act.id_food IS NOT NULL THEN 'attivo'
+                    ELSE 'non_attivo'
+                END AS status
+
+            ${baseQuery}
+            ${where}
+
+            ORDER BY f.name ASC
             LIMIT ? OFFSET ?
         `;
+
         const dataParams = [...params, sizeNum, offset];
+
         const [rows] = await pool.query(dataSql, dataParams);
 
         return res.json({
