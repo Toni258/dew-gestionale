@@ -1,4 +1,6 @@
-export default function PageButton({ pageNum, current, onClick }) {
+import { memo } from 'react';
+
+export default memo(function PageButton({ pageNum, current, onClick }) {
     const active = pageNum === current;
 
     return (
@@ -22,4 +24,4 @@ export default function PageButton({ pageNum, current, onClick }) {
             {pageNum}
         </button>
     );
-}
+});
