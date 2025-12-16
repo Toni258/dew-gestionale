@@ -90,6 +90,8 @@ export default function DishesList() {
     });
 
     const [showAllergensInfo, setShowAllergensInfo] = useState(false);
+    const [showDeletePlateInfo, setShowDeletePlateInfo] = useState(false);
+    const [dishToDelete, setDishToDelete] = useState(null);
 
     const [page, setPage] = useState(1);
     const pageSize = 12;
@@ -404,10 +406,9 @@ export default function DishesList() {
                                                 title="Piatto non attivo"
                                                 className="text-red-500 hover:scale-110 transition ml-3 select-none text-base"
                                                 onClick={() => {
-                                                    // per ora solo placeholder
-                                                    console.log(
-                                                        'Cestino per piatto',
-                                                        r.id_food
+                                                    setDishToDelete(r);
+                                                    setShowDeletePlateInfo(
+                                                        true
                                                     );
                                                 }}
                                             >
@@ -419,6 +420,69 @@ export default function DishesList() {
                             ))}
                         </tbody>
                     </table>
+
+                    {/* MODALE CANCELLAZIONE PIATTO */}
+                    {showDeletePlateInfo && dishToDelete && (
+                        <Modal
+                            onClose={() => {
+                                setShowDeletePlateInfo(false);
+                                setDishToDelete(null);
+                            }}
+                        >
+                            <div className="bg-white rounded-xl p-8 w-[500px] flex flex-col items-center text-center">
+                                {/* Titolo */}
+                                <h2 className="text-brand-text text-xl font-semibold mb-2">
+                                    Conferma eliminazione
+                                </h2>
+
+                                {/* Nome piatto */}
+                                <p className="text-brand-primary text-lg font-bold mb-4">
+                                    {dishToDelete.name}
+                                </p>
+
+                                {/* Messaggio */}
+                                <p className="text-brand-textSecondary text-s mb-8 leading-relaxed">
+                                    Questo piatto verrà eliminato
+                                    definitivamente.
+                                    <br />
+                                    L’operazione{' '}
+                                    <span className="font-semibold">
+                                        non può essere annullata
+                                    </span>
+                                    .
+                                </p>
+
+                                {/* Azioni */}
+                                <div className="flex justify-center gap-8">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowDeletePlateInfo(false);
+                                            setDishToDelete(null);
+                                        }}
+                                        className="bg-brand-sidebar text-black px-6 py-2 rounded-xl hover:opacity-70 transition font-semibold"
+                                    >
+                                        Annulla
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            console.log(
+                                                'Elimina piatto',
+                                                dishToDelete.id_food,
+                                                dishToDelete.name
+                                            );
+                                            // chiamata API DELETE
+                                        }}
+                                        className="bg-red-600 text-white font-semibold px-6 py-2 rounded-xl hover:opacity-70 transition"
+                                    >
+                                        Elimina
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
+                    )}
 
                     {/* MODALE LEGENDA ALLERGENI */}
                     {showAllergensInfo && (
