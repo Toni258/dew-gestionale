@@ -7,6 +7,7 @@ export default function FormGroup({
     name,
     children,
     className = '',
+    labelClassName = '',
 }) {
     const form = useFormContext();
 
@@ -19,7 +20,12 @@ export default function FormGroup({
     return (
         <div className={`flex flex-col gap-1 ${className}`}>
             {label && (
-                <label className="text-sm font-semibold text-brand-text">
+                <label
+                    className={`
+                        text-sm font-semibold text-brand-text
+                        ${labelClassName}
+                    `}
+                >
                     {label}
                     {required && (
                         <span className="text-brand-error ml-1">*</span>

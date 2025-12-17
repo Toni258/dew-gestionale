@@ -239,12 +239,12 @@ export default memo(function DishesTable({
                         value={pageSize}
                         onChange={onPageSizeChange}
                         className="
-                                                border border-brand-divider
-                                                rounded-full px-3 py-1
-                                                bg-white text-brand-text
-                                                focus:outline-none focus:ring-2 focus:ring-brand-primary
-                                                cursor-pointer
-                                            "
+                                border border-brand-divider
+                                rounded-full px-3 py-1
+                                bg-white text-brand-text
+                                focus:outline-none focus:ring-2 focus:ring-brand-primary
+                                cursor-pointer
+                            "
                     >
                         {[10, 15, 20, 30, 40, 50].map((n) => (
                             <option key={n} value={n}>

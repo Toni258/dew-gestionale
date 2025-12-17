@@ -12,41 +12,9 @@ import DishesTable from '../../components/dishes/DishesTable';
 import DeleteDishModal from '../../components/modals/DeleteDishModal';
 import AllergensModal from '../../components/modals/AllergensModal';
 
-const ALLERGEN_OPTIONS = [
-    { value: 'glutine', label: 'Glutine' },
-    { value: 'latte', label: 'Latte / Lattosio' },
-    { value: 'uova', label: 'Uova' },
-    { value: 'arachidi', label: 'Arachidi' },
-    { value: 'frutta a guscio', label: 'Frutta a guscio' },
-    { value: 'pesce', label: 'Pesce' },
-    { value: 'crostacei', label: 'Crostacei' },
-    { value: 'molluschi', label: 'Molluschi' },
-    { value: 'soia', label: 'Soia' },
-    { value: 'sedano', label: 'Sedano' },
-    { value: 'sesamo', label: 'Semi di sesamo' },
-    {
-        value: 'anidride solforosa e solfiti',
-        label: 'Anidride solforosa e solfiti',
-    },
-    { value: 'lupini', label: 'Lupini' },
-];
-
-const TIPOLOGIA_OPTIONS = [
-    { value: '', label: '— Tipologia —' },
-    { value: 'primo', label: 'Primo' },
-    { value: 'secondo', label: 'Secondo' },
-    { value: 'contorno', label: 'Contorno' },
-    { value: 'ultimo', label: 'Ultimo' },
-    { value: 'speciale', label: 'Speciale' },
-    { value: 'coperto', label: 'Coperto' },
-];
-
-const STATO_OPTIONS = [
-    { value: '', label: '— Stato —' },
-    { value: 'attivo', label: 'Attivo' },
-    { value: 'sospeso', label: 'Sospeso' },
-    { value: 'inattivo', label: 'Inattivo' },
-];
+import { ALLERGEN_OPTIONS } from '../../domain/allergens';
+import { TIPOLOGIA_OPTIONS } from '../../domain/tipologia';
+import { STATO_OPTIONS } from '../../domain/stato';
 
 export default function DishesList() {
     const [query, setQuery] = useState('');

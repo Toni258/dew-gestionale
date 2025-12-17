@@ -44,3 +44,23 @@ export const ALLERGENS = [
     },
     { key: 'lupini', label: 'Lupini', emoji: '🌻', patterns: ['lupini'] },
 ];
+
+export const ALLERGEN_OPTIONS = [
+    { value: 'glutine', label: 'Glutine' },
+    { value: 'crostacei', label: 'Crostacei' },
+    { value: 'uova', label: 'Uova' },
+    { value: 'pesce', label: 'Pesce' },
+    { value: 'arachidi', label: 'Arachidi' },
+    { value: 'soia', label: 'Soia' },
+    { value: 'latte', label: 'Latte' },
+    { value: 'frutta_a_guscio', label: 'Frutta a guscio' },
+    { value: 'sedano', label: 'Sedano' },
+    { value: 'senape', label: 'Senape' },
+    { value: 'sesamo', label: 'Semi di sesamo' },
+    {
+        value: 'anidride_solforosa',
+        label: 'Anidride solforosa e solfiti',
+    },
+    { value: 'lupini', label: 'Lupini' },
+    { value: 'molluschi', label: 'Molluschi' },
+];
