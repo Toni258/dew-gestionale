@@ -36,13 +36,13 @@ export default function FormGroup({
             {children}
 
             {!error && helperText && (
-                <p className="text-xs text-brand-textSecondary mt-1">
+                <p className="text-sm text-brand-textSecondary mt-1">
                     {helperText}
                 </p>
             )}
 
             {error && (
-                <p className="text-xs text-brand-error mt-1 animate-fadeIn">
+                <p className="text-sm text-brand-error mt-1 animate-fadeIn">
                     {error}
                 </p>
             )}

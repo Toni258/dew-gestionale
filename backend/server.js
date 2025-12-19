@@ -1,13 +1,21 @@
-import express from "express";
-import cors from "cors";
-import dishesRouter from "./routes/dishes.js";
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import dishesRouter from './routes/dishes.js';
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// ROUTES
-app.use("/api/dishes", dishesRouter);
+// ESPOSIZIONE IMMAGINI PIATTI (STATIC FILES)
+app.use(
+    '/food-images',
+    express.static(path.join(process.cwd(), '..', 'public', 'food-images'))
+);
+
+// ROUTES API
+app.use('/api/dishes', dishesRouter);
 
 const PORT = 3001;
 

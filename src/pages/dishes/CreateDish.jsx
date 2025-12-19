@@ -10,8 +10,13 @@ import DateRangePicker from '../../components/ui/DateRangePicker';
 import Card from '../../components/ui/Card';
 import ImageUploader from '../../components/ui/ImageUploader';
 import AllergenCheckboxGroup from '../../components/ui/AllergenCheckboxGroup';
+import { isDecimal, isPositive } from '../../utils/validators';
+import { validateMacrosVsGrammage } from '../../utils/validators';
+import { useNavigate } from 'react-router-dom';
 
 export default function DishesList() {
+    const navigate = useNavigate();
+
     return (
         <AppLayout title="GESTIONE PIATTI" username="Antonio">
             <h1 className="text-3xl font-semibold">Crea un piatto nuovo</h1>
@@ -37,37 +42,75 @@ export default function DishesList() {
                             : null,
                     type: (v) => (!v ? 'Seleziona un tipo' : null),
                     img: (v) => (!v ? 'Carica un’immagine' : null),
+
+                    grammage_tot: (v) =>
+                        !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+
+                    kcal_tot: (v) =>
+                        !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+
+                    proteins: (v) =>
+                        !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+
+                    carbohydrates: (v) =>
+                        !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+
+                    fats: (v) =>
+                        !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
                 }}
                 asyncValidate={{
                     name: async (value) => {
-                        if (!value) return null;
+                        const v = (value ?? '').trim();
+                        if (!v) return null;
 
-                        // Simulazione API (1.5 secondi)
-                        await new Promise((res) => setTimeout(res, 1500));
+                        // opzionale: non chiamare il server per stringhe troppo corte
+                        if (v.length < 3) return null;
 
-                        const namesAlreadyUsed = [
-                            'pasta al sugo',
-                            'risotto',
-                            'pollo arrosto',
-                        ];
+                        const res = await fetch(
+                            `/api/dishes/exists?name=${encodeURIComponent(v)}`
+                        );
 
-                        return namesAlreadyUsed.includes(value.toLowerCase())
-                            ? 'Questo nome è già in uso'
-                            : null;
+                        if (!res.ok) {
+                            // scegli tu: o nessun errore (fail-open) o errore generico
+                            return 'Impossibile verificare il nome (server non raggiungibile)';
+                        }
+
+                        const data = await res.json();
+                        return data.exists ? 'Questo nome è già in uso' : null;
                     },
                 }}
+                validateForm={validateMacrosVsGrammage}
                 validateOnBlur
                 validateOnSubmit
-                onSubmit={(values) => {
+                onSubmit={async (values) => {
                     const formData = new FormData();
 
                     Object.entries(values).forEach(([key, value]) => {
                         if (value !== null && value !== '') {
-                            formData.append(key, value);
+                            if (Array.isArray(value)) {
+                                value.forEach((v) =>
+                                    formData.append(`${key}[]`, v)
+                                );
+                            } else {
+                                formData.append(key, value);
+                            }
                         }
                     });
 
-                    console.log('FormData ready:', formData);
+                    const res = await fetch('/api/dishes', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!res.ok) {
+                        alert('Errore creazione piatto');
+                        return;
+                    }
+
+                    alert('Piatto creato correttamente');
+
+                    // vai alla lista
+                    navigate('/dishes');
                 }}
             >
                 <Card className="mt-6">
@@ -121,36 +164,57 @@ export default function DishesList() {
                         <div className="w-4/5 flex flex-col gap-4">
                             {/* Riga 1: Grammatura + Kcal */}
                             <div className="flex gap-4">
-                                <FormGroup label="Grammatura">
+                                <FormGroup label="Grammatura" required>
                                     <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.001"
                                         name="grammage_tot"
                                         className="w-[200px]"
                                     />
                                 </FormGroup>
 
-                                <FormGroup label="Kcal">
-                                    <Input name="kcal" className="w-[200px]" />
+                                <FormGroup label="Kcal" required>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.001"
+                                        name="kcal_tot"
+                                        className="w-[200px]"
+                                    />
                                 </FormGroup>
                             </div>
 
                             {/* Riga 2: Proteine + Carboidrati + Grassi */}
                             <div className="flex gap-4">
-                                <FormGroup label="Proteine">
+                                <FormGroup label="Proteine" required>
                                     <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.001"
                                         name="proteins"
                                         className="w-[200px]"
                                     />
                                 </FormGroup>
 
-                                <FormGroup label="Carboidrati">
+                                <FormGroup label="Carboidrati" required>
                                     <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.001"
                                         name="carbohydrates"
                                         className="w-[200px]"
                                     />
                                 </FormGroup>
 
-                                <FormGroup label="Grassi">
-                                    <Input name="fats" className="w-[200px]" />
+                                <FormGroup label="Grassi" required>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.001"
+                                        name="fats"
+                                        className="w-[200px]"
+                                    />
                                 </FormGroup>
                             </div>
                         </div>

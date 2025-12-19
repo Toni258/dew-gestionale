@@ -8,8 +8,9 @@ export function useFormContext() {
 
 export default function Form({
     initialValues = {},
-    validate = {}, // { campo: (value) => string|null }
-    asyncValidate = {}, // { campo: async (value) => string|null }
+    validate = {},
+    asyncValidate = {},
+    validateForm,
 
     // Configurazione comportamento
     validateOnBlur = true,
@@ -29,10 +30,12 @@ export default function Form({
     const [asyncSuccess, setAsyncSuccess] = useState({});
 
     const firstErrorRef = useRef(null);
+    const asyncValidationToken = useRef({});
 
     // ------------------------------------------------------------
     // VALIDAZIONI
     // ------------------------------------------------------------
+
     const runSyncValidation = (name, value) => {
         if (!validate[name]) return null;
         return validate[name](value);
@@ -55,10 +58,19 @@ export default function Form({
             return null;
         }
 
+        // 🔐 TOKEN
+        const token = (asyncValidationToken.current[name] ?? 0) + 1;
+        asyncValidationToken.current[name] = token;
+
         setAsyncLoading((prev) => ({ ...prev, [name]: true }));
         setAsyncSuccess((prev) => ({ ...prev, [name]: false }));
 
         const result = await asyncValidate[name](value);
+
+        // ❌ risposta vecchia → ignora
+        if (asyncValidationToken.current[name] !== token) {
+            return null;
+        }
 
         setAsyncLoading((prev) => ({ ...prev, [name]: false }));
 
@@ -160,16 +172,27 @@ export default function Form({
             if (asyncErr) asyncErrors[field] = asyncErr;
         }
 
+        // VALIDAZIONE INCROCIATA (se fornita)
+        if (validateForm) {
+            const formErrors = validateForm(values);
+
+            if (formErrors && Object.keys(formErrors).length > 0) {
+                setErrors((prev) => ({ ...prev, ...formErrors }));
+                setSubmitting(false);
+                return;
+            }
+        }
+
         const allErrors = { ...syncErrors, ...asyncErrors };
         setErrors(allErrors);
 
-        // ❌ Blocca submit se async è ancora in corso
+        // Blocca submit se async è ancora in corso
         if (Object.values(asyncLoading).some((v) => v === true)) {
             setSubmitting(false);
             return;
         }
 
-        // ❌ Blocca submit se ci sono errori
+        // Blocca submit se ci sono errori
         if (Object.keys(allErrors).length > 0) {
             setSubmitting(false);
             return;

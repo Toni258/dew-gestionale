@@ -43,6 +43,21 @@ export default function DishesList() {
         setPage(1);
     };
 
+    // Funzione per chiamata API DELETE piatto
+    const deleteDish = async (id_food) => {
+        const res = await fetch(`/api/dishes/${id_food}`, { method: 'DELETE' });
+
+        if (!res.ok) {
+            let msg = 'Errore eliminazione piatto';
+            try {
+                const data = await res.json();
+                if (data?.error) msg = data.error;
+            } catch {}
+
+            throw new Error(msg);
+        }
+    };
+
     // Payload “finale” usato per chiamare API
     const requestParams = useMemo(() => {
         return {
@@ -187,14 +202,15 @@ export default function DishesList() {
             <DeleteDishModal
                 dish={dishToDelete}
                 onClose={() => setDishToDelete(null)}
-                onConfirm={(dish) => {
-                    console.log('Elimina piatto', dish.id_food, dish.name);
-
-                    // TODO: chiamata API DELETE
-                    // await deleteDish(dish.id_food)
-
-                    setDishToDelete(null);
-                    fetchDishes(); // ricarichi lista
+                onConfirm={async (dish) => {
+                    try {
+                        await deleteDish(dish.id_food);
+                        console.log('Elimina piatto', dish.id_food, dish.name);
+                        setDishToDelete(null);
+                        await fetchDishes();
+                    } catch (e) {
+                        alert(e.message);
+                    }
                 }}
             />
 

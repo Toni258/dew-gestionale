@@ -153,3 +153,109 @@ export async function getFirstMeals(req, res) {
         res.status(500).json({ error: 'Errore database' });
     }
 }
+
+export async function checkDishName(req, res) {
+    try {
+        const name = (req.query.name ?? '').trim();
+        const excludeId = req.query.excludeId ?? null;
+
+        if (!name) return res.json({ exists: false });
+
+        // confronto case-insensitive e spazi normalizzati
+        const normalized = name.replace(/\s+/g, ' ').toLowerCase();
+
+        let sql = `
+            SELECT 1
+            FROM food
+            WHERE LOWER(TRIM(name)) = ?
+        `;
+
+        const params = [normalized];
+
+        if (excludeId) {
+            sql += ` AND id_food <> ?`;
+            params.push(excludeId);
+        }
+
+        sql += ` LIMIT 1`;
+
+        const [rows] = await pool.query(sql, params);
+
+        return res.json({ exists: rows.length > 0 });
+    } catch (err) {
+        console.error('Errore checkDishName:', err);
+        return res.status(500).json({ error: 'Errore interno al server' });
+    }
+}
+
+export async function createDish(req, res) {
+    try {
+        const {
+            name,
+            type,
+            grammage_tot,
+            kcal_tot,
+            proteins,
+            carbohydrates,
+            fats,
+            allergy_notes,
+        } = req.body;
+
+        const img = req.file ? req.file.filename : null;
+
+        const sql = `
+            INSERT INTO food
+            (name, type, image_url, grammage_tot, kcal_tot, proteins, carbs, fats, allergy_notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        await pool.query(sql, [
+            name,
+            type,
+            img,
+            grammage_tot,
+            kcal_tot,
+            proteins,
+            carbohydrates,
+            fats,
+            allergy_notes?.join(', ') ?? null,
+        ]);
+
+        return res.status(201).json({ success: true });
+    } catch (err) {
+        console.error('Errore createDish:', err);
+        return res.status(500).json({ error: 'Errore creazione piatto' });
+    }
+}
+
+export async function deleteDish(req, res) {
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+        return res.status(400).json({ error: 'id non valido' });
+    }
+
+    try {
+        // se vuoi cancellare anche l’immagine dal disco, lo facciamo dopo (opzionale)
+        const [result] = await pool.query(
+            'DELETE FROM food WHERE id_food = ?',
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Piatto non trovato' });
+        }
+
+        return res.json({ success: true });
+    } catch (err) {
+        // tipico: vincoli FK (dish_pairing, food_availability, ecc.)
+        if (err?.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(409).json({
+                error: 'Impossibile eliminare: il piatto è usato altrove.',
+            });
+        }
+
+        console.error('Errore deleteDish:', err);
+        return res.status(500).json({ error: 'Errore eliminazione piatto' });
+    }
+}
