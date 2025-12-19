@@ -206,6 +206,7 @@ export default function DishesList() {
                     try {
                         await deleteDish(dish.id_food);
                         console.log('Elimina piatto', dish.id_food, dish.name);
+                        alert('Piatto eliminato correttamente');
                         setDishToDelete(null);
                         await fetchDishes();
                     } catch (e) {

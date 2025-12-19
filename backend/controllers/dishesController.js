@@ -1,4 +1,8 @@
 import { pool } from '../db/db.js';
+import path from 'path';
+import fs from 'fs/promises';
+
+const IMAGES_DIR = path.join(process.cwd(), '..', 'public', 'food-images');
 
 export async function getFilteredDishes(req, res) {
     try {
@@ -236,14 +240,37 @@ export async function deleteDish(req, res) {
     }
 
     try {
-        // se vuoi cancellare anche l’immagine dal disco, lo facciamo dopo (opzionale)
+        // recupero immagine
+        const [[dish]] = await pool.query(
+            'SELECT image_url FROM food WHERE id_food = ?',
+            [id]
+        );
+
+        if (!dish) {
+            return res
+                .status(404)
+                .json({ error: 'Piatto non trovato per immagine' });
+        }
+
         const [result] = await pool.query(
             'DELETE FROM food WHERE id_food = ?',
             [id]
         );
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Piatto non trovato' });
+            return res
+                .status(404)
+                .json({ error: 'Piatto non trovato per delete' });
+        }
+
+        // cancello immagine
+        if (dish.image_url) {
+            const imgPath = path.join(IMAGES_DIR, dish.image_url);
+            try {
+                await fs.unlink(imgPath);
+            } catch (err) {
+                console.warn('Immagine non trovata:', imgPath);
+            }
         }
 
         return res.json({ success: true });
@@ -257,5 +284,164 @@ export async function deleteDish(req, res) {
 
         console.error('Errore deleteDish:', err);
         return res.status(500).json({ error: 'Errore eliminazione piatto' });
+    }
+}
+
+export async function getDishById(req, res) {
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+        return res.status(400).json({ error: 'id non valido' });
+    }
+
+    try {
+        const sql = `
+            SELECT
+                id_food,
+                name,
+                type,
+                image_url,
+                grammage_tot,
+                kcal_tot,
+                proteins,
+                carbs,
+                fats,
+                allergy_notes
+            FROM food
+            WHERE id_food = ?
+            LIMIT 1
+        `;
+
+        const [rows] = await pool.query(sql, [id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Piatto non trovato' });
+        }
+
+        const dish = rows[0];
+
+        return res.json({
+            ...dish,
+            allergy_notes: dish.allergy_notes
+                ? dish.allergy_notes.split(',').map((a) => a.trim())
+                : [],
+        });
+    } catch (err) {
+        console.error('Errore getDishById:', err);
+        return res.status(500).json({ error: 'Errore interno' });
+    }
+}
+
+export async function updateDish(req, res) {
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+        return res.status(400).json({ error: 'id non valido' });
+    }
+
+    try {
+        const {
+            name,
+            type,
+            grammage_tot,
+            kcal_tot,
+            proteins,
+            carbohydrates,
+            fats,
+            allergy_notes,
+        } = req.body;
+
+        // se è stata caricata una nuova immagine
+        const newImage = req.file ? req.file.filename : null;
+
+        // recupera immagine attuale
+        const [[current]] = await pool.query(
+            'SELECT image_url FROM food WHERE id_food = ?',
+            [id]
+        );
+
+        if (!current) {
+            return res.status(404).json({ error: 'Piatto non trovato' });
+        }
+
+        const oldImage = current.image_url;
+        const imageToSave = newImage ?? current.image_url;
+
+        // LOG PER DEBUGGING
+        console.log('NEW IMAGE:', newImage);
+        console.log('OLD IMAGE:', oldImage);
+        console.log(
+            'PATH:',
+            oldImage ? path.join(IMAGES_DIR, oldImage) : '(nessuna immagine)'
+        );
+
+        const sql = `
+            UPDATE food
+            SET
+                name = ?,
+                type = ?,
+                image_url = ?,
+                grammage_tot = ?,
+                kcal_tot = ?,
+                proteins = ?,
+                carbs = ?,
+                fats = ?,
+                allergy_notes = ?
+            WHERE id_food = ?
+        `;
+
+        await pool.query(sql, [
+            name,
+            type,
+            imageToSave,
+            grammage_tot,
+            kcal_tot,
+            proteins,
+            carbohydrates,
+            fats,
+            allergy_notes?.join(', ') ?? null,
+            id,
+        ]);
+
+        // rispondi SUBITO al frontend
+        res.json({ success: true });
+
+        // 🧹 pulizia file system DOPO la response
+        if (newImage && oldImage && newImage !== oldImage) {
+            const oldPath = path.join(IMAGES_DIR, oldImage);
+
+            fs.unlink(oldPath).catch((err) => {
+                if (err.code !== 'ENOENT') {
+                    console.error('Errore cancellazione immagine:', err);
+                }
+            });
+        }
+
+        /* 
+        //  cancello vecchia immagine SOLO se è cambiata
+        if (newImage && oldImage && newImage !== oldImage) {
+            const oldPath = path.join(IMAGES_DIR, oldImage);
+            try {
+                await fs.unlink(oldPath);
+            } catch (err) {
+                if (err.code !== 'ENOENT') {
+                    console.error('Errore cancellazione immagine:', err);
+                }
+            }
+        }
+
+        return res.json({ success: true });
+        */
+    } catch (err) {
+        console.error('Errore updateDish:', err);
+
+        // nome duplicato
+        if (err?.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: 'Nome piatto già esistente' });
+        }
+
+        return res
+            .status(500)
+            .json({ error: 'Errore aggiornamento piatto sql' });
     }
 }

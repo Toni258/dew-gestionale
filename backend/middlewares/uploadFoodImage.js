@@ -2,9 +2,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-const uploadDir = path.join(process.cwd(), 'public', 'food-images');
+const uploadDir = path.join(process.cwd(), '..', 'public', 'food-images');
 
-// 🔐 crea la cartella se non esiste
+// crea la cartella se non esiste
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }

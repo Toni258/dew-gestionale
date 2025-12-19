@@ -5,6 +5,7 @@ export default function ImageUploader({ name, disabled = false }) {
     const inputRef = useRef(null);
     const form = useFormContext();
     const [isDragOver, setIsDragOver] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     if (!form) {
         throw new Error('ImageUploader deve essere usato dentro <Form>');
@@ -12,12 +13,16 @@ export default function ImageUploader({ name, disabled = false }) {
 
     const value = form.values[name];
 
+    useEffect(() => {
+        setImageError(false);
+    }, [value]);
+
     const previewUrl = useMemo(() => {
-        if (!value) return null;
+        if (!value || imageError) return null;
         if (typeof value === 'string') return value;
         if (value instanceof File) return URL.createObjectURL(value);
         return null;
-    }, [value]);
+    }, [value, imageError]);
 
     useEffect(() => {
         if (value instanceof File && previewUrl) {
@@ -107,6 +112,7 @@ export default function ImageUploader({ name, disabled = false }) {
                         src={previewUrl}
                         alt="Anteprima piatto"
                         className="absolute inset-0 w-full h-full object-cover rounded-md"
+                        onError={() => setImageError(true)}
                     />
                 ) : (
                     <div className="flex flex-col items-center gap-2 select-none">
