@@ -1,7 +1,9 @@
+import AppLayout from '../../components/layout/AppLayout';
+
 export default function CreateMenu() {
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-semibold">Create Menu</h1>
-        </div>
+        <AppLayout title="GESTIONE MENÙ" username="Antonio">
+            <h1 className="text-3xl font-semibold">Create Menu</h1>
+        </AppLayout>
     );
 }
