@@ -13,7 +13,7 @@ export default function AppLayout({ title, username, children }) {
                 <Sidebar />
 
                 {/* Contenuto */}
-                <main className="ml-[290px] flex-grow p-6 bg-white">
+                <main className="ml-[290px] flex-grow p-6 bg-white overflow-y-auto">
                     {children}
                 </main>
             </div>

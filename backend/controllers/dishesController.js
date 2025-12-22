@@ -320,11 +320,28 @@ export async function getDishById(req, res) {
 
         const dish = rows[0];
 
+        // sospensione “attuale o futura” più recente
+        const availSql = `
+            SELECT 
+                id_avail, 
+                DATE_FORMAT(valid_from, '%Y-%m-%d') AS valid_from, 
+                DATE_FORMAT(valid_to, '%Y-%m-%d')   AS valid_to, 
+                reason
+            FROM food_availability
+            WHERE id_food = ?
+              AND valid_to >= CURDATE()
+            ORDER BY valid_from ASC
+            LIMIT 1
+        `;
+        const [availRows] = await pool.query(availSql, [id]);
+        const suspension = availRows[0] ?? null;
+
         return res.json({
             ...dish,
             allergy_notes: dish.allergy_notes
                 ? dish.allergy_notes.split(',').map((a) => a.trim())
                 : [],
+            suspension, // {id_avail, valid_from, valid_to, reason} oppure null
         });
     } catch (err) {
         console.error('Errore getDishById:', err);
@@ -339,7 +356,15 @@ export async function updateDish(req, res) {
         return res.status(400).json({ error: 'id non valido' });
     }
 
+    const conn = await pool.getConnection();
+
+    // ci serve dopo per eventuale unlink
+    let oldImage = null;
+    let newImage = null;
+
     try {
+        await conn.beginTransaction();
+
         const {
             name,
             type,
@@ -349,32 +374,33 @@ export async function updateDish(req, res) {
             carbohydrates,
             fats,
             allergy_notes,
+
+            // sospensione
+            suspension_enabled,
+            suspension_id,
+            start_date,
+            end_date,
+            reason,
         } = req.body;
 
-        // se è stata caricata una nuova immagine
-        const newImage = req.file ? req.file.filename : null;
+        // immagine nuova
+        newImage = req.file ? req.file.filename : null;
 
         // recupera immagine attuale
-        const [[current]] = await pool.query(
+        const [[current]] = await conn.query(
             'SELECT image_url FROM food WHERE id_food = ?',
             [id]
         );
 
         if (!current) {
+            await conn.rollback();
             return res.status(404).json({ error: 'Piatto non trovato' });
         }
 
-        const oldImage = current.image_url;
-        const imageToSave = newImage ?? current.image_url;
+        oldImage = current.image_url;
+        const imageToSave = newImage ?? oldImage;
 
-        // LOG PER DEBUGGING
-        console.log('NEW IMAGE:', newImage);
-        console.log('OLD IMAGE:', oldImage);
-        console.log(
-            'PATH:',
-            oldImage ? path.join(IMAGES_DIR, oldImage) : '(nessuna immagine)'
-        );
-
+        // 1) update food
         const sql = `
             UPDATE food
             SET
@@ -390,7 +416,7 @@ export async function updateDish(req, res) {
             WHERE id_food = ?
         `;
 
-        await pool.query(sql, [
+        await conn.query(sql, [
             name,
             type,
             imageToSave,
@@ -399,49 +425,101 @@ export async function updateDish(req, res) {
             proteins,
             carbohydrates,
             fats,
-            allergy_notes?.join(', ') ?? null,
+            Array.isArray(allergy_notes) ? allergy_notes.join(', ') : null,
             id,
         ]);
 
-        // rispondi SUBITO al frontend
+        // 2) sospensione (storico)
+        const enabled = String(suspension_enabled) === '1';
+        const sid = suspension_id ? Number(suspension_id) : null;
+
+        if (enabled) {
+            if (!start_date || !end_date) {
+                await conn.rollback();
+                return res.status(400).json({
+                    error: 'Periodo sospensione non valido',
+                });
+            }
+
+            if (sid) {
+                // UPDATE stessa tupla
+                await conn.query(
+                    `
+                    UPDATE food_availability
+                    SET valid_from = ?, valid_to = ?, reason = ?
+                    WHERE id_avail = ? AND id_food = ?
+                    `,
+                    [
+                        start_date,
+                        end_date,
+                        (reason ?? '').trim() || null,
+                        sid,
+                        id,
+                    ]
+                );
+            } else {
+                // INSERT nuovo record (storico)
+                await conn.query(
+                    `
+                    INSERT INTO food_availability (id_food, valid_from, valid_to, reason)
+                    VALUES (?, ?, ?, ?)
+                    `,
+                    [id, start_date, end_date, (reason ?? '').trim() || null]
+                );
+            }
+        } else {
+            // toggle OFF: non cancellare. “Scade ora”.
+            // Se abbiamo un id specifico, scadi quello (se ancora attivo/futuro)
+            if (sid) {
+                await conn.query(
+                    `
+                    UPDATE food_availability
+                    SET valid_to = CURDATE()
+                    WHERE id_avail = ? AND id_food = ? AND valid_to >= CURDATE()
+                    `,
+                    [sid, id]
+                );
+            } else {
+                // fallback: se non hai id ma esiste una sospensione attuale/futura, scadi quella più vicina
+                await conn.query(
+                    `
+                    UPDATE food_availability
+                    SET valid_to = CURDATE()
+                    WHERE id_food = ? AND valid_to >= CURDATE()
+                    ORDER BY valid_from ASC
+                    LIMIT 1
+                    `,
+                    [id]
+                );
+            }
+        }
+
+        await conn.commit();
+
+        // rispondi subito al frontend
         res.json({ success: true });
 
-        // 🧹 pulizia file system DOPO la response
+        // 3) unlink immagine vecchia (fuori dalla transazione)
         if (newImage && oldImage && newImage !== oldImage) {
             const oldPath = path.join(IMAGES_DIR, oldImage);
-
             fs.unlink(oldPath).catch((err) => {
                 if (err.code !== 'ENOENT') {
                     console.error('Errore cancellazione immagine:', err);
                 }
             });
         }
-
-        /* 
-        //  cancello vecchia immagine SOLO se è cambiata
-        if (newImage && oldImage && newImage !== oldImage) {
-            const oldPath = path.join(IMAGES_DIR, oldImage);
-            try {
-                await fs.unlink(oldPath);
-            } catch (err) {
-                if (err.code !== 'ENOENT') {
-                    console.error('Errore cancellazione immagine:', err);
-                }
-            }
-        }
-
-        return res.json({ success: true });
-        */
     } catch (err) {
+        try {
+            await conn.rollback();
+        } catch {}
         console.error('Errore updateDish:', err);
 
-        // nome duplicato
         if (err?.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'Nome piatto già esistente' });
         }
 
-        return res
-            .status(500)
-            .json({ error: 'Errore aggiornamento piatto sql' });
+        return res.status(500).json({ error: 'Errore aggiornamento piatto' });
+    } finally {
+        conn.release();
     }
 }

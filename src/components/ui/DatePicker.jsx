@@ -15,6 +15,10 @@ export default function DatePicker({
     const [open, setOpen] = useState(false);
     const wrapperRef = useRef(null);
 
+    const overlayRef = useRef(null);
+    const [placement, setPlacement] = useState('bottom'); // 'bottom' | 'top'
+    const [maxH, setMaxH] = useState(null);
+
     // ========== Data corrente ==========
     const today = new Date();
     const todayStart = new Date();
@@ -27,6 +31,39 @@ export default function DatePicker({
         month: base.getMonth(),
     });
 
+    useEffect(() => {
+        if (!open) return;
+
+        const calc = () => {
+            const el = wrapperRef.current;
+            if (!el) return;
+
+            const r = el.getBoundingClientRect();
+            const saveBarH = 72; // metti la tua altezza reale
+            const margin = 12; // aria
+
+            const spaceBelow =
+                window.innerHeight - saveBarH - margin - r.bottom;
+            const spaceAbove = r.top - margin;
+
+            // scegli dove aprire
+            const nextPlacement = spaceBelow >= 260 ? 'bottom' : 'top';
+            setPlacement(nextPlacement);
+
+            const available =
+                nextPlacement === 'bottom' ? spaceBelow : spaceAbove;
+            setMaxH(Math.max(180, Math.floor(available)));
+        };
+
+        calc();
+        window.addEventListener('resize', calc);
+        window.addEventListener('scroll', calc, true); // true: prende anche scroll di container
+        return () => {
+            window.removeEventListener('resize', calc);
+            window.removeEventListener('scroll', calc, true);
+        };
+    }, [open]);
+
     // ========== Chiudi click fuori ==========
     useEffect(() => {
         const handler = (e) => {
@@ -37,6 +74,21 @@ export default function DatePicker({
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, []);
+
+    // ========== Scroll automatico quando si apre il calendario ==========
+    useEffect(() => {
+        if (!open) return;
+
+        // piccolo delay per assicurarsi che il calendario sia montato
+        const id = setTimeout(() => {
+            wrapperRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }, 0);
+
+        return () => clearTimeout(id);
+    }, [open]);
 
     // ========== Genera calendario ==========
     const generateCalendar = (year, month) => {
@@ -122,24 +174,26 @@ export default function DatePicker({
             ref={wrapperRef}
             className={`relative flex flex-col gap-1 ${className}`}
         >
-            {/* INPUT */}
-            <button
-                type="button"
-                onClick={() => setOpen((o) => !o)}
-                className={`
+            <div className="relative h-10">
+                {/* INPUT */}
+                <button
+                    type="button"
+                    onClick={() => setOpen((o) => !o)}
+                    className={`
                     input-default h-[38px] w-full pr-10 text-left
                     ${error ? 'border-brand-error' : 'border-brand-divider'}
                 `}
-            >
-                {selectedValue || (
-                    <span className="text-brand-textSecondary">
-                        {placeholder}
+                >
+                    {selectedValue || (
+                        <span className="text-brand-textSecondary">
+                            {placeholder}
+                        </span>
+                    )}
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70">
+                        📅
                     </span>
-                )}
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70">
-                    📅
-                </span>
-            </button>
+                </button>
+            </div>
 
             {/* Error */}
             {error && (
@@ -148,15 +202,24 @@ export default function DatePicker({
                 </span>
             )}
 
-            {/* CALENDAR OVERLAY */}
+            {/* CALENDARIO */}
             {open && (
                 <div
-                    className="
-                        absolute left-0 top-full mt-2
-                        w-full
+                    ref={overlayRef}
+                    className={`
+                        absolute left-0 w-full
                         bg-white border border-brand-divider shadow-ios-strong
-                        rounded-textField p-4 animate-fadeScale z-50
-                    "
+                        rounded-textField p-4 animate-fadeScale z-[1000]
+                        ${
+                            placement === 'bottom'
+                                ? 'top-full mt-2'
+                                : 'bottom-full mb-2'
+                        }
+                    `}
+                    style={{
+                        maxHeight: maxH ? `${maxH}px` : undefined,
+                        overflowY: 'auto',
+                    }}
                 >
                     {/* HEADER */}
                     <div className="flex justify-between items-center mb-4">
