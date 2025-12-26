@@ -144,7 +144,7 @@ export default function Form({
         e.preventDefault();
 
         if (!validateOnSubmit) {
-            await onSubmit(values);
+            await onSubmit(values, ctxValue);
             return;
         }
 
@@ -198,9 +198,8 @@ export default function Form({
             return;
         }
 
-        // ✔ Submit effettivo
-        await onSubmit(values);
-
+        // Submit effettivo
+        await onSubmit(values, ctxValue);
         setSubmitting(false);
     };
 

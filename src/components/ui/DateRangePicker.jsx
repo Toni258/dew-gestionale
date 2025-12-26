@@ -142,12 +142,7 @@ export default function DateRangePicker({
         }
     };
 
-    // ===================================
     // UI
-    // ===================================
-    // ===================================
-    // UI
-    // ===================================
     return (
         <div
             className={`relative flex flex-col gap-3 ${className}`}
@@ -218,11 +213,23 @@ export default function DateRangePicker({
                 </div>
             </div>
 
-            {(errorStart || errorEnd) && (
-                <span className="text-brand-error text-sm -mt-2 animate-fadeIn">
-                    {errorStart || errorEnd}
-                </span>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="min-h-[16px]">
+                    {errorStart && (
+                        <p className="text-brand-error text-sm animate-fadeIn">
+                            {errorStart}
+                        </p>
+                    )}
+                </div>
+
+                <div className="min-h-[16px]">
+                    {errorEnd && (
+                        <p className="text-brand-error text-sm animate-fadeIn">
+                            {errorEnd}
+                        </p>
+                    )}
+                </div>
+            </div>
 
             {/* CALENDAR PANEL (overlay, non spinge il layout) */}
             {open && (

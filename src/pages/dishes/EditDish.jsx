@@ -360,13 +360,13 @@ export default function EditDish() {
                 <Card className="mt-4">
                     <div className="flex items-start gap-8">
                         <div className="w-2/3">
-                            <FormGroup label="Nome piatto" required>
+                            <FormGroup label="Nome piatto" name="name" required>
                                 <Input name="name" className="w-full" />
                             </FormGroup>
                         </div>
 
                         <div className="w-1/3">
-                            <FormGroup label="Tipo" required>
+                            <FormGroup label="Tipo" name="type" required>
                                 <CustomSelect
                                     name="type"
                                     options={[
@@ -394,7 +394,7 @@ export default function EditDish() {
 
                     <div className="flex items-center gap-8 mt-6">
                         <div className="w-1/5">
-                            <FormGroup label="Immagine">
+                            <FormGroup label="Immagine" name="img">
                                 <ImageUploader
                                     name="img"
                                     initialUrl={existingImageUrl}
@@ -404,14 +404,22 @@ export default function EditDish() {
 
                         <div className="w-4/5 flex flex-col gap-4">
                             <div className="flex gap-4">
-                                <FormGroup label="Grammatura" required>
+                                <FormGroup
+                                    label="Grammatura"
+                                    name="grammage_tot"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         step="0.001"
                                         name="grammage_tot"
                                     />
                                 </FormGroup>
-                                <FormGroup label="Kcal" required>
+                                <FormGroup
+                                    label="Kcal"
+                                    name="kcal_tot"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         step="0.001"
@@ -421,21 +429,29 @@ export default function EditDish() {
                             </div>
 
                             <div className="flex gap-4">
-                                <FormGroup label="Proteine" required>
+                                <FormGroup
+                                    label="Proteine"
+                                    name="proteins"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         step="0.001"
                                         name="proteins"
                                     />
                                 </FormGroup>
-                                <FormGroup label="Carboidrati" required>
+                                <FormGroup
+                                    label="Carboidrati"
+                                    name="carbohydrates"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         step="0.001"
                                         name="carbohydrates"
                                     />
                                 </FormGroup>
-                                <FormGroup label="Grassi" required>
+                                <FormGroup label="Grassi" name="fats" required>
                                     <Input
                                         type="number"
                                         step="0.001"

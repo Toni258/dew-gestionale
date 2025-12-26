@@ -63,7 +63,7 @@ export default function DishesList() {
                         const v = (value ?? '').trim();
                         if (!v) return null;
 
-                        // opzionale: non chiamare il server per stringhe troppo corte
+                        // non chiamare il server per stringhe troppo corte
                         if (v.length < 3) return null;
 
                         const res = await fetch(
@@ -71,7 +71,6 @@ export default function DishesList() {
                         );
 
                         if (!res.ok) {
-                            // scegli tu: o nessun errore (fail-open) o errore generico
                             return 'Impossibile verificare il nome (server non raggiungibile)';
                         }
 
@@ -116,7 +115,7 @@ export default function DishesList() {
                 <Card className="mt-6">
                     <div className="flex items-start gap-8">
                         <div className="w-2/3">
-                            <FormGroup label="Nome piatto" required>
+                            <FormGroup label="Nome piatto" name="name" required>
                                 <Input
                                     name="name"
                                     asyncValidate
@@ -164,7 +163,11 @@ export default function DishesList() {
                         <div className="w-4/5 flex flex-col gap-4">
                             {/* Riga 1: Grammatura + Kcal */}
                             <div className="flex gap-4">
-                                <FormGroup label="Grammatura" required>
+                                <FormGroup
+                                    label="Grammatura"
+                                    name="grammage_tot"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         min="0"
@@ -174,7 +177,11 @@ export default function DishesList() {
                                     />
                                 </FormGroup>
 
-                                <FormGroup label="Kcal" required>
+                                <FormGroup
+                                    label="Kcal"
+                                    name="kcal_tot"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         min="0"
@@ -187,7 +194,11 @@ export default function DishesList() {
 
                             {/* Riga 2: Proteine + Carboidrati + Grassi */}
                             <div className="flex gap-4">
-                                <FormGroup label="Proteine" required>
+                                <FormGroup
+                                    label="Proteine"
+                                    name="proteins"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         min="0"
@@ -197,7 +208,11 @@ export default function DishesList() {
                                     />
                                 </FormGroup>
 
-                                <FormGroup label="Carboidrati" required>
+                                <FormGroup
+                                    label="Carboidrati"
+                                    name="carbohydrates"
+                                    required
+                                >
                                     <Input
                                         type="number"
                                         min="0"
@@ -207,7 +222,7 @@ export default function DishesList() {
                                     />
                                 </FormGroup>
 
-                                <FormGroup label="Grassi" required>
+                                <FormGroup label="Grassi" name="fats" required>
                                     <Input
                                         type="number"
                                         min="0"

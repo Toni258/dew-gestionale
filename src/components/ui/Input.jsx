@@ -82,13 +82,6 @@ export default function Input({
                     </div>
                 )}
             </div>
-
-            {/* Errore sotto il campo */}
-            {error && (
-                <span className="text-brand-error text-sm mt-1 animate-fadeIn">
-                    {error}
-                </span>
-            )}
         </div>
     );
 }
