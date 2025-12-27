@@ -28,7 +28,14 @@ export default function Sidebar() {
 
             {/* SEZIONE MENU */}
             <SidebarSection title="Gestione Menù">
-                <SidebarItem to="/menu" label="Visualizza / Modifica menù" />
+                <SidebarItem
+                    to="/menu"
+                    label="Visualizza / Modifica menù"
+                    isActiveOverride={(pathname) =>
+                        pathname === '/menu' ||
+                        pathname.startsWith('/menu/edit')
+                    }
+                />
                 <SidebarItem to="/menu/create" label="Aggiungi nuovo menù" />
                 <SidebarItem to="/menu/history" label="Menù archiviati" />
             </SidebarSection>

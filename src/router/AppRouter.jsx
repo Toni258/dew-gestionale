@@ -27,7 +27,7 @@ export default function AppRouter() {
 
                 <Route path="/menu" element={<MenuList />} />
                 <Route path="/menu/create" element={<CreateMenu />} />
-                <Route path="/menu/edit/seasonType" element={<EditMenu />} />
+                <Route path="/menu/edit/:seasonType" element={<EditMenu />} />
                 <Route path="/menu/history" element={<MenuHistory />} />
 
                 <Route path="/dishes" element={<DishesList />} />
