@@ -12,7 +12,7 @@ export default function Header({ title, username }) {
                     src="/Do Eat Well Logo Bianco.png"
                     alt="logo"
                     className="w-[55px] h-[55px]"
-                    draggable={false} // ← impedisce trascinamento
+                    draggable={false}
                 />
 
                 <span className="font-semibold text-xl text-white ml-2">
@@ -30,8 +30,7 @@ export default function Header({ title, username }) {
                     <img
                         src="/user icon verde.png"
                         className="w-6 h-6 rounded-full object-cover"
-                        draggable={false} // ← NON selezionabile? No! Selezionabile sì.
-                        // blocca solo il trascinamento
+                        draggable={false}
                     />
                 </div>
 

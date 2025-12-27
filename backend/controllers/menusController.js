@@ -1,16 +1,52 @@
 import { pool } from '../db/db.js';
 
-/* Lista menù (tabella season) */
+/* Lista menù */
 export async function getMenus(req, res) {
     try {
         const [rows] = await pool.query(`
             SELECT
-                season_type,
-                DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
-                DATE_FORMAT(end_date, '%Y-%m-%d')   AS end_date,
-                day_index
-            FROM season
-            ORDER BY start_date DESC, season_type ASC
+            s.season_type,
+            DATE_FORMAT(s.start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(s.end_date,   '%Y-%m-%d') AS end_date,
+
+            (s.day_index + 1) AS day_number,
+            CONCAT(
+                DATE_FORMAT(s.start_date, '%d.%m.%Y'),
+                ' - ',
+                DATE_FORMAT(s.end_date,   '%d.%m.%Y')
+            ) AS period_label,
+
+            YEAR(s.start_date) AS start_year,
+
+            CASE
+                WHEN CURDATE() BETWEEN s.start_date AND s.end_date THEN 1
+                ELSE 0
+            END AS is_active,
+
+            56 AS meals_total,
+
+            COALESCE(cm.meals_completed, 0) AS meals_completed
+
+            FROM season s
+
+            LEFT JOIN (
+            SELECT
+                x.season_type,
+                SUM(CASE WHEN x.cnt_day_dishes >= 4 THEN 1 ELSE 0 END) AS meals_completed
+            FROM (
+                SELECT
+                dp.season_type,
+                dp.id_meal,
+                COUNT(*) AS cnt_day_dishes
+                FROM dish_pairing dp
+                JOIN meal m ON m.id_meal = dp.id_meal
+                WHERE m.first_choice = 0
+                GROUP BY dp.season_type, dp.id_meal
+            ) x
+            GROUP BY x.season_type
+            ) cm ON cm.season_type = s.season_type
+
+            ORDER BY s.start_date ASC;
         `);
 
         return res.json({ data: rows });
@@ -100,7 +136,9 @@ export async function checkMenuDatesOverlap(req, res) {
 /* Recupera un menu per season_type */
 export async function getMenuBySeasonType(req, res) {
     try {
-        const seasonType = (req.params.season_type ?? '').trim();
+        const seasonType = decodeURIComponent(
+            req.params.season_type ?? ''
+        ).trim();
         if (!seasonType) {
             return res.status(400).json({ error: 'season_type non valido' });
         }

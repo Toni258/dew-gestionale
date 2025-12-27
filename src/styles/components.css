@@ -247,4 +247,16 @@
     input[type='search']::-webkit-search-results-decoration {
         display: none;
     }
+
+    /* Effetto hover per i menù card */
+    .menu-card {
+        @apply bg-brand-card rounded-[8px] shadow-card px-2 py-6 flex
+           transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
+           hover:shadow-cardHover hover:scale-[1.01];
+    }
+
+    .menu-card:active {
+        @apply scale-[0.995];
+        transition-duration: 80ms;
+    }
 }

@@ -9,7 +9,9 @@ import Button from '../../components/ui/Button';
 export default function CreateMenu() {
     return (
         <AppLayout title="GESTIONE MENÙ" username="Antonio">
-            <h1 className="text-3xl font-semibold">Creazione nuovo menù</h1>
+            <h1 className="text-3xl font-semibold mx-8">
+                Creazione nuovo menù
+            </h1>
 
             <Form
                 initialValues={{
@@ -136,7 +138,7 @@ export default function CreateMenu() {
                     navigate('/menu/edit');
                 }}
             >
-                <Card className="mt-6">
+                <Card className="mt-6 mx-8">
                     <FormGroup label="Nome" name="name" required>
                         <div className="flex items-center gap-6">
                             <div className="w-1/2">

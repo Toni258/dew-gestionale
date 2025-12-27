@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from '../pages/Auth/Login';
 import Dashboard from '../pages/Dashboard';
 
+import MenuList from '../pages/menu/MenuList';
 import CreateMenu from '../pages/menu/CreateMenu';
 import EditMenu from '../pages/menu/EditMenu';
 import MenuHistory from '../pages/menu/MenuHistory';
@@ -24,8 +25,9 @@ export default function AppRouter() {
                 <Route path="/" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
 
+                <Route path="/menu" element={<MenuList />} />
                 <Route path="/menu/create" element={<CreateMenu />} />
-                <Route path="/menu/edit" element={<EditMenu />} />
+                <Route path="/menu/edit/seasonType" element={<EditMenu />} />
                 <Route path="/menu/history" element={<MenuHistory />} />
 
                 <Route path="/dishes" element={<DishesList />} />

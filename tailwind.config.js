@@ -50,6 +50,7 @@ export default {
                 textField: '0px 0px 15px rgba(0, 0, 0, 0.15)',
                 textFieldHover: '0px 0px 15px rgba(0, 0, 0, 0.20)',
                 card: '0px 0px 40px rgba(0,0,0,0.25)',
+                cardHover: '0px 0px 55px rgba(0,0,0,0.32)',
             },
         },
     },
