@@ -259,4 +259,146 @@
         @apply scale-[0.995];
         transition-duration: 80ms;
     }
+
+    .menu-grid {
+        --header-size: 35px;
+        --cell-size: clamp(140px, 16vw, 200px);
+
+        display: grid;
+        grid-template-columns: var(--header-size) repeat(7, var(--cell-size));
+        grid-template-rows: var(--header-size) repeat(4, var(--cell-size));
+        gap: 0;
+        user-select: none;
+    }
+
+    /* Corner in alto a sinistra */
+    .menu-grid__corner {
+        background: transparent;
+        border: none;
+    }
+
+    /* Header giorni (1..7) */
+    .menu-grid__dayHeader {
+        height: var(--header-size);
+        background: theme('colors.brand.primary');
+        color: white;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        /* divider sotto */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+
+        /* divider verticale tra header giorni */
+        border-right: 1px solid rgba(255, 255, 255, 0.35);
+    }
+
+    /* Header settimane (1..4) */
+    .menu-grid__weekHeader {
+        width: var(--header-size);
+        background: theme('colors.brand.primary');
+        color: white;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        /* divider a destra */
+        border-right: 1px solid rgba(255, 255, 255, 0.35);
+
+        /* divider orizzontale tra settimane */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+    }
+
+    /* Cella 200x200 con divider tratteggiati */
+    .menu-grid__cell {
+        position: relative;
+        width: var(--cell-size);
+        height: var(--cell-size);
+        background: theme('colors.brand.card');
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 20px;
+        padding: clamp(12px, 1.5vw, 18px);
+    }
+
+    /* divider verticale */
+    .menu-grid__cell::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 1px;
+        height: 100%;
+        background: repeating-linear-gradient(
+            to bottom,
+            #909090 0,
+            #909090 10px,
+            transparent 10px,
+            transparent 20px
+        );
+    }
+
+    /* divider orizzontale */
+    .menu-grid__cell::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 1px;
+        background: repeating-linear-gradient(
+            to right,
+            #909090 0,
+            #909090 10px,
+            transparent 10px,
+            transparent 20px
+        );
+    }
+
+    /* blocco pranzo/cena dentro la cella */
+    .menu-grid__mealBlock {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .menu-grid__mealTitle {
+        font-weight: 700;
+        color: theme('colors.brand.text');
+        font-size: clamp(14px, 1.2vw, 18px);
+    }
+
+    .no-v-divider::after {
+        display: none;
+    }
+
+    .no-h-divider::before {
+        display: none;
+    }
+
+    .menu-grid__dayHeader--first {
+        border-top-left-radius: 10px;
+    }
+
+    .menu-grid__dayHeader--last {
+        border-top-right-radius: 10px;
+    }
+
+    .menu-grid__weekHeader--first {
+        border-top-left-radius: 10px;
+    }
+
+    .menu-grid__weekHeader--last {
+        border-bottom-left-radius: 10px;
+    }
+
+    .menu-grid__cell--active {
+        z-index: 10; /* sopra alle altre celle */
+        box-shadow: 0px 0px 30px 4px #398e3b;
+        border-radius: 10px;
+    }
 }

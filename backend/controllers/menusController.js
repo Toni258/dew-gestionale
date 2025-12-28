@@ -148,7 +148,8 @@ export async function getMenuBySeasonType(req, res) {
             SELECT
                 season_type,
                 DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
-                DATE_FORMAT(end_date, '%Y-%m-%d')   AS end_date
+                DATE_FORMAT(end_date, '%Y-%m-%d')   AS end_date,
+                day_index
             FROM season
             WHERE season_type = ?
             LIMIT 1
@@ -164,6 +165,70 @@ export async function getMenuBySeasonType(req, res) {
     } catch (err) {
         console.error('Errore getMenuBySeasonType:', err);
         return res.status(500).json({ error: 'Errore interno' });
+    }
+}
+
+/*
+  Ritorna la lista pasti (56) del menù:
+  - solo meal.first_choice = 0 (piatti del giorno)
+  - is_completed = 1 se per quel meal ci sono 4 dish_pairing nel menù
+*/
+export async function getMenuMealsStatus(req, res) {
+    try {
+        const seasonType = decodeURIComponent(
+            req.params.season_type ?? ''
+        ).trim();
+        if (!seasonType) {
+            return res.status(400).json({ error: 'season_type non valido' });
+        }
+
+        // (opzionale ma utile) verifica che il menù esista
+        const [seasonRows] = await pool.query(
+            `SELECT 1 FROM season WHERE season_type = ? LIMIT 1`,
+            [seasonType]
+        );
+        if (seasonRows.length === 0) {
+            return res.status(404).json({ error: 'Menù non trovato' });
+        }
+
+        const [rows] = await pool.query(
+            `
+            SELECT
+                m.day_index,
+                m.type,
+
+                COALESCE(dp_cnt.cnt_day_dishes, 0) AS day_dishes_count,
+
+                CASE
+                    WHEN COALESCE(dp_cnt.cnt_day_dishes, 0) >= 4 THEN 1
+                    ELSE 0
+                END AS is_completed
+
+            FROM meal m
+
+            LEFT JOIN (
+                SELECT
+                    dp.id_meal,
+                    COUNT(*) AS cnt_day_dishes
+                FROM dish_pairing dp
+                WHERE dp.season_type = ?
+                GROUP BY dp.id_meal
+            ) dp_cnt ON dp_cnt.id_meal = m.id_meal
+
+            WHERE m.first_choice = 0
+              AND m.day_index BETWEEN 0 AND 27
+
+            ORDER BY
+                m.day_index ASC,
+                FIELD(m.type, 'pranzo', 'cena') ASC
+            `,
+            [seasonType]
+        );
+
+        return res.json({ data: rows });
+    } catch (err) {
+        console.error('Errore getMenuMealsStatus:', err);
+        return res.status(500).json({ error: 'Errore interno al server' });
     }
 }
 
