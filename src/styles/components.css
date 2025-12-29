@@ -271,6 +271,16 @@
         user-select: none;
     }
 
+    .menu-grid-wrapper {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2),
+            0 4px 12px rgba(0, 0, 0, 0.2);
+        background: theme('colors.brand.card');
+        margin-bottom: 25px;
+        margin-top: 10px;
+    }
+
     /* Corner in alto a sinistra */
     .menu-grid__corner {
         background: transparent;

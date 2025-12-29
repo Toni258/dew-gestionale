@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 
-export default function DeleteDishModal({ dish, onClose, onConfirm }) {
+export default function DeleteMenuModal({ menu, onClose, onConfirm }) {
     const [confirmText, setConfirmText] = useState('');
 
     useEffect(() => {
-        if (!dish) setConfirmText('');
-    }, [dish]);
+        if (!menu) setConfirmText('');
+    }, [menu]);
 
-    if (!dish) return null;
+    if (!menu) return null;
 
     const isValid = confirmText === 'ELIMINA';
 
     return (
         <Modal onClose={onClose}>
-            <div className="bg-white rounded-xl p-8 w-[500px] flex flex-col items-center text-center">
+            <div className="bg-white rounded-xl p-8 w-[500px] flex flex-col text-center">
                 <h2 className="text-brand-text text-xl font-semibold mb-2">
-                    Conferma eliminazione del piatto:
+                    Conferma eliminazione del menù:
                 </h2>
 
                 <p className="text-brand-primary text-lg font-bold mb-4">
-                    {dish.name}
+                    {menu.season_type}
                 </p>
 
                 <p className="text-brand-textSecondary text-sm mb-4">
@@ -55,7 +55,7 @@ export default function DeleteDishModal({ dish, onClose, onConfirm }) {
                     <button
                         type="button"
                         disabled={!isValid}
-                        onClick={() => onConfirm(dish)}
+                        onClick={() => onConfirm(menu)}
                         className={`
                             px-6 py-2 rounded-xl font-semibold text-white
                             transition

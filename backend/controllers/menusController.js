@@ -310,5 +310,44 @@ export async function updateMenu(req, res) {
     }
 }
 
-/* DA CREARE LA CHIAMATA DI ELIMINAZIONE DEL MENU' E SALVATAGGIO NELL ARCHIVIO */
-export async function deleteMenu(req, res) {}
+/* Elimina definitivamente un menu e tutti i suoi dish_pairing (operazione transazionale e atomica) */
+export async function deleteMenu(req, res) {
+    const conn = await pool.getConnection();
+
+    try {
+        const seasonType = decodeURIComponent(
+            req.params.season_type ?? ''
+        ).trim();
+
+        if (!seasonType) {
+            return res.status(400).json({ error: 'season_type non valido' });
+        }
+
+        await conn.beginTransaction();
+
+        // 1) elimina dish_pairing
+        await conn.query(`DELETE FROM dish_pairing WHERE season_type = ?`, [
+            seasonType,
+        ]);
+
+        // 2) elimina menu
+        const [result] = await conn.query(
+            `DELETE FROM season WHERE season_type = ?`,
+            [seasonType]
+        );
+
+        if (result.affectedRows === 0) {
+            await conn.rollback();
+            return res.status(404).json({ error: 'Menù non trovato' });
+        }
+
+        await conn.commit();
+        return res.json({ success: true });
+    } catch (err) {
+        await conn.rollback();
+        console.error('Errore deleteMenu:', err);
+        return res.status(500).json({ error: 'Errore eliminazione menù' });
+    } finally {
+        conn.release();
+    }
+}

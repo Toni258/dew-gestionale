@@ -2,6 +2,8 @@ import AppLayout from '../../components/layout/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 
+import DeleteMenuModal from '../../components/modals/DeleteMenuModal';
+
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 
@@ -16,6 +18,7 @@ export default function EditMenu() {
 
     const [menu, setMenu] = useState(null);
     const [meals, setMeals] = useState([]);
+    const [menuToDelete, setMenuToDelete] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -32,6 +35,19 @@ export default function EditMenu() {
 
     const daysHeader = [1, 2, 3, 4, 5, 6, 7];
     const weeksHeader = [1, 2, 3, 4];
+
+    // Funzione per chiamata API DELETE menù
+    async function deleteMenu(seasonType) {
+        const res = await fetch(
+            `/api/menus/${encodeURIComponent(seasonType)}`,
+            { method: 'DELETE' }
+        );
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Errore eliminazione menù');
+        }
+    }
 
     useEffect(() => {
         async function load() {
@@ -148,9 +164,12 @@ export default function EditMenu() {
 
                         <button
                             className="ml-3 text-red-500"
-                            onClick={() =>
-                                console.log('Premuto bottone cancelazione menù')
-                            }
+                            onClick={() => {
+                                console.log(
+                                    'Premuto bottone cancellazione menù'
+                                );
+                                setMenuToDelete(menu);
+                            }}
                         >
                             🗑
                         </button>
@@ -159,69 +178,71 @@ export default function EditMenu() {
             </Card>
 
             {/* ===== GRIGLIA 7x4 ===== */}
-            <div className="mt-6 overflow-x-auto">
+            <div className="mt-4 overflow-x-auto">
                 <div className="flex justify-center min-w-fit">
-                    <div className="menu-grid">
-                        {/* top-left corner (vuoto) */}
-                        <div className="menu-grid__corner" />
+                    <div className="menu-grid-wrapper">
+                        <div className="menu-grid">
+                            {/* top-left corner (vuoto) */}
+                            <div className="menu-grid__corner" />
 
-                        {/* header giorni 1..7 */}
-                        {daysHeader.map((d, idx) => (
-                            <div
-                                key={`day-h-${d}`}
-                                className={`menu-grid__dayHeader ${
-                                    idx === 0
-                                        ? 'menu-grid__dayHeader--first'
-                                        : ''
-                                } ${
-                                    idx === daysHeader.length - 1
-                                        ? 'menu-grid__dayHeader--last'
-                                        : ''
-                                }`}
-                            >
-                                {d}
-                            </div>
-                        ))}
-
-                        {/* righe settimane */}
-                        {weeksHeader.map((w, weekIdx) => (
-                            <div key={`week-row-${w}`} className="contents">
-                                {/* header settimana */}
+                            {/* header giorni 1..7 */}
+                            {daysHeader.map((d, idx) => (
                                 <div
-                                    className={`menu-grid__weekHeader ${
-                                        weekIdx === 0
-                                            ? 'menu-grid__weekHeader--first'
+                                    key={`day-h-${d}`}
+                                    className={`menu-grid__dayHeader ${
+                                        idx === 0
+                                            ? 'menu-grid__dayHeader--first'
                                             : ''
                                     } ${
-                                        weekIdx === weeksHeader.length - 1
-                                            ? 'menu-grid__weekHeader--last'
+                                        idx === daysHeader.length - 1
+                                            ? 'menu-grid__dayHeader--last'
                                             : ''
                                     }`}
                                 >
-                                    {w}
+                                    {d}
                                 </div>
+                            ))}
 
-                                {/* 7 celle */}
-                                {daysHeader.map((d, dayIdx) => {
-                                    const dayIndex = weekIdx * 7 + dayIdx; // 0..27
-                                    const pranzo = mealsByDay[dayIndex]?.pranzo;
-                                    const cena = mealsByDay[dayIndex]?.cena;
-                                    const isLastColumn = dayIdx === 6;
-                                    const isLastRow = weekIdx === 3;
-                                    const isActiveDay =
-                                        dayIndex === menu.day_index;
+                            {/* righe settimane */}
+                            {weeksHeader.map((w, weekIdx) => (
+                                <div key={`week-row-${w}`} className="contents">
+                                    {/* header settimana */}
+                                    <div
+                                        className={`menu-grid__weekHeader ${
+                                            weekIdx === 0
+                                                ? 'menu-grid__weekHeader--first'
+                                                : ''
+                                        } ${
+                                            weekIdx === weeksHeader.length - 1
+                                                ? 'menu-grid__weekHeader--last'
+                                                : ''
+                                        }`}
+                                    >
+                                        {w}
+                                    </div>
 
-                                    const pranzoCompleted = Boolean(
-                                        pranzo?.is_completed
-                                    );
-                                    const cenaCompleted = Boolean(
-                                        cena?.is_completed
-                                    );
+                                    {/* 7 celle */}
+                                    {daysHeader.map((d, dayIdx) => {
+                                        const dayIndex = weekIdx * 7 + dayIdx; // 0..27
+                                        const pranzo =
+                                            mealsByDay[dayIndex]?.pranzo;
+                                        const cena = mealsByDay[dayIndex]?.cena;
+                                        const isLastColumn = dayIdx === 6;
+                                        const isLastRow = weekIdx === 3;
+                                        const isActiveDay =
+                                            dayIndex === menu.day_index;
 
-                                    return (
-                                        <div
-                                            key={`cell-${dayIndex}`}
-                                            className={`menu-grid__cell
+                                        const pranzoCompleted = Boolean(
+                                            pranzo?.is_completed
+                                        );
+                                        const cenaCompleted = Boolean(
+                                            cena?.is_completed
+                                        );
+
+                                        return (
+                                            <div
+                                                key={`cell-${dayIndex}`}
+                                                className={`menu-grid__cell
                                             ${
                                                 isLastColumn
                                                     ? 'no-v-divider'
@@ -234,76 +255,94 @@ export default function EditMenu() {
                                                     : ''
                                             }
                                         `}
-                                        >
-                                            {/* PRANZO */}
-                                            <div className="menu-grid__mealBlock">
-                                                <span className="menu-grid__mealTitle">
-                                                    Pranzo
-                                                </span>
-                                                <Button
-                                                    variant={
-                                                        pranzoCompleted
-                                                            ? 'primary'
-                                                            : 'secondary'
-                                                    }
-                                                    size="md"
-                                                    className="px-3 py-1 rounded-[6px]"
-                                                    onClick={() =>
-                                                        console.log(
+                                            >
+                                                {/* PRANZO */}
+                                                <div className="menu-grid__mealBlock">
+                                                    <span className="menu-grid__mealTitle">
+                                                        Pranzo
+                                                    </span>
+                                                    <Button
+                                                        variant={
                                                             pranzoCompleted
-                                                                ? 'modifica pranzo'
-                                                                : 'componi pranzo',
-                                                            {
-                                                                dayIndex,
-                                                                type: 'pranzo',
-                                                            }
-                                                        )
-                                                    }
-                                                >
-                                                    {pranzoCompleted
-                                                        ? 'Modifica'
-                                                        : 'Componi'}
-                                                </Button>
-                                            </div>
+                                                                ? 'primary'
+                                                                : 'secondary'
+                                                        }
+                                                        size="md"
+                                                        className="px-3 py-1 rounded-[6px]"
+                                                        onClick={() =>
+                                                            console.log(
+                                                                pranzoCompleted
+                                                                    ? 'modifica pranzo'
+                                                                    : 'componi pranzo',
+                                                                {
+                                                                    dayIndex,
+                                                                    type: 'pranzo',
+                                                                }
+                                                            )
+                                                        }
+                                                    >
+                                                        {pranzoCompleted
+                                                            ? 'Modifica'
+                                                            : 'Componi'}
+                                                    </Button>
+                                                </div>
 
-                                            {/* CENA */}
-                                            <div className="menu-grid__mealBlock">
-                                                <span className="menu-grid__mealTitle">
-                                                    Cena
-                                                </span>
-                                                <Button
-                                                    variant={
-                                                        cenaCompleted
-                                                            ? 'primary'
-                                                            : 'secondary'
-                                                    }
-                                                    size="md"
-                                                    className="px-3 py-1 rounded-[6px]"
-                                                    onClick={() =>
-                                                        console.log(
+                                                {/* CENA */}
+                                                <div className="menu-grid__mealBlock">
+                                                    <span className="menu-grid__mealTitle">
+                                                        Cena
+                                                    </span>
+                                                    <Button
+                                                        variant={
                                                             cenaCompleted
-                                                                ? 'modifica cena'
-                                                                : 'componi cena',
-                                                            {
-                                                                dayIndex,
-                                                                type: 'cena',
-                                                            }
-                                                        )
-                                                    }
-                                                >
-                                                    {cenaCompleted
-                                                        ? 'Modifica'
-                                                        : 'Componi'}
-                                                </Button>
+                                                                ? 'primary'
+                                                                : 'secondary'
+                                                        }
+                                                        size="md"
+                                                        className="px-3 py-1 rounded-[6px]"
+                                                        onClick={() =>
+                                                            console.log(
+                                                                cenaCompleted
+                                                                    ? 'modifica cena'
+                                                                    : 'componi cena',
+                                                                {
+                                                                    dayIndex,
+                                                                    type: 'cena',
+                                                                }
+                                                            )
+                                                        }
+                                                    >
+                                                        {cenaCompleted
+                                                            ? 'Modifica'
+                                                            : 'Componi'}
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* MODALE ELIMINA MENU' */}
+            <DeleteMenuModal
+                menu={menuToDelete}
+                onClose={() => setMenuToDelete(null)}
+                onConfirm={async (menu) => {
+                    try {
+                        await deleteMenu(menu.season_type);
+                        console.log('Elimina menù', menu.season_type);
+                        alert('Menù eliminato correttamente');
+                        setMenuToDelete(null);
+                        navigate(`/menu`);
+                    } catch (e) {
+                        alert(e.message);
+                    }
+                }}
+            />
         </AppLayout>
     );
 }
