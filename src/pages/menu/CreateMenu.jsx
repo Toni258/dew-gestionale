@@ -6,7 +6,11 @@ import Input from '../../components/ui/Input';
 import DateRangePicker from '../../components/ui/DateRangePicker';
 import Button from '../../components/ui/Button';
 
+import { useNavigate } from 'react-router-dom';
+
 export default function CreateMenu() {
+    const navigate = useNavigate();
+
     return (
         <AppLayout title="GESTIONE MENÙ" username="Antonio">
             <h1 className="text-3xl font-semibold mx-8">
@@ -135,7 +139,7 @@ export default function CreateMenu() {
                     alert('Menù creato correttamente');
 
                     // vai alla lista
-                    navigate('/menu/edit');
+                    navigate('/menu');
                 }}
             >
                 <Card className="mt-6 mx-8">

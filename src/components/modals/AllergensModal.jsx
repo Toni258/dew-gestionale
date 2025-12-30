@@ -1,21 +1,5 @@
 import Modal from '../ui/Modal';
-
-const ALLERGENS = [
-    { label: 'Glutine', emoji: '🌾' },
-    { label: 'Latte / Lattosio', emoji: '🥛' },
-    { label: 'Uova', emoji: '🥚' },
-    { label: 'Arachidi', emoji: '🥜' },
-    { label: 'Frutta a guscio', emoji: '🌰' },
-    { label: 'Pesce', emoji: '🐟' },
-    { label: 'Crostacei', emoji: '🦐' },
-    { label: 'Molluschi', emoji: '🦑' },
-    { label: 'Soia', emoji: '🌱' },
-    { label: 'Sedano', emoji: '🥬' },
-    { label: 'Senape', emoji: '🌿' },
-    { label: 'Semi di sesamo', emoji: '⚫' },
-    { label: 'Anidride solforosa e solfiti', emoji: '🍷' },
-    { label: 'Lupini', emoji: '🌻' },
-];
+import { ALLERGENS } from '../../domain/allergens';
 
 export default function AllergensModal({ open, onClose }) {
     if (!open) return null;

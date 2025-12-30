@@ -408,7 +408,64 @@
 
     .menu-grid__cell--active {
         z-index: 10; /* sopra alle altre celle */
-        box-shadow: 0px 0px 30px 4px #398e3b;
+        box-shadow: 0px 0px 40px 6px #398e3b;
         border-radius: 10px;
+    }
+
+    /* Pallino menu attivo */
+    .menu-grid__activeDot {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+
+        background-color: #398e3b;
+
+        /* leggero alone fisso */
+        box-shadow: 0 0 6px rgba(57, 142, 59, 0.6);
+
+        /* animazione soft */
+        animation: activeDotPulse 2.4s ease-in-out infinite;
+
+        pointer-events: none;
+    }
+
+    .menu-grid__activeDot::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 1px solid rgba(57, 142, 59, 0.4);
+        animation: activeDotRing 2.4s ease-out infinite;
+    }
+
+    /* Animazione molto fine */
+    @keyframes activeDotPulse {
+        0% {
+            transform: scale(1);
+            opacity: 0.7;
+        }
+        50% {
+            transform: scale(1.35);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 0.7;
+        }
+    }
+
+    @keyframes activeDotRing {
+        0% {
+            transform: scale(0.8);
+            opacity: 0.6;
+        }
+        100% {
+            transform: scale(1.6);
+            opacity: 0;
+        }
     }
 }

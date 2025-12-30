@@ -273,13 +273,17 @@ export async function createMenu(req, res) {
 /* Aggiorna un menu (se serve in futuro) */
 export async function updateMenu(req, res) {
     try {
-        const seasonType = (req.params.season_type ?? '').trim();
+        const seasonType = decodeURIComponent(
+            req.params.season_type ?? ''
+        ).trim();
+
         if (!seasonType) {
             return res.status(400).json({ error: 'season_type non valido' });
         }
 
         const start_date = (req.body.start_date ?? '').trim();
         const end_date = (req.body.end_date ?? '').trim();
+        const day_index = Number(req.body.day_index);
 
         if (!start_date || !end_date) {
             return res.status(400).json({ error: 'Date non valide' });
@@ -289,14 +293,36 @@ export async function updateMenu(req, res) {
                 error: 'La data fine deve essere >= data inizio',
             });
         }
+        if (!Number.isInteger(day_index) || day_index < 0 || day_index > 27) {
+            return res.status(400).json({ error: 'day_index non valido' });
+        }
+
+        // overlap: escludo il menu corrente
+        const [ov] = await pool.query(
+            `
+            SELECT season_type
+            FROM season
+            WHERE season_type <> ?
+              AND NOT (? < start_date OR ? > end_date)
+            LIMIT 1
+            `,
+            [seasonType, end_date, start_date]
+        );
+
+        if (ov.length > 0) {
+            return res.status(409).json({
+                error: `Intervallo già usato nel menù "${ov[0].season_type}"`,
+                season_type: ov[0].season_type,
+            });
+        }
 
         const [result] = await pool.query(
             `
             UPDATE season
-            SET start_date = ?, end_date = ?
+            SET start_date = ?, end_date = ?, day_index = ?
             WHERE season_type = ?
             `,
-            [start_date, end_date, seasonType]
+            [start_date, end_date, day_index, seasonType]
         );
 
         if (result.affectedRows === 0) {

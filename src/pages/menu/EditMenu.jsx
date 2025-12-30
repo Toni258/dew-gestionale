@@ -3,9 +3,26 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 
 import DeleteMenuModal from '../../components/modals/DeleteMenuModal';
+import ModifyMenuModal from '../../components/modals/ModifyMenuModal';
 
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+
+async function updateMenu(seasonType, payload) {
+    const res = await fetch(`/api/menus/${encodeURIComponent(seasonType)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+        throw new Error(data.error || 'Errore aggiornamento menù');
+    }
+
+    return data; // { success:true } oppure menu aggiornato se lo ritorni
+}
 
 export default function EditMenu() {
     const { seasonType } = useParams();
@@ -19,6 +36,7 @@ export default function EditMenu() {
     const [menu, setMenu] = useState(null);
     const [meals, setMeals] = useState([]);
     const [menuToDelete, setMenuToDelete] = useState(null);
+    const [modifyMenu, setModifyMenu] = useState(false);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -129,7 +147,7 @@ export default function EditMenu() {
                 <div className="flex flex-[1] flex-col justify-center items-center gap-2 text-lg font-semibold">
                     <span>Piatti fissi</span>
                     <button
-                        type="submit"
+                        type="button"
                         className="flex py-2 bg-[#F5C542] rounded-[6px] w-[100px] justify-center"
                         onClick={() => {
                             console.log('Premuto modifica piatti fissi!');
@@ -155,9 +173,10 @@ export default function EditMenu() {
                     <div className="flex gap-4">
                         <button
                             className="text-brand-primary font-semibold"
-                            onClick={() =>
-                                console.log('Premuto bottone modifica menù')
-                            }
+                            onClick={() => {
+                                console.log('Premuto bottone modifica menù');
+                                setModifyMenu(true);
+                            }}
                         >
                             ✏
                         </button>
@@ -243,19 +262,27 @@ export default function EditMenu() {
                                             <div
                                                 key={`cell-${dayIndex}`}
                                                 className={`menu-grid__cell
-                                            ${
-                                                isLastColumn
-                                                    ? 'no-v-divider'
-                                                    : ''
-                                            }
-                                            ${isLastRow ? 'no-h-divider' : ''}
-                                            ${
-                                                isActiveDay
-                                                    ? 'menu-grid__cell--active'
-                                                    : ''
-                                            }
-                                        `}
+                                                    ${
+                                                        isLastColumn
+                                                            ? 'no-v-divider'
+                                                            : ''
+                                                    }
+                                                    ${
+                                                        isLastRow
+                                                            ? 'no-h-divider'
+                                                            : ''
+                                                    }
+                                                    ${
+                                                        isActiveDay
+                                                            ? 'menu-grid__cell--active'
+                                                            : ''
+                                                    }
+                                                `}
                                             >
+                                                {isActiveDay && (
+                                                    <span className="menu-grid__activeDot" />
+                                                )}
+
                                                 {/* PRANZO */}
                                                 <div className="menu-grid__mealBlock">
                                                     <span className="menu-grid__mealTitle">
@@ -338,6 +365,30 @@ export default function EditMenu() {
                         alert('Menù eliminato correttamente');
                         setMenuToDelete(null);
                         navigate(`/menu`);
+                    } catch (e) {
+                        alert(e.message);
+                    }
+                }}
+            />
+
+            {/* MODALE MODIFICA MENU' */}
+            <ModifyMenuModal
+                open={modifyMenu}
+                menu={menu}
+                onClose={() => setModifyMenu(false)}
+                onConfirm={async (updatedValues) => {
+                    try {
+                        // update server
+                        await updateMenu(menu.season_type, updatedValues);
+
+                        // aggiorna UI locale (minimo indispensabile)
+                        setMenu((prev) => ({
+                            ...prev,
+                            ...updatedValues,
+                        }));
+
+                        alert('Menù modificato correttamente');
+                        setModifyMenu(false);
                     } catch (e) {
                         alert(e.message);
                     }
