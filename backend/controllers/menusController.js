@@ -36,7 +36,7 @@ export async function getMenus(req, res) {
                 x.season_type,
                 SUM(
                     CASE
-                        WHEN x.distinct_types = 4 THEN 1
+                        WHEN x.distinct_types >= 4 THEN 1
                         ELSE 0
                     END
                 ) AS meals_completed
@@ -205,7 +205,7 @@ export async function getMenuMealsStatus(req, res) {
                 COALESCE(dp_cnt.distinct_types, 0) AS distinct_types,
 
                 CASE
-                    WHEN COALESCE(dp_cnt.distinct_types, 0) = 4 THEN 1
+                    WHEN COALESCE(dp_cnt.distinct_types, 0) >= 4 THEN 1
                     ELSE 0
                 END AS is_completed
 
@@ -445,5 +445,108 @@ export async function getMenuMealComposition(req, res) {
     } catch (err) {
         console.error('Errore getMenuMealComposition:', err);
         return res.status(500).json({ error: 'Errore interno' });
+    }
+}
+
+// Cancella tutti i dish_pairing del giorno/pasto selezionato e scrive i nuovi dish_pairing
+export async function upsertMenuMealComposition(req, res) {
+    const seasonType = decodeURIComponent(req.params.season_type ?? '').trim();
+    const dayIndex = Number(req.params.day_index);
+    const mealType = String(req.params.meal_type ?? '')
+        .trim()
+        .toLowerCase();
+
+    try {
+        if (!seasonType) {
+            return res.status(400).json({ error: 'season_type non valido' });
+        }
+        if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 27) {
+            return res.status(400).json({ error: 'day_index non valido' });
+        }
+        if (!['pranzo', 'cena'].includes(mealType)) {
+            return res.status(400).json({ error: 'meal_type non valido' });
+        }
+
+        const foods = req.body?.foods ?? req.body;
+        const requiredKeys = ['primo', 'secondo', 'contorno', 'ultimo'];
+
+        for (const k of requiredKeys) {
+            if (!foods?.[k]) {
+                return res.status(400).json({ error: `Campo mancante: ${k}` });
+            }
+        }
+
+        const ids = requiredKeys.map((k) => Number(foods[k]));
+        if (ids.some((x) => !Number.isInteger(x) || x <= 0)) {
+            return res.status(400).json({ error: 'id_food non validi' });
+        }
+
+        // opzionale: evita duplicati (stesso id_food selezionato 2 volte)
+        const unique = new Set(ids);
+        if (unique.size !== ids.length) {
+            return res
+                .status(400)
+                .json({ error: 'Hai selezionato lo stesso piatto più volte' });
+        }
+
+        const conn = await pool.getConnection();
+        try {
+            await conn.beginTransaction();
+
+            // Verifica che il menu esista
+            const [seasonRows] = await conn.query(
+                `SELECT 1 FROM season WHERE season_type = ? LIMIT 1`,
+                [seasonType]
+            );
+            if (seasonRows.length === 0) {
+                await conn.rollback();
+                return res.status(404).json({ error: 'Menù non trovato' });
+            }
+
+            // Trova id_meal per quel day_index + type + first_choice=0
+            const [mealRows] = await conn.query(
+                `
+          SELECT id_meal
+          FROM meal
+          WHERE day_index = ?
+            AND type = ?
+            AND first_choice = 0
+          LIMIT 1
+        `,
+                [dayIndex, mealType]
+            );
+            if (mealRows.length === 0) {
+                await conn.rollback();
+                return res.status(404).json({ error: 'Meal non trovato' });
+            }
+            const idMeal = mealRows[0].id_meal;
+
+            // Cancella eventuale composizione precedente (used=1)
+            await conn.query(
+                `DELETE FROM dish_pairing WHERE season_type = ? AND id_meal = ? AND used = 1`,
+                [seasonType, idMeal]
+            );
+
+            // Inserisci i 4 piatti
+            const values = ids.map((idFood) => [idMeal, idFood, seasonType, 1]);
+            await conn.query(
+                `INSERT INTO dish_pairing (id_meal, id_food, season_type, used) VALUES ?`,
+                [values]
+            );
+
+            await conn.commit();
+            return res.json({ ok: true });
+        } catch (e) {
+            await conn.rollback();
+            console.error('Errore upsertMenuMealComposition:', e);
+            return res
+                .status(500)
+                .json({ error: 'Errore salvataggio composizione pasto' });
+        } finally {
+            conn.release();
+        }
+    } catch (err) {
+        console.error('Errore upsertMenuMealComposition:', err);
+        return res.status(500).json({ error: 'Errore interno al server' });
     }
 }

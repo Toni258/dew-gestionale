@@ -9,6 +9,7 @@ import {
     deleteMenu,
     getMenuMealsStatus,
     getMenuMealComposition,
+    upsertMenuMealComposition,
 } from '../controllers/menusController.js';
 
 const router = Router();
@@ -22,6 +23,10 @@ router.get('/:season_type', getMenuBySeasonType);
 
 router.post('/', createMenu);
 router.put('/:season_type', updateMenu);
+router.put(
+    '/:season_type/meals/:day_index/:meal_type',
+    upsertMenuMealComposition
+);
 router.delete('/:season_type', deleteMenu);
 
 export default router;

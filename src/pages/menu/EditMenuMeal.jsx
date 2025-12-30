@@ -1,5 +1,5 @@
 import AppLayout from '../../components/layout/AppLayout';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { dayIndexToWeekDay } from '../../utils/dayIndex';
 import { capitalize } from '../../utils/capitalize';
@@ -17,6 +17,8 @@ const COURSE_TYPES = [
 ];
 
 export default function EditMenuMeal() {
+    const navigate = useNavigate();
+
     const { seasonType, dayIndex, mealType } = useParams();
 
     const [data, setData] = useState(null);
@@ -37,6 +39,8 @@ export default function EditMenuMeal() {
         ultimo: [],
     });
 
+    const [saving, setSaving] = useState(false);
+
     async function loadFoodsByType(type) {
         const res = await fetch(`/api/foods?type=${type}`);
         if (!res.ok) throw new Error('Errore caricamento foods');
@@ -45,6 +49,62 @@ export default function EditMenuMeal() {
 
         return json.data;
     }
+
+    async function handleSaveMeal() {
+        // Validazione
+        for (const c of COURSE_TYPES) {
+            if (!selectedFoods[c.key]?.id_food) {
+                alert(`Seleziona un piatto per: ${c.label}`);
+                return;
+            }
+        }
+
+        const payload = {
+            foods: {
+                primo: selectedFoods.primo.id_food,
+                secondo: selectedFoods.secondo.id_food,
+                contorno: selectedFoods.contorno.id_food,
+                ultimo: selectedFoods.ultimo.id_food,
+            },
+        };
+
+        try {
+            const res = await fetch(
+                `/api/menus/${encodeURIComponent(
+                    seasonType
+                )}/meals/${dayIndex}/${mealType}`,
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            if (!res.ok) {
+                const errJson = await res.json().catch(() => null);
+                throw new Error(errJson?.error || 'Errore salvataggio');
+            }
+
+            alert('Pasto aggiunto correttamente');
+            navigate(`/menu/edit/${seasonType}`);
+        } catch (e) {
+            console.error(e);
+            alert(e.message || 'Errore aggiunta pasto');
+        }
+    }
+
+    const totals = Object.values(selectedFoods).reduce(
+        (acc, f) => {
+            if (!f) return acc;
+            acc.weight += f.grammage_tot;
+            acc.kcal += f.kcal_tot;
+            acc.proteins += f.proteins;
+            acc.carbs += f.carbs;
+            acc.fats += f.fats;
+            return acc;
+        },
+        { weight: 0, kcal: 0, proteins: 0, carbs: 0, fats: 0 }
+    );
 
     useEffect(() => {
         async function loadAllFoods() {
@@ -66,19 +126,6 @@ export default function EditMenuMeal() {
 
         loadAllFoods();
     }, []);
-
-    const totals = Object.values(selectedFoods).reduce(
-        (acc, f) => {
-            if (!f) return acc;
-            acc.weight += f.grammage_tot;
-            acc.kcal += f.kcal_tot;
-            acc.proteins += f.proteins;
-            acc.carbs += f.carbs;
-            acc.fats += f.fats;
-            return acc;
-        },
-        { weight: 0, kcal: 0, proteins: 0, carbs: 0, fats: 0 }
-    );
 
     useEffect(() => {
         async function load() {
@@ -175,23 +222,24 @@ export default function EditMenuMeal() {
                                         {/* SELECT + SEARCH */}
                                         <SearchableSelect
                                             placeholder={`Seleziona ${course.label.toLowerCase()}`}
-                                            value={
+                                            value={String(
                                                 selectedFoods[course.key]
                                                     ?.id_food ?? ''
-                                            }
+                                            )}
                                             options={foodOptions[
                                                 course.key
                                             ].map((f) => ({
-                                                value: f.id_food,
+                                                value: String(f.id_food),
                                                 label: f.name,
                                             }))}
-                                            onChange={(idFood) => {
+                                            onChange={(idFoodStr) => {
+                                                const idFood =
+                                                    Number(idFoodStr);
                                                 const fullFood = foodOptions[
                                                     course.key
                                                 ].find(
                                                     (f) => f.id_food === idFood
                                                 );
-
                                                 setSelectedFoods((prev) => ({
                                                     ...prev,
                                                     [course.key]:
@@ -268,8 +316,15 @@ export default function EditMenuMeal() {
 
                     {/* BOTTONE */}
                     <div className="flex justify-center">
-                        <Button className="px-5 py-2 mb-[-10px]">
-                            Aggiungi pasto
+                        <Button
+                            className="px-5 py-2 mb-[-10px]"
+                            onClick={() => {
+                                console.log('Premuto pulsante aggiungi pasto');
+                                handleSaveMeal();
+                            }}
+                            disabled={saving}
+                        >
+                            {saving ? 'Salvataggio...' : 'Aggiungi pasto'}
                         </Button>
                     </div>
                 </div>
