@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import dishesRouter from './routes/dishes.js';
 import menusRouter from './routes/menus.js';
+import foodsRoutes from './routes/foodsRoutes.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(
 // ROUTES API
 app.use('/api/dishes', dishesRouter);
 app.use('/api/menus', menusRouter);
+app.use('/api/foods', foodsRoutes);
 
 const PORT = 3001;
 

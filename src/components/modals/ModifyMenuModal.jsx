@@ -4,20 +4,7 @@ import FormGroup from '../ui/FormGroup';
 import DateRangePicker from '../ui/DateRangePicker';
 import CustomSelect from '../ui/CustomSelect';
 import Button from '../ui/Button';
-
-function dayIndexToWeekDay(dayIndex) {
-    const idx = Number(dayIndex ?? 0);
-    const settimana = Math.floor(idx / 7) + 1; // 1..4
-    const giorno = (idx % 7) + 1; // 1..7
-    return { settimana: String(settimana), giorno: String(giorno) };
-}
-
-function weekDayToDayIndex(settimana, giorno) {
-    const w = Number(settimana);
-    const d = Number(giorno);
-    if (!w || !d) return null;
-    return (w - 1) * 7 + (d - 1); // 0..27
-}
+import { weekDayToDayIndex, dayIndexToWeekDay } from '../../utils/dayIndex';
 
 export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
     if (!open || !menu) return null;

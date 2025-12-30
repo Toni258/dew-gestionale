@@ -8,6 +8,7 @@ import {
     updateMenu,
     deleteMenu,
     getMenuMealsStatus,
+    getMenuMealComposition,
 } from '../controllers/menusController.js';
 
 const router = Router();
@@ -16,6 +17,7 @@ router.get('/', getMenus);
 router.get('/exists', checkMenuName);
 router.get('/dates-overlap', checkMenuDatesOverlap);
 router.get('/:season_type/meals-status', getMenuMealsStatus);
+router.get('/:season_type/meals/:day_index/:meal_type', getMenuMealComposition);
 router.get('/:season_type', getMenuBySeasonType);
 
 router.post('/', createMenu);

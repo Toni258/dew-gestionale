@@ -1,6 +1,7 @@
 import AppLayout from '../../components/layout/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
+import { capitalize } from '../../utils/capitalize';
 
 import DeleteMenuModal from '../../components/modals/DeleteMenuModal';
 import ModifyMenuModal from '../../components/modals/ModifyMenuModal';
@@ -122,7 +123,7 @@ export default function EditMenu() {
                     <div className="flex text-lg text-brand-text gap-2">
                         <span>Nome:</span>
                         <span className="text-brand-primary font-semibold">
-                            {menu.season_type}
+                            {capitalize(menu.season_type)}
                         </span>
                     </div>
                     <div className="flex text-lg text-brand-text gap-2">
@@ -297,14 +298,10 @@ export default function EditMenu() {
                                                         size="md"
                                                         className="px-3 py-1 rounded-[6px]"
                                                         onClick={() =>
-                                                            console.log(
-                                                                pranzoCompleted
-                                                                    ? 'modifica pranzo'
-                                                                    : 'componi pranzo',
-                                                                {
-                                                                    dayIndex,
-                                                                    type: 'pranzo',
-                                                                }
+                                                            navigate(
+                                                                `/menu/edit/${encodeURIComponent(
+                                                                    menu.season_type
+                                                                )}/meal/${dayIndex}/pranzo`
                                                             )
                                                         }
                                                     >
@@ -328,14 +325,10 @@ export default function EditMenu() {
                                                         size="md"
                                                         className="px-3 py-1 rounded-[6px]"
                                                         onClick={() =>
-                                                            console.log(
-                                                                cenaCompleted
-                                                                    ? 'modifica cena'
-                                                                    : 'componi cena',
-                                                                {
-                                                                    dayIndex,
-                                                                    type: 'cena',
-                                                                }
+                                                            navigate(
+                                                                `/menu/edit/${encodeURIComponent(
+                                                                    menu.season_type
+                                                                )}/meal/${dayIndex}/cena`
                                                             )
                                                         }
                                                     >

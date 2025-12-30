@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { capitalize } from '../../utils/capitalize';
 
 export default function MenuCard({ menu }) {
     const navigate = useNavigate();
@@ -49,7 +50,7 @@ export default function MenuCard({ menu }) {
             <div className="flex-[7]">
                 <div className="flex flex-col h-full">
                     <span className="text-2xl font-semibold mb-4">
-                        {season_type}
+                        {capitalize(season_type)}
                     </span>
 
                     <div className="flex">

@@ -8,6 +8,7 @@ import MenuList from '../pages/menu/MenuList';
 import CreateMenu from '../pages/menu/CreateMenu';
 import EditMenu from '../pages/menu/EditMenu';
 import MenuHistory from '../pages/menu/MenuHistory';
+import EditMenuMeal from '../pages/menu/EditMenuMeal';
 
 import DishesList from '../pages/dishes/DishesList';
 import CreateDish from '../pages/dishes/CreateDish';
@@ -29,6 +30,10 @@ export default function AppRouter() {
                 <Route path="/menu/create" element={<CreateMenu />} />
                 <Route path="/menu/edit/:seasonType" element={<EditMenu />} />
                 <Route path="/menu/history" element={<MenuHistory />} />
+                <Route
+                    path="/menu/edit/:seasonType/meal/:dayIndex/:mealType"
+                    element={<EditMenuMeal />}
+                />
 
                 <Route path="/dishes" element={<DishesList />} />
                 <Route path="/dishes/create" element={<CreateDish />} />

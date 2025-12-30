@@ -4,6 +4,7 @@ import { NavLink } from 'react-router-dom';
 import PageButton from '../ui/PageButton';
 import { extractAllergenEmojis } from '../../utils/extractAllergens';
 import { formatNumber } from '../../utils/format';
+import { capitalize } from '../../utils/capitalize';
 import StatusDot from './StatusDot';
 
 export default memo(function DishesTable({
@@ -74,7 +75,7 @@ export default memo(function DishesTable({
 
                                 <td className="px-4 py-3">
                                     <span className="bg-brand-primary/50 px-3 py-1 rounded-full">
-                                        {r.type}
+                                        {capitalize(r.type)}
                                     </span>
                                 </td>
 

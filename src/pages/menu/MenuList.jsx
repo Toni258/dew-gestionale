@@ -26,7 +26,7 @@ export default function EditMenu() {
 
     return (
         <AppLayout title="GESTIONE MENÙ" username="Antonio">
-            <h1 className="text-3xl font-semibold ml-10">
+            <h1 className="text-3xl font-semibold">
                 Elenco Menù attivi e futuri
             </h1>
 
@@ -44,7 +44,7 @@ export default function EditMenu() {
                 </p>
             )}
 
-            <div className="flex flex-col gap-8 mx-10">
+            <div className="flex flex-col gap-8">
                 {menus.map((menu) => (
                     <MenuCard key={menu.season_type} menu={menu} />
                 ))}

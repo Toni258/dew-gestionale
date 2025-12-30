@@ -10,6 +10,7 @@ export async function getMenus(req, res) {
             DATE_FORMAT(s.end_date,   '%Y-%m-%d') AS end_date,
 
             (s.day_index + 1) AS day_number,
+
             CONCAT(
                 DATE_FORMAT(s.start_date, '%d.%m.%Y'),
                 ' - ',
@@ -27,26 +28,38 @@ export async function getMenus(req, res) {
 
             COALESCE(cm.meals_completed, 0) AS meals_completed
 
-            FROM season s
+        FROM season s
 
-            LEFT JOIN (
+        LEFT JOIN (
+            /* === conteggio pasti COMPLETI per menù === */
             SELECT
                 x.season_type,
-                SUM(CASE WHEN x.cnt_day_dishes >= 4 THEN 1 ELSE 0 END) AS meals_completed
+                SUM(
+                    CASE
+                        WHEN x.distinct_types = 4 THEN 1
+                        ELSE 0
+                    END
+                ) AS meals_completed
             FROM (
+                /* === verifica che ogni meal abbia 4 TIPI DISTINTI === */
                 SELECT
-                dp.season_type,
-                dp.id_meal,
-                COUNT(*) AS cnt_day_dishes
+                    dp.season_type,
+                    dp.id_meal,
+                    COUNT(DISTINCT f.type) AS distinct_types
                 FROM dish_pairing dp
-                JOIN meal m ON m.id_meal = dp.id_meal
+                JOIN meal m
+                    ON m.id_meal = dp.id_meal
+                JOIN food f
+                    ON f.id_food = dp.id_food
                 WHERE m.first_choice = 0
+                AND dp.used = 1
                 GROUP BY dp.season_type, dp.id_meal
             ) x
             GROUP BY x.season_type
-            ) cm ON cm.season_type = s.season_type
+        ) cm
+            ON cm.season_type = s.season_type
 
-            ORDER BY s.start_date ASC;
+        ORDER BY s.start_date ASC;
         `);
 
         return res.json({ data: rows });
@@ -178,17 +191,9 @@ export async function getMenuMealsStatus(req, res) {
         const seasonType = decodeURIComponent(
             req.params.season_type ?? ''
         ).trim();
+
         if (!seasonType) {
             return res.status(400).json({ error: 'season_type non valido' });
-        }
-
-        // (opzionale ma utile) verifica che il menù esista
-        const [seasonRows] = await pool.query(
-            `SELECT 1 FROM season WHERE season_type = ? LIMIT 1`,
-            [seasonType]
-        );
-        if (seasonRows.length === 0) {
-            return res.status(404).json({ error: 'Menù non trovato' });
         }
 
         const [rows] = await pool.query(
@@ -197,10 +202,10 @@ export async function getMenuMealsStatus(req, res) {
                 m.day_index,
                 m.type,
 
-                COALESCE(dp_cnt.cnt_day_dishes, 0) AS day_dishes_count,
+                COALESCE(dp_cnt.distinct_types, 0) AS distinct_types,
 
                 CASE
-                    WHEN COALESCE(dp_cnt.cnt_day_dishes, 0) >= 4 THEN 1
+                    WHEN COALESCE(dp_cnt.distinct_types, 0) = 4 THEN 1
                     ELSE 0
                 END AS is_completed
 
@@ -209,9 +214,11 @@ export async function getMenuMealsStatus(req, res) {
             LEFT JOIN (
                 SELECT
                     dp.id_meal,
-                    COUNT(*) AS cnt_day_dishes
+                    COUNT(DISTINCT f.type) AS distinct_types
                 FROM dish_pairing dp
+                JOIN food f ON f.id_food = dp.id_food
                 WHERE dp.season_type = ?
+                  AND dp.used = 1
                 GROUP BY dp.id_meal
             ) dp_cnt ON dp_cnt.id_meal = m.id_meal
 
@@ -375,5 +382,68 @@ export async function deleteMenu(req, res) {
         return res.status(500).json({ error: 'Errore eliminazione menù' });
     } finally {
         conn.release();
+    }
+}
+
+export async function getMenuMealComposition(req, res) {
+    try {
+        const seasonType = decodeURIComponent(
+            req.params.season_type ?? ''
+        ).trim();
+
+        const day_index = Number(req.params.day_index);
+        const meal_type = req.params.meal_type;
+
+        if (!seasonType || !Number.isInteger(day_index)) {
+            return res.status(400).json({ error: 'Parametri non validi' });
+        }
+
+        if (!['pranzo', 'cena'].includes(meal_type)) {
+            return res.status(400).json({ error: 'Tipo pasto non valido' });
+        }
+
+        const [rows] = await pool.query(
+            `
+            SELECT
+                dp.id_dish_pairing,
+                dp.used,
+
+                f.id_food,
+                f.name,
+                f.type,
+                f.grammage_tot,
+                f.kcal_tot,
+                f.proteins,
+                f.carbs,
+                f.fats,
+                f.allergy_notes
+
+            FROM dish_pairing dp
+
+            JOIN meal m
+              ON m.id_meal = dp.id_meal
+
+            JOIN food f
+              ON f.id_food = dp.id_food
+
+            WHERE dp.season_type = ?
+              AND m.day_index = ?
+              AND m.type = ?
+              AND m.first_choice = 0
+
+            ORDER BY dp.id_dish_pairing ASC
+            `,
+            [seasonType, day_index, meal_type]
+        );
+
+        return res.json({
+            season_type: seasonType,
+            day_index,
+            meal_type,
+            dishes: rows,
+        });
+    } catch (err) {
+        console.error('Errore getMenuMealComposition:', err);
+        return res.status(500).json({ error: 'Errore interno' });
     }
 }
