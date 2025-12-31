@@ -1,6 +1,6 @@
 import AppLayout from '../../components/layout/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { dayIndexToWeekDay } from '../../utils/dayIndex';
 import { capitalize } from '../../utils/capitalize';
 
@@ -16,16 +16,24 @@ const COURSE_TYPES = [
     { key: 'ultimo', label: 'Ultimo' },
 ];
 
+const EMPTY_SELECTED = {
+    primo: null,
+    secondo: null,
+    contorno: null,
+    ultimo: null,
+};
+
 export default function EditMenuMeal() {
     const navigate = useNavigate();
-
     const { seasonType, dayIndex, mealType } = useParams();
+
+    const { settimana, giorno } = dayIndexToWeekDay(dayIndex);
 
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const { settimana, giorno } = dayIndexToWeekDay(dayIndex);
 
-    const [selectedFoods, setSelectedFoods] = useState({
+    const [selectedFoods, setSelectedFoods] = useState(EMPTY_SELECTED);
+    const [initialFoodIds, setInitialFoodIds] = useState({
         primo: null,
         secondo: null,
         contorno: null,
@@ -42,13 +50,156 @@ export default function EditMenuMeal() {
     const [saving, setSaving] = useState(false);
 
     async function loadFoodsByType(type) {
-        const res = await fetch(`/api/foods?type=${type}`);
-        if (!res.ok) throw new Error('Errore caricamento foods');
+        const qs = new URLSearchParams({
+            type,
+            season_type: seasonType,
+            meal_type: mealType,
+        });
+
+        const res = await fetch(
+            `/api/foods/available-for-menu?${qs.toString()}`
+        );
+
+        if (!res.ok) {
+            throw new Error('Errore caricamento foods');
+        }
 
         const json = await res.json();
-
         return json.data;
     }
+
+    // 1) carico le option di tutti i tipi
+    useEffect(() => {
+        let alive = true;
+
+        async function loadAllFoods() {
+            try {
+                const results = await Promise.all(
+                    COURSE_TYPES.map((c) => loadFoodsByType(c.key))
+                );
+
+                const map = {};
+                COURSE_TYPES.forEach((c, i) => {
+                    map[c.key] = results[i];
+                });
+
+                if (alive) setFoodOptions(map);
+            } catch (err) {
+                console.error('Errore caricamento foods:', err);
+            }
+        }
+
+        loadAllFoods();
+        return () => {
+            alive = false;
+        };
+    }, []);
+
+    // 2) carico la composizione corrente dal backend e precompilo selectedFoods + snapshot iniziale ids
+    useEffect(() => {
+        let alive = true;
+
+        async function load() {
+            setLoading(true);
+            try {
+                const res = await fetch(
+                    `/api/menus/${encodeURIComponent(
+                        seasonType
+                    )}/meals/${dayIndex}/${mealType}`
+                );
+
+                if (!res.ok) throw new Error('Errore caricamento pasto');
+
+                const json = await res.json();
+                if (!alive) return;
+
+                setData(json);
+
+                const initialSelected = { ...EMPTY_SELECTED };
+
+                // json.dishes contiene i piatti già assegnati (se ci sono)
+                json.dishes.forEach((d) => {
+                    // d.type deve essere: primo/secondo/contorno/ultimo
+                    initialSelected[d.type] = d;
+                });
+
+                setSelectedFoods(initialSelected);
+
+                // snapshot degli id_food iniziali, per capire se ci sono modifiche
+                setInitialFoodIds({
+                    primo: initialSelected.primo?.id_food ?? null,
+                    secondo: initialSelected.secondo?.id_food ?? null,
+                    contorno: initialSelected.contorno?.id_food ?? null,
+                    ultimo: initialSelected.ultimo?.id_food ?? null,
+                });
+            } catch (err) {
+                console.error(err);
+                if (alive) setData(null);
+            } finally {
+                if (alive) setLoading(false);
+            }
+        }
+
+        load();
+        return () => {
+            alive = false;
+        };
+    }, [seasonType, dayIndex, mealType]);
+
+    // --------- CALCOLI UI ---------
+
+    // nel DB ci sono già tutti e 4 i tipi?
+    const hasAllFourSaved = useMemo(() => {
+        if (!data?.dishes) return false;
+        const types = new Set(data.dishes.map((d) => d.type));
+        return (
+            types.has('primo') &&
+            types.has('secondo') &&
+            types.has('contorno') &&
+            types.has('ultimo')
+        );
+    }, [data]);
+
+    // l'utente ha selezionato tutti e 4 ora?
+    const allSelectedNow = useMemo(() => {
+        return COURSE_TYPES.every((c) =>
+            Boolean(selectedFoods[c.key]?.id_food)
+        );
+    }, [selectedFoods]);
+
+    // rispetto allo snapshot iniziale, c'è almeno una modifica?
+    const hasChanges = useMemo(() => {
+        return COURSE_TYPES.some((c) => {
+            const now = selectedFoods[c.key]?.id_food ?? null;
+            const init = initialFoodIds[c.key] ?? null;
+            return now !== init;
+        });
+    }, [selectedFoods, initialFoodIds]);
+
+    const buttonLabel = hasAllFourSaved ? 'Salva modifica' : 'Aggiungi pasto';
+    const pageLabel = hasAllFourSaved ? 'Modifica pasto' : 'Composizione pasto';
+
+    // disabilita:
+    // - se sto salvando
+    // - se non ho tutte e 4 selezionate
+    // - se è una modifica ma non è cambiato nulla
+    const disableSave =
+        saving || !allSelectedNow || (hasAllFourSaved && !hasChanges);
+
+    const totals = useMemo(() => {
+        return Object.values(selectedFoods).reduce(
+            (acc, f) => {
+                if (!f) return acc;
+                acc.weight += Number(f.grammage_tot || 0);
+                acc.kcal += Number(f.kcal_tot || 0);
+                acc.proteins += Number(f.proteins || 0);
+                acc.carbs += Number(f.carbs || 0);
+                acc.fats += Number(f.fats || 0);
+                return acc;
+            },
+            { weight: 0, kcal: 0, proteins: 0, carbs: 0, fats: 0 }
+        );
+    }, [selectedFoods]);
 
     async function handleSaveMeal() {
         // Validazione
@@ -57,6 +208,12 @@ export default function EditMenuMeal() {
                 alert(`Seleziona un piatto per: ${c.label}`);
                 return;
             }
+        }
+
+        // se è "Salva modifica" ma non è cambiato nulla, evito chiamata
+        if (hasAllFourSaved && !hasChanges) {
+            alert('Nessuna modifica da salvare');
+            return;
         }
 
         const payload = {
@@ -68,6 +225,7 @@ export default function EditMenuMeal() {
             },
         };
 
+        setSaving(true);
         try {
             const res = await fetch(
                 `/api/menus/${encodeURIComponent(
@@ -85,85 +243,21 @@ export default function EditMenuMeal() {
                 throw new Error(errJson?.error || 'Errore salvataggio');
             }
 
-            alert('Pasto aggiunto correttamente');
+            alert(
+                hasAllFourSaved
+                    ? 'Modifiche salvate correttamente'
+                    : 'Pasto aggiunto correttamente'
+            );
+
+            // torna alla griglia del menu
             navigate(`/menu/edit/${seasonType}`);
         } catch (e) {
             console.error(e);
-            alert(e.message || 'Errore aggiunta pasto');
+            alert(e.message || 'Errore salvataggio');
+        } finally {
+            setSaving(false);
         }
     }
-
-    const totals = Object.values(selectedFoods).reduce(
-        (acc, f) => {
-            if (!f) return acc;
-            acc.weight += f.grammage_tot;
-            acc.kcal += f.kcal_tot;
-            acc.proteins += f.proteins;
-            acc.carbs += f.carbs;
-            acc.fats += f.fats;
-            return acc;
-        },
-        { weight: 0, kcal: 0, proteins: 0, carbs: 0, fats: 0 }
-    );
-
-    useEffect(() => {
-        async function loadAllFoods() {
-            try {
-                const results = await Promise.all(
-                    COURSE_TYPES.map((c) => loadFoodsByType(c.key))
-                );
-
-                const map = {};
-                COURSE_TYPES.forEach((c, i) => {
-                    map[c.key] = results[i];
-                });
-
-                setFoodOptions(map);
-            } catch (err) {
-                console.error('Errore caricamento foods:', err);
-            }
-        }
-
-        loadAllFoods();
-    }, []);
-
-    useEffect(() => {
-        async function load() {
-            setLoading(true);
-            try {
-                const res = await fetch(
-                    `/api/menus/${encodeURIComponent(
-                        seasonType
-                    )}/meals/${dayIndex}/${mealType}`
-                );
-
-                if (!res.ok) throw new Error('Errore caricamento pasto');
-
-                const json = await res.json();
-                setData(json);
-
-                const initialSelected = {
-                    primo: null,
-                    secondo: null,
-                    contorno: null,
-                    ultimo: null,
-                };
-
-                json.dishes.forEach((d) => {
-                    initialSelected[d.type] = d;
-                });
-
-                setSelectedFoods(initialSelected);
-            } catch (err) {
-                console.error(err);
-                setData(null);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        load();
-    }, [seasonType, dayIndex, mealType]);
 
     if (loading)
         return (
@@ -171,6 +265,7 @@ export default function EditMenuMeal() {
                 <p>Caricamento…</p>
             </AppLayout>
         );
+
     if (!data)
         return (
             <AppLayout title="GESTIONE MENÙ" username="Antonio">
@@ -181,9 +276,8 @@ export default function EditMenuMeal() {
     return (
         <AppLayout title="GESTIONE MENÙ" username="Antonio">
             <div className="flex items-center">
-                <h1 className="flex-[1] text-3xl font-semibold">
-                    Composizione pasto
-                </h1>
+                <h1 className="flex-[1] text-3xl font-semibold">{pageLabel}</h1>
+
                 <div className="flex gap-20 text-xl mt-2">
                     <div className="flex gap-2">
                         <span>Giorno:</span>
@@ -191,12 +285,14 @@ export default function EditMenuMeal() {
                             {Number(giorno)}
                         </span>
                     </div>
+
                     <div className="flex gap-2">
                         <span>Settimana:</span>
                         <span className="text-brand-primary font-bold">
                             {Number(settimana)}
                         </span>
                     </div>
+
                     <div className="flex gap-2">
                         <span>Pasto:</span>
                         <span className="text-brand-primary font-bold">
@@ -214,12 +310,10 @@ export default function EditMenuMeal() {
                         return (
                             <div key={course.key}>
                                 <div className="flex gap-20">
-                                    {/* TITOLO PORTATA */}
                                     <FormGroup
                                         label={course.label}
                                         className="flex flex-[3]"
                                     >
-                                        {/* SELECT + SEARCH */}
                                         <SearchableSelect
                                             placeholder={`Seleziona ${course.label.toLowerCase()}`}
                                             value={String(
@@ -240,6 +334,7 @@ export default function EditMenuMeal() {
                                                 ].find(
                                                     (f) => f.id_food === idFood
                                                 );
+
                                                 setSelectedFoods((prev) => ({
                                                     ...prev,
                                                     [course.key]:
@@ -249,7 +344,6 @@ export default function EditMenuMeal() {
                                         />
                                     </FormGroup>
 
-                                    {/* INFO NUTRIZIONALI */}
                                     <div className="flex-[2] text-md text-brand-textSecondary flex flex-col gap-1 justify-center">
                                         {food ? (
                                             <>
@@ -281,7 +375,7 @@ export default function EditMenuMeal() {
                                         )}
                                     </div>
                                 </div>
-                                {/* DIVIDER TRA PORTATE */}
+
                                 {idx < COURSE_TYPES.length - 1 && (
                                     <div className="border-t border-dashed border-brand-divider mt-6" />
                                 )}
@@ -289,13 +383,12 @@ export default function EditMenuMeal() {
                         );
                     })}
 
-                    {/* Divider orizzontale tratteggiato */}
                     <div className="mt-3 mb-1 h-px w-full bg-[repeating-linear-gradient(to_right,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
 
-                    {/* TOTALI PASTO */}
                     <span className="text-lg font-semibold">
                         Valori nutrizionali complessivi del pasto
                     </span>
+
                     <Card className="!p-3 rounded-xl mt-[-10px]">
                         <div className="flex justify-between items-center text-md text-brand-textSecondary flex mx-10">
                             <span>
@@ -314,17 +407,13 @@ export default function EditMenuMeal() {
                         </div>
                     </Card>
 
-                    {/* BOTTONE */}
                     <div className="flex justify-center">
                         <Button
                             className="px-5 py-2 mb-[-10px]"
-                            onClick={() => {
-                                console.log('Premuto pulsante aggiungi pasto');
-                                handleSaveMeal();
-                            }}
-                            disabled={saving}
+                            onClick={handleSaveMeal}
+                            disabled={disableSave}
                         >
-                            {saving ? 'Salvataggio...' : 'Aggiungi pasto'}
+                            {saving ? 'Salvataggio...' : buttonLabel}
                         </Button>
                     </div>
                 </div>

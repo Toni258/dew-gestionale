@@ -33,31 +33,43 @@ export async function getMenus(req, res) {
         LEFT JOIN (
             /* === conteggio pasti COMPLETI per menù === */
             SELECT
-                x.season_type,
+                y.season_type,
                 SUM(
                     CASE
-                        WHEN x.distinct_types >= 4 THEN 1
+                        WHEN
+                            y.has_primo = 1
+                        AND y.has_secondo = 1
+                        AND y.has_contorno = 1
+                        AND y.has_ultimo = 1
+                        THEN 1
                         ELSE 0
                     END
                 ) AS meals_completed
             FROM (
-                /* === verifica che ogni meal abbia 4 TIPI DISTINTI === */
+                /* === verifica presenza dei 4 tipi per ogni meal === */
                 SELECT
                     dp.season_type,
                     dp.id_meal,
-                    COUNT(DISTINCT f.type) AS distinct_types
+
+                    MAX(f.type = 'primo')    AS has_primo,
+                    MAX(f.type = 'secondo') AS has_secondo,
+                    MAX(f.type = 'contorno') AS has_contorno,
+                    MAX(f.type = 'ultimo')  AS has_ultimo
+
                 FROM dish_pairing dp
                 JOIN meal m
                     ON m.id_meal = dp.id_meal
                 JOIN food f
                     ON f.id_food = dp.id_food
+
                 WHERE m.first_choice = 0
                 AND dp.used = 1
+
                 GROUP BY dp.season_type, dp.id_meal
-            ) x
-            GROUP BY x.season_type
+            ) y
+            GROUP BY y.season_type
         ) cm
-            ON cm.season_type = s.season_type
+        ON cm.season_type = s.season_type
 
         ORDER BY s.start_date ASC;
         `);
@@ -184,7 +196,7 @@ export async function getMenuBySeasonType(req, res) {
 /*
   Ritorna la lista pasti (56) del menù:
   - solo meal.first_choice = 0 (piatti del giorno)
-  - is_completed = 1 se per quel meal ci sono 4 dish_pairing nel menù
+  - is_completed = 1 se per quel meal ci sono 4 dish_pairing (primo, secondo, contorno e ultimo) nel menù
 */
 export async function getMenuMealsStatus(req, res) {
     try {
@@ -202,10 +214,20 @@ export async function getMenuMealsStatus(req, res) {
                 m.day_index,
                 m.type,
 
-                COALESCE(dp_cnt.distinct_types, 0) AS distinct_types,
+                /* === flag di presenza per tipo === */
+                COALESCE(x.has_primo, 0)     AS has_primo,
+                COALESCE(x.has_secondo, 0)  AS has_secondo,
+                COALESCE(x.has_contorno, 0) AS has_contorno,
+                COALESCE(x.has_ultimo, 0)   AS has_ultimo,
 
+                /* === completo SOLO se tutti e 4 === */
                 CASE
-                    WHEN COALESCE(dp_cnt.distinct_types, 0) >= 4 THEN 1
+                    WHEN
+                        COALESCE(x.has_primo, 0) = 1
+                    AND COALESCE(x.has_secondo, 0) = 1
+                    AND COALESCE(x.has_contorno, 0) = 1
+                    AND COALESCE(x.has_ultimo, 0) = 1
+                    THEN 1
                     ELSE 0
                 END AS is_completed
 
@@ -214,13 +236,18 @@ export async function getMenuMealsStatus(req, res) {
             LEFT JOIN (
                 SELECT
                     dp.id_meal,
-                    COUNT(DISTINCT f.type) AS distinct_types
+
+                    MAX(f.type = 'primo')    AS has_primo,
+                    MAX(f.type = 'secondo') AS has_secondo,
+                    MAX(f.type = 'contorno') AS has_contorno,
+                    MAX(f.type = 'ultimo')  AS has_ultimo
+
                 FROM dish_pairing dp
                 JOIN food f ON f.id_food = dp.id_food
                 WHERE dp.season_type = ?
                   AND dp.used = 1
                 GROUP BY dp.id_meal
-            ) dp_cnt ON dp_cnt.id_meal = m.id_meal
+            ) x ON x.id_meal = m.id_meal
 
             WHERE m.first_choice = 0
               AND m.day_index BETWEEN 0 AND 27
@@ -404,36 +431,66 @@ export async function getMenuMealComposition(req, res) {
 
         const [rows] = await pool.query(
             `
-            SELECT
-                dp.id_dish_pairing,
-                dp.used,
+                SELECT
+                    dp.id_dish_pairing,
+                    dp.used,
 
-                f.id_food,
-                f.name,
-                f.type,
-                f.grammage_tot,
-                f.kcal_tot,
-                f.proteins,
-                f.carbs,
-                f.fats,
-                f.allergy_notes
+                    f.id_food,
+                    f.name,
+                    f.type,
+                    f.grammage_tot,
+                    f.kcal_tot,
+                    f.proteins,
+                    f.carbs,
+                    f.fats,
+                    f.allergy_notes,
 
-            FROM dish_pairing dp
+                    /* === flag di completezza del pasto === */
+                    stats.is_completed
 
-            JOIN meal m
-              ON m.id_meal = dp.id_meal
+                FROM dish_pairing dp
 
-            JOIN food f
-              ON f.id_food = dp.id_food
+                JOIN meal m
+                ON m.id_meal = dp.id_meal
 
-            WHERE dp.season_type = ?
-              AND m.day_index = ?
-              AND m.type = ?
-              AND m.first_choice = 0
+                JOIN food f
+                ON f.id_food = dp.id_food
 
-            ORDER BY dp.id_dish_pairing ASC
+                /* === subquery che valuta la completezza del meal === */
+                JOIN (
+                    SELECT
+                        m2.id_meal,
+                        CASE
+                            WHEN
+                                MAX(f2.type = 'primo')    = 1
+                            AND MAX(f2.type = 'secondo') = 1
+                            AND MAX(f2.type = 'contorno') = 1
+                            AND MAX(f2.type = 'ultimo')  = 1
+                            THEN 1
+                            ELSE 0
+                        END AS is_completed
+                    FROM dish_pairing dp2
+                    JOIN meal m2
+                        ON m2.id_meal = dp2.id_meal
+                    JOIN food f2
+                        ON f2.id_food = dp2.id_food
+                    WHERE dp2.season_type = ?
+                    AND m2.day_index = ?
+                    AND m2.type = ?
+                    AND m2.first_choice = 0
+                    AND dp2.used = 1
+                    GROUP BY m2.id_meal
+                ) stats
+                    ON stats.id_meal = m.id_meal
+
+                WHERE dp.season_type = ?
+                AND m.day_index = ?
+                AND m.type = ?
+                AND m.first_choice = 0
+
+                ORDER BY dp.id_dish_pairing ASC
             `,
-            [seasonType, day_index, meal_type]
+            [seasonType, day_index, meal_type, seasonType, day_index, meal_type]
         );
 
         return res.json({

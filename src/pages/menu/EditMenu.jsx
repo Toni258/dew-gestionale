@@ -247,6 +247,16 @@ export default function EditMenu() {
                                         const pranzo =
                                             mealsByDay[dayIndex]?.pranzo;
                                         const cena = mealsByDay[dayIndex]?.cena;
+                                        const pranzoHasIssues =
+                                            pranzo &&
+                                            !pranzo.is_completed &&
+                                            pranzo.day_dishes_count > 0;
+
+                                        const cenaHasIssues =
+                                            cena &&
+                                            !cena.is_completed &&
+                                            cena.day_dishes_count > 0;
+
                                         const isLastColumn = dayIdx === 6;
                                         const isLastRow = weekIdx === 3;
                                         const isActiveDay =
@@ -293,6 +303,8 @@ export default function EditMenu() {
                                                         variant={
                                                             pranzoCompleted
                                                                 ? 'primary'
+                                                                : pranzoHasIssues
+                                                                ? 'danger'
                                                                 : 'secondary'
                                                         }
                                                         size="md"
@@ -307,6 +319,8 @@ export default function EditMenu() {
                                                     >
                                                         {pranzoCompleted
                                                             ? 'Modifica'
+                                                            : pranzoHasIssues
+                                                            ? 'Da correggere'
                                                             : 'Componi'}
                                                     </Button>
                                                 </div>
@@ -320,6 +334,8 @@ export default function EditMenu() {
                                                         variant={
                                                             cenaCompleted
                                                                 ? 'primary'
+                                                                : cenaHasIssues
+                                                                ? 'danger'
                                                                 : 'secondary'
                                                         }
                                                         size="md"
@@ -334,6 +350,8 @@ export default function EditMenu() {
                                                     >
                                                         {cenaCompleted
                                                             ? 'Modifica'
+                                                            : cenaHasIssues
+                                                            ? 'Da correggere'
                                                             : 'Componi'}
                                                     </Button>
                                                 </div>
