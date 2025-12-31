@@ -15,7 +15,9 @@ export default function MenuCard({ menu }) {
     } = menu;
 
     const mealsCompletedClass =
-        meals_completed === meals_total ? 'text-green-600' : 'text-red-600';
+        meals_completed == meals_total
+            ? 'text-brand-primary'
+            : 'text-brand-error';
 
     return (
         <div
