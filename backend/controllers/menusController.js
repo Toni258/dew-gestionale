@@ -162,7 +162,7 @@ export async function checkMenuDatesOverlap(req, res) {
 export async function getMenuBySeasonType(req, res) {
     try {
         const seasonType = decodeURIComponent(
-            req.params.season_type ?? ''
+            req.params.season_type ?? '',
         ).trim();
         if (!seasonType) {
             return res.status(400).json({ error: 'season_type non valido' });
@@ -179,7 +179,7 @@ export async function getMenuBySeasonType(req, res) {
             WHERE season_type = ?
             LIMIT 1
             `,
-            [seasonType]
+            [seasonType],
         );
 
         if (rows.length === 0) {
@@ -201,7 +201,7 @@ export async function getMenuBySeasonType(req, res) {
 export async function getMenuMealsStatus(req, res) {
     try {
         const seasonType = decodeURIComponent(
-            req.params.season_type ?? ''
+            req.params.season_type ?? '',
         ).trim();
 
         if (!seasonType) {
@@ -256,7 +256,7 @@ export async function getMenuMealsStatus(req, res) {
                 m.day_index ASC,
                 FIELD(m.type, 'pranzo', 'cena') ASC
             `,
-            [seasonType]
+            [seasonType],
         );
 
         return res.json({ data: rows });
@@ -308,7 +308,7 @@ export async function createMenu(req, res) {
 export async function updateMenu(req, res) {
     try {
         const seasonType = decodeURIComponent(
-            req.params.season_type ?? ''
+            req.params.season_type ?? '',
         ).trim();
 
         if (!seasonType) {
@@ -340,7 +340,7 @@ export async function updateMenu(req, res) {
               AND NOT (? < start_date OR ? > end_date)
             LIMIT 1
             `,
-            [seasonType, end_date, start_date]
+            [seasonType, end_date, start_date],
         );
 
         if (ov.length > 0) {
@@ -356,7 +356,7 @@ export async function updateMenu(req, res) {
             SET start_date = ?, end_date = ?, day_index = ?
             WHERE season_type = ?
             `,
-            [start_date, end_date, day_index, seasonType]
+            [start_date, end_date, day_index, seasonType],
         );
 
         if (result.affectedRows === 0) {
@@ -376,7 +376,7 @@ export async function deleteMenu(req, res) {
 
     try {
         const seasonType = decodeURIComponent(
-            req.params.season_type ?? ''
+            req.params.season_type ?? '',
         ).trim();
 
         if (!seasonType) {
@@ -393,7 +393,7 @@ export async function deleteMenu(req, res) {
         // 2) elimina menu
         const [result] = await conn.query(
             `DELETE FROM season WHERE season_type = ?`,
-            [seasonType]
+            [seasonType],
         );
 
         if (result.affectedRows === 0) {
@@ -415,7 +415,7 @@ export async function deleteMenu(req, res) {
 export async function getMenuMealComposition(req, res) {
     try {
         const seasonType = decodeURIComponent(
-            req.params.season_type ?? ''
+            req.params.season_type ?? '',
         ).trim();
 
         const day_index = Number(req.params.day_index);
@@ -490,7 +490,14 @@ export async function getMenuMealComposition(req, res) {
 
                 ORDER BY dp.id_dish_pairing ASC
             `,
-            [seasonType, day_index, meal_type, seasonType, day_index, meal_type]
+            [
+                seasonType,
+                day_index,
+                meal_type,
+                seasonType,
+                day_index,
+                meal_type,
+            ],
         );
 
         return res.json({
@@ -538,7 +545,7 @@ export async function upsertMenuMealComposition(req, res) {
             return res.status(400).json({ error: 'id_food non validi' });
         }
 
-        // opzionale: evita duplicati (stesso id_food selezionato 2 volte)
+        // evita duplicati (stesso id_food selezionato 2 volte)
         const unique = new Set(ids);
         if (unique.size !== ids.length) {
             return res
@@ -553,7 +560,7 @@ export async function upsertMenuMealComposition(req, res) {
             // Verifica che il menu esista
             const [seasonRows] = await conn.query(
                 `SELECT 1 FROM season WHERE season_type = ? LIMIT 1`,
-                [seasonType]
+                [seasonType],
             );
             if (seasonRows.length === 0) {
                 await conn.rollback();
@@ -563,14 +570,14 @@ export async function upsertMenuMealComposition(req, res) {
             // Trova id_meal per quel day_index + type + first_choice=0
             const [mealRows] = await conn.query(
                 `
-          SELECT id_meal
-          FROM meal
-          WHERE day_index = ?
-            AND type = ?
-            AND first_choice = 0
-          LIMIT 1
-        `,
-                [dayIndex, mealType]
+                SELECT id_meal
+                FROM meal
+                WHERE day_index = ?
+                    AND type = ?
+                    AND first_choice = 0
+                LIMIT 1
+                `,
+                [dayIndex, mealType],
             );
             if (mealRows.length === 0) {
                 await conn.rollback();
@@ -578,17 +585,23 @@ export async function upsertMenuMealComposition(req, res) {
             }
             const idMeal = mealRows[0].id_meal;
 
-            // Cancella eventuale composizione precedente (used=1)
+            // Cancella eventuale composizione precedente (ma NON il coperto)
             await conn.query(
-                `DELETE FROM dish_pairing WHERE season_type = ? AND id_meal = ? AND used = 1`,
-                [seasonType, idMeal]
+                `   DELETE dp
+                    FROM dish_pairing dp
+                    JOIN food f ON f.id_food = dp.id_food
+                    WHERE dp.season_type = ?
+                        AND dp.id_meal = ?
+                        AND f.type <> 'coperto';
+                `,
+                [seasonType, idMeal],
             );
 
             // Inserisci i 4 piatti
             const values = ids.map((idFood) => [idMeal, idFood, seasonType, 1]);
             await conn.query(
                 `INSERT INTO dish_pairing (id_meal, id_food, season_type, used) VALUES ?`,
-                [values]
+                [values],
             );
 
             await conn.commit();
