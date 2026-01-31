@@ -620,3 +620,278 @@ export async function upsertMenuMealComposition(req, res) {
         return res.status(500).json({ error: 'Errore interno al server' });
     }
 }
+
+// Piatti fissi (first_choice = 1) di un menù (season_type)
+export async function getMenuFixedDishes(req, res) {
+    try {
+        const seasonType = req.params.season_type;
+
+        const [rows] = await pool.query(
+            `
+            SELECT 
+                f.id_food,
+                m.type AS pasto,
+                f.name,
+                f.type AS portata,
+                f.grammage_tot,
+                f.kcal_tot,
+                f.proteins,
+                f.carbs,
+                f.fats,
+                COUNT(*) AS ripetizioni
+            FROM dish_pairing dp 
+            JOIN meal m ON m.id_meal = dp.id_meal
+            JOIN food f ON f.id_food = dp.id_food
+            WHERE dp.season_type = ?
+              AND (m.first_choice = 1 OR f.type = "coperto")
+            GROUP BY f.id_food, m.type
+            ORDER BY FIELD(m.type, 'pranzo', 'cena'), f.type, ripetizioni DESC;
+            `,
+            [seasonType],
+        );
+
+        return res.json({ data: rows });
+    } catch (err) {
+        console.error('Errore getMenuFixedDishes:', err);
+        return res.status(500).json({ error: 'Errore interno al server' });
+    }
+}
+
+// Salva PIATTI FISSI (meal.first_choice = 1) di un menù (season_type)
+// - Cancella tutte le righe dish_pairing per i meal first_choice=1 di quel season_type
+// - Inserisce di nuovo tutte le righe, replicandole per 28 giorni
+export async function upsertMenuFixedDishes(req, res) {
+    const seasonType = decodeURIComponent(req.params.season_type ?? '').trim();
+
+    try {
+        if (!seasonType) {
+            return res.status(400).json({ error: 'season_type non valido' });
+        }
+
+        // Body atteso:
+        // {
+        //   pranzo: { primo:[...], secondo:[...], contorno:[...], ultimo:[...], coperto:[...] },
+        //   cena:   { primo:[...], secondo:[...], contorno:[...], ultimo:[...], coperto:[...], speciale:[...] }
+        // }
+        const body = req.body ?? {};
+        const pranzo = body.pranzo ?? {};
+        const cena = body.cena ?? {};
+
+        const requiredLunch = [
+            'primo',
+            'secondo',
+            'contorno',
+            'ultimo',
+            'coperto',
+        ];
+        const requiredDinner = [
+            'primo',
+            'secondo',
+            'contorno',
+            'ultimo',
+            'coperto',
+            'speciale',
+        ];
+
+        // helper: da array di numeri/oggetti -> array di id_food (numeri)
+        const toIds = (arr) => {
+            if (!Array.isArray(arr)) return [];
+            return arr
+                .map((x) => {
+                    // supporto sia [1,2,3] che [{id_food:1}, ...]
+                    if (x && typeof x === 'object') return Number(x.id_food);
+                    return Number(x);
+                })
+                .filter((n) => Number.isInteger(n) && n > 0);
+        };
+
+        // validazione presenza campi + che siano tutti pieni (nessun buco)
+        const validateBlock = (block, keys, label) => {
+            for (const k of keys) {
+                if (!Array.isArray(block[k])) {
+                    return `${label}: campo "${k}" mancante o non valido`;
+                }
+                // qui decidiamo "completo" = non devono esserci null/0/stringhe vuote
+                const ids = block[k].map((x) =>
+                    x && typeof x === 'object' ? Number(x.id_food) : Number(x),
+                );
+                if (ids.some((n) => !Number.isInteger(n) || n <= 0)) {
+                    return `${label}: campo "${k}" incompleto`;
+                }
+            }
+            return null;
+        };
+
+        const errLunch = validateBlock(pranzo, requiredLunch, 'PRANZO');
+        if (errLunch) return res.status(400).json({ error: errLunch });
+
+        const errDinner = validateBlock(cena, requiredDinner, 'CENA');
+        if (errDinner) return res.status(400).json({ error: errDinner });
+
+        // Normalizzo tutto in liste di id_food
+        const idsLunch = {
+            primo: toIds(pranzo.primo),
+            secondo: toIds(pranzo.secondo),
+            contorno: toIds(pranzo.contorno),
+            ultimo: toIds(pranzo.ultimo),
+            coperto: toIds(pranzo.coperto),
+        };
+
+        const idsDinner = {
+            primo: toIds(cena.primo),
+            secondo: toIds(cena.secondo),
+            contorno: toIds(cena.contorno),
+            ultimo: toIds(cena.ultimo),
+            coperto: toIds(cena.coperto),
+            speciale: toIds(cena.speciale),
+        };
+
+        const conn = await pool.getConnection();
+        try {
+            await conn.beginTransaction();
+
+            // 0) verifica che il menu esista
+            const [seasonRows] = await conn.query(
+                `SELECT 1 FROM season WHERE season_type = ? LIMIT 1`,
+                [seasonType],
+            );
+            if (seasonRows.length === 0) {
+                await conn.rollback();
+                return res.status(404).json({ error: 'Menù non trovato' });
+            }
+
+            // 1) meal fissi (first_choice=1) -> per tutti i piatti fissi TRANNE coperto
+            const [fixedMeals] = await conn.query(
+                `
+                SELECT id_meal, day_index, type
+                FROM meal
+                WHERE first_choice = 1
+                    AND day_index BETWEEN 0 AND 27
+                ORDER BY day_index ASC, FIELD(type, 'pranzo','cena') ASC
+                `,
+            );
+
+            // 1b) meal giornalieri (first_choice=0) -> SOLO per coperto
+            const [dailyMeals] = await conn.query(
+                `
+                SELECT id_meal, day_index, type
+                FROM meal
+                WHERE first_choice = 0
+                    AND day_index BETWEEN 0 AND 27
+                ORDER BY day_index ASC, FIELD(type, 'pranzo','cena') ASC
+                `,
+            );
+
+            if (fixedMeals.length === 0 || dailyMeals.length === 0) {
+                await conn.rollback();
+                return res
+                    .status(500)
+                    .json({ error: 'Tabella meal non popolata correttamente' });
+            }
+
+            // 2) DELETE: elimina tutti i pairing dei meal fissi (first_choice=1) per quel menu
+            await conn.query(
+                `
+                DELETE FROM dish_pairing
+                WHERE season_type = ?
+                    AND id_meal IN (
+                    SELECT id_meal
+                    FROM meal
+                    WHERE first_choice = 1
+                        AND day_index BETWEEN 0 AND 27
+                    )
+                `,
+                [seasonType],
+            );
+
+            // 2b) DELETE: elimina SOLO i coperti dai meal giornalieri (first_choice=0)
+            await conn.query(
+                `
+                DELETE dp
+                FROM dish_pairing dp
+                JOIN food f ON f.id_food = dp.id_food
+                WHERE dp.season_type = ?
+                    AND f.type = 'coperto'
+                    AND dp.id_meal IN (
+                    SELECT id_meal
+                    FROM meal
+                    WHERE first_choice = 0
+                        AND day_index BETWEEN 0 AND 27
+                    )
+                `,
+                [seasonType],
+            );
+
+            // 3) INSERT: preparo righe nuove
+            const values = [];
+
+            // 3a) Inserisco i fissi (NO coperto) su fixedMeals
+            for (const m of fixedMeals) {
+                const isLunch = m.type === 'pranzo';
+                const src = isLunch ? idsLunch : idsDinner;
+
+                const allIdsNoCoperto = [
+                    ...src.primo,
+                    ...src.secondo,
+                    ...src.contorno,
+                    ...src.ultimo,
+                    ...(isLunch ? [] : src.speciale),
+                ];
+
+                for (const idFood of allIdsNoCoperto) {
+                    values.push([m.id_meal, idFood, seasonType, 1]);
+                }
+            }
+
+            // 3b) Inserisco coperto (1) su dailyMeals
+            // payload: coperto è array, ma per te è 1 slot => prendo il primo
+            const copertoLunchId = Number(idsLunch.coperto?.[0] ?? 0);
+            const copertoDinnerId = Number(idsDinner.coperto?.[0] ?? 0);
+
+            if (!Number.isInteger(copertoLunchId) || copertoLunchId <= 0) {
+                await conn.rollback();
+                return res
+                    .status(400)
+                    .json({ error: 'PRANZO: coperto non valido' });
+            }
+            if (!Number.isInteger(copertoDinnerId) || copertoDinnerId <= 0) {
+                await conn.rollback();
+                return res
+                    .status(400)
+                    .json({ error: 'CENA: coperto non valido' });
+            }
+
+            for (const m of dailyMeals) {
+                const idFood =
+                    m.type === 'pranzo' ? copertoLunchId : copertoDinnerId;
+                values.push([m.id_meal, idFood, seasonType, 1]);
+            }
+
+            if (values.length === 0) {
+                await conn.rollback();
+                return res
+                    .status(400)
+                    .json({ error: 'Nessun piatto da salvare' });
+            }
+
+            await conn.query(
+                `INSERT INTO dish_pairing (id_meal, id_food, season_type, used) VALUES ?`,
+                [values],
+            );
+
+            await conn.commit();
+            return res.json({ ok: true, inserted: values.length });
+        } catch (e) {
+            await conn.rollback();
+            console.error('Errore upsertMenuFixedDishes:', e);
+            return res
+                .status(500)
+                .json({ error: 'Errore salvataggio piatti fissi' });
+        } finally {
+            conn.release();
+        }
+    } catch (err) {
+        console.error('Errore upsertMenuFixedDishes:', err);
+        return res.status(500).json({ error: 'Errore interno al server' });
+    }
+}

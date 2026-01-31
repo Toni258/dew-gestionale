@@ -14,7 +14,7 @@ export async function getFoods(req, res) {
         const allowedTypes = ['primo', 'secondo', 'contorno', 'ultimo'];
         if (!allowedTypes.includes(type)) {
             return res.status(400).json({
-                error: 'Tipo di piatto non valido',
+                error: 'Tipo di piatto non validoo',
             });
         }
 
@@ -67,9 +67,18 @@ export async function getFoodsAvailableForMenu(req, res) {
             });
         }
 
-        const allowedTypes = ['primo', 'secondo', 'contorno', 'ultimo'];
+        const allowedTypes = [
+            'primo',
+            'secondo',
+            'contorno',
+            'ultimo',
+            'coperto',
+            'speciale',
+        ];
         if (!allowedTypes.includes(type)) {
-            return res.status(400).json({ error: 'Tipo di piatto non valido' });
+            return res
+                .status(400)
+                .json({ error: 'Tipo di piatto non validou' });
         }
 
         if (!['pranzo', 'cena'].includes(meal_type)) {

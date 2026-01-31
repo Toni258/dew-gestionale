@@ -9,6 +9,7 @@ import CreateMenu from '../pages/menu/CreateMenu';
 import EditMenu from '../pages/menu/EditMenu';
 import MenuHistory from '../pages/menu/MenuHistory';
 import EditMenuMeal from '../pages/menu/EditMenuMeal';
+import MenuPiattiFissi from '../pages/menu/MenuPiattiFissi';
 
 import DishesList from '../pages/dishes/DishesList';
 import CreateDish from '../pages/dishes/CreateDish';
@@ -26,6 +27,7 @@ export default function AppRouter() {
                 <Route path="/" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
 
+                {/* Menu routes */}
                 <Route path="/menu" element={<MenuList />} />
                 <Route path="/menu/create" element={<CreateMenu />} />
                 <Route path="/menu/edit/:seasonType" element={<EditMenu />} />
@@ -34,7 +36,12 @@ export default function AppRouter() {
                     path="/menu/edit/:seasonType/meal/:dayIndex/:mealType"
                     element={<EditMenuMeal />}
                 />
+                <Route
+                    path="/menu/edit/:seasonType/piatti_fissi"
+                    element={<MenuPiattiFissi />}
+                />
 
+                {/* Dishes routes */}
                 <Route path="/dishes" element={<DishesList />} />
                 <Route path="/dishes/create" element={<CreateDish />} />
                 <Route path="/dishes/edit/:dishId" element={<EditDish />} />
