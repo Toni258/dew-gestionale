@@ -1,5 +1,5 @@
 import AppLayout from '../../components/layout/AppLayout';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import Button from '../../components/ui/Button';
 import SearchableSelect from '../../components/ui/SearchableSelect';
@@ -39,6 +39,8 @@ function ensureInOptions(optionsMap, meal, courseKey, food) {
 
 export default function MenuPiattiFissi() {
     const { seasonType } = useParams();
+
+    const navigate = useNavigate();
 
     const decodedSeasonType = useMemo(
         () => decodeURIComponent(seasonType ?? ''),
@@ -175,7 +177,9 @@ export default function MenuPiattiFissi() {
                 throw new Error(errJson?.error || 'Errore salvataggio');
             }
 
-            alert('Piatti fissi salvati correttamente ✅');
+            alert('Piatti fissi salvati correttamente');
+
+            navigate(`/menu/edit/${decodedSeasonType}`);
         } catch (e) {
             console.error(e);
             alert(e.message || 'Errore salvataggio');
