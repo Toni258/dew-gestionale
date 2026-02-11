@@ -83,7 +83,7 @@ export default function DishesList() {
             qs.set('page', String(requestParams.page));
             qs.set('pageSize', String(requestParams.pageSize));
             (requestParams.allergeni || []).forEach((a) =>
-                qs.append('allergeni', a)
+                qs.append('allergeni', a),
             );
 
             const res = await fetch(`/api/dishes?${qs.toString()}`);
