@@ -8,6 +8,15 @@ import Button from '../../components/ui/Button';
 
 import { useNavigate } from 'react-router-dom';
 
+import WarningNote from '../../components/menu/WarningNote';
+import DashedDivider from '../../components/menu/DashedDivider';
+
+import {
+    checkMenuNameExists,
+    checkMenuDatesOverlap,
+    createMenu,
+} from '../../services/menusApi';
+
 export default function CreateMenu() {
     const navigate = useNavigate();
 
@@ -25,11 +34,11 @@ export default function CreateMenu() {
                     name: (v) =>
                         !v
                             ? 'Obbligatorio'
-                            : v.length < 3
-                            ? 'Nome troppo lungo'
-                            : v.length > 100
-                            ? 'Nome troppo corto'
-                            : null,
+                            : v.trim().length < 3
+                              ? 'Nome troppo corto'
+                              : v.trim().length > 100
+                                ? 'Nome troppo lungo'
+                                : null,
                     start_date: (v) => (!v ? 'Obbligatorio' : null),
                     end_date: (v) => (!v ? 'Obbligatorio' : null),
                 }}
@@ -37,26 +46,20 @@ export default function CreateMenu() {
                     name: async (value) => {
                         const v = (value ?? '').trim();
                         if (!v) return null;
-
-                        // non chiamare il server per stringhe troppo corte
                         if (v.length < 3) return null;
 
-                        // Verifica se il nome del menù esiste già
-                        const res = await fetch(
-                            `/api/menus/exists?name=${encodeURIComponent(v)}`
-                        );
-
-                        if (!res.ok) {
+                        try {
+                            const data = await checkMenuNameExists(v);
+                            return data?.exists
+                                ? 'Questo nome è già in uso'
+                                : null;
+                        } catch {
                             return 'Impossibile verificare il nome (server non raggiungibile)';
                         }
-
-                        const data = await res.json();
-                        return data.exists ? 'Questo nome è già in uso' : null;
                     },
                 }}
                 validateForm={(values) => {
                     const errs = {};
-
                     const { start_date, end_date } = values;
 
                     if (start_date && end_date && end_date < start_date) {
@@ -71,73 +74,32 @@ export default function CreateMenu() {
                 onSubmit={async (values, form) => {
                     const { start_date, end_date, name } = values;
 
-                    const overlapRes = await fetch(
-                        `/api/menus/dates-overlap?start_date=${encodeURIComponent(
-                            start_date
-                        )}&end_date=${encodeURIComponent(end_date)}`
-                    );
-
-                    if (!overlapRes.ok) {
-                        alert('Impossibile verificare le date');
-                        return;
-                    }
-
-                    const overlapData = await overlapRes.json();
-
-                    if (overlapData.overlap) {
-                        form.setFieldError(
-                            'start_date',
-                            'Intervallo date già in uso'
+                    try {
+                        const overlapData = await checkMenuDatesOverlap(
+                            start_date,
+                            end_date,
                         );
-                        form.setFieldError(
-                            'end_date',
-                            `Intervallo già usato nel menù "${overlapData.season_type}"`
-                        );
-                        return;
-                    }
 
-                    // nessun overlap faccio submit
-                    const formData = new FormData();
-
-                    Object.entries(values).forEach(([key, value]) => {
-                        if (value !== null && value !== '') {
-                            if (Array.isArray(value)) {
-                                value.forEach((v) =>
-                                    formData.append(`${key}[]`, v)
-                                );
-                            } else {
-                                formData.append(key, value);
-                            }
-                        }
-                    });
-
-                    const res = await fetch('/api/menus', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(values),
-                    });
-
-                    if (!res.ok) {
-                        let errorMsg = 'Errore creazione menù';
-
-                        try {
-                            const data = await res.json();
-                            if (data?.error) errorMsg = data.error;
-                        } catch (e) {
-                            // risposta non JSON
+                        if (overlapData?.overlap) {
+                            form.setFieldError(
+                                'start_date',
+                                'Intervallo date già in uso',
+                            );
+                            form.setFieldError(
+                                'end_date',
+                                `Intervallo già usato nel menù "${overlapData.season_type}"`,
+                            );
+                            return;
                         }
 
-                        console.error('Errore API /api/menus:', errorMsg);
-                        alert(errorMsg);
-                        return;
+                        await createMenu({ name, start_date, end_date });
+
+                        alert('Menù creato correttamente');
+                        navigate('/menu');
+                    } catch (e) {
+                        console.error('Errore creazione menù:', e);
+                        alert(e.message || 'Errore creazione menù');
                     }
-
-                    alert('Menù creato correttamente');
-
-                    // vai alla lista
-                    navigate('/menu');
                 }}
             >
                 <Card className="mt-6">
@@ -147,23 +109,15 @@ export default function CreateMenu() {
                                 <Input name="name" asyncValidate />
                             </div>
                             <div className="w-1/2">
-                                <div className="flex items-center gap-4">
-                                    <img
-                                        src="/warning giallo.png"
-                                        className="w-5 h-5"
-                                        alt="Avvertenza"
-                                    />
-                                    <h2 className="text-brand-textSecondary">
-                                        Il nome del menù deve essere diverso dai
-                                        nomi di altri menù attivi o futuri.
-                                    </h2>
-                                </div>
+                                <WarningNote>
+                                    Il nome del menù deve essere diverso dai
+                                    nomi di altri menù attivi o futuri.
+                                </WarningNote>
                             </div>
                         </div>
                     </FormGroup>
 
-                    {/* Divider tratteggiato */}
-                    <div className="mt-10 mb-8 h-px w-full bg-[repeating-linear-gradient(to_right,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
+                    <DashedDivider className="mt-10 mb-8" />
 
                     <FormGroup label="Intervallo date" required>
                         <div className="flex gap-6">
@@ -175,23 +129,15 @@ export default function CreateMenu() {
                                 />
                             </div>
                             <div className="w-1/2">
-                                <div className="flex items-center gap-4 ">
-                                    <img
-                                        src="/warning giallo.png"
-                                        className="w-5 h-5"
-                                        alt="Avvertenza"
-                                    />
-                                    <h2 className="text-brand-textSecondary">
-                                        Le date di inizio e fine del menù
-                                        corrente non si devono sovrapporre con
-                                        le date di altri menù attivi o futuri.
-                                    </h2>
-                                </div>
+                                <WarningNote>
+                                    Le date di inizio e fine del menù corrente
+                                    non si devono sovrapporre con le date di
+                                    altri menù attivi o futuri.
+                                </WarningNote>
                             </div>
                         </div>
                     </FormGroup>
 
-                    {/* BOTTONE CREA MENU' */}
                     <div className="flex justify-center mt-10">
                         <Button
                             type="submit"

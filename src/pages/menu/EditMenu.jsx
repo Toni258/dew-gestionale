@@ -9,29 +9,19 @@ import ModifyMenuModal from '../../components/modals/ModifyMenuModal';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 
-async function updateMenu(seasonType, payload) {
-    const res = await fetch(`/api/menus/${encodeURIComponent(seasonType)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-        throw new Error(data.error || 'Errore aggiornamento menù');
-    }
-
-    return data; // { success:true } oppure menu aggiornato se lo ritorni
-}
+import {
+    getMenuBySeasonType,
+    getMenuMealsStatus,
+    updateMenu,
+    deleteMenu,
+} from '../../services/menusApi';
 
 export default function EditMenu() {
     const { seasonType } = useParams();
 
-    // decodifica esplicita
     const decodedSeasonType = useMemo(
         () => decodeURIComponent(seasonType ?? ''),
-        [seasonType]
+        [seasonType],
     );
 
     const [menu, setMenu] = useState(null);
@@ -42,7 +32,6 @@ export default function EditMenu() {
     const navigate = useNavigate();
 
     const mealsByDay = useMemo(() => {
-        // meals: [{ day_index, type, is_completed, ... }]
         const map = {};
         for (const m of meals) {
             const d = Number(m.day_index);
@@ -55,50 +44,33 @@ export default function EditMenu() {
     const daysHeader = [1, 2, 3, 4, 5, 6, 7];
     const weeksHeader = [1, 2, 3, 4];
 
-    // Funzione per chiamata API DELETE menù
-    async function deleteMenu(seasonType) {
-        const res = await fetch(
-            `/api/menus/${encodeURIComponent(seasonType)}`,
-            { method: 'DELETE' }
-        );
-
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.error || 'Errore eliminazione menù');
-        }
-    }
-
     useEffect(() => {
+        let alive = true;
+
         async function load() {
             setLoading(true);
             try {
-                // info menù
-                const resMenu = await fetch(
-                    `/api/menus/${encodeURIComponent(decodedSeasonType)}`
-                );
-                if (!resMenu.ok) throw new Error('Menu non trovato');
-                const menuData = await resMenu.json();
-                setMenu(menuData);
+                const menuData = await getMenuBySeasonType(decodedSeasonType);
+                const mealsData = await getMenuMealsStatus(decodedSeasonType);
 
-                // stati pasti
-                const resMeals = await fetch(
-                    `/api/menus/${encodeURIComponent(
-                        decodedSeasonType
-                    )}/meals-status`
-                );
-                if (!resMeals.ok) throw new Error('Errore fetch pasti');
-                const mealsData = await resMeals.json();
-                setMeals(mealsData.data ?? []);
+                if (!alive) return;
+
+                setMenu(menuData);
+                setMeals(mealsData?.data ?? mealsData ?? []);
             } catch (err) {
                 console.error(err);
+                if (!alive) return;
                 setMenu(null);
                 setMeals([]);
             } finally {
-                setLoading(false);
+                if (alive) setLoading(false);
             }
         }
 
         load();
+        return () => {
+            alive = false;
+        };
     }, [decodedSeasonType]);
 
     if (loading) return <p>Caricamento…</p>;
@@ -116,7 +88,6 @@ export default function EditMenu() {
                     </span>
                 </div>
 
-                {/* DIVIDER VERTICALE */}
                 <div className="w-[1px] bg-brand-divider ml-2 mr-6" />
 
                 <div className="flex flex-[5] flex-col gap-2 justify-center">
@@ -142,7 +113,6 @@ export default function EditMenu() {
                     </div>
                 </div>
 
-                {/* DIVIDER VERTICALE */}
                 <div className="w-[1px] bg-brand-divider ml-2 mr-6" />
 
                 <div className="flex flex-[1] flex-col justify-center items-center gap-2 text-lg font-semibold">
@@ -151,9 +121,8 @@ export default function EditMenu() {
                         type="button"
                         className="flex py-2 bg-[#F5C542] rounded-[6px] w-[100px] justify-center"
                         onClick={() => {
-                            console.log('Premuto modifica piatti fissi!');
                             navigate(
-                                `/menu/edit/${menu.season_type}/piatti_fissi`
+                                `/menu/edit/${menu.season_type}/piatti_fissi`,
                             );
                         }}
                     >
@@ -166,7 +135,6 @@ export default function EditMenu() {
                     </button>
                 </div>
 
-                {/* DIVIDER VERTICALE */}
                 <div className="w-[1px] bg-brand-divider ml-6 mr-6" />
 
                 <div className="flex flex-[1] flex-col justify-center items-center gap-2 text-lg font-semibold">
@@ -174,22 +142,14 @@ export default function EditMenu() {
                     <div className="flex gap-4">
                         <button
                             className="text-brand-primary font-semibold"
-                            onClick={() => {
-                                console.log('Premuto bottone modifica menù');
-                                setModifyMenu(true);
-                            }}
+                            onClick={() => setModifyMenu(true)}
                         >
                             ✏
                         </button>
 
                         <button
                             className="ml-3 text-red-500"
-                            onClick={() => {
-                                console.log(
-                                    'Premuto bottone cancellazione menù'
-                                );
-                                setMenuToDelete(menu);
-                            }}
+                            onClick={() => setMenuToDelete(menu)}
                         >
                             🗑
                         </button>
@@ -197,15 +157,12 @@ export default function EditMenu() {
                 </div>
             </Card>
 
-            {/* ===== GRIGLIA 7x4 ===== */}
             <div className="mt-4 overflow-x-auto">
                 <div className="flex justify-center min-w-fit">
                     <div className="menu-grid-wrapper">
                         <div className="menu-grid">
-                            {/* top-left corner (vuoto) */}
                             <div className="menu-grid__corner" />
 
-                            {/* header giorni 1..7 */}
                             {daysHeader.map((d, idx) => (
                                 <div
                                     key={`day-h-${d}`}
@@ -223,10 +180,8 @@ export default function EditMenu() {
                                 </div>
                             ))}
 
-                            {/* righe settimane */}
                             {weeksHeader.map((w, weekIdx) => (
                                 <div key={`week-row-${w}`} className="contents">
-                                    {/* header settimana */}
                                     <div
                                         className={`menu-grid__weekHeader ${
                                             weekIdx === 0
@@ -241,12 +196,12 @@ export default function EditMenu() {
                                         {w}
                                     </div>
 
-                                    {/* 7 celle */}
-                                    {daysHeader.map((d, dayIdx) => {
-                                        const dayIndex = weekIdx * 7 + dayIdx; // 0..27
+                                    {daysHeader.map((_, dayIdx) => {
+                                        const dayIndex = weekIdx * 7 + dayIdx;
                                         const pranzo =
                                             mealsByDay[dayIndex]?.pranzo;
                                         const cena = mealsByDay[dayIndex]?.cena;
+
                                         const pranzoHasIssues =
                                             pranzo &&
                                             !pranzo.is_completed &&
@@ -263,26 +218,18 @@ export default function EditMenu() {
                                             dayIndex === menu.day_index;
 
                                         const pranzoCompleted = Boolean(
-                                            pranzo?.is_completed
+                                            pranzo?.is_completed,
                                         );
                                         const cenaCompleted = Boolean(
-                                            cena?.is_completed
+                                            cena?.is_completed,
                                         );
 
                                         return (
                                             <div
                                                 key={`cell-${dayIndex}`}
                                                 className={`menu-grid__cell
-                                                    ${
-                                                        isLastColumn
-                                                            ? 'no-v-divider'
-                                                            : ''
-                                                    }
-                                                    ${
-                                                        isLastRow
-                                                            ? 'no-h-divider'
-                                                            : ''
-                                                    }
+                                                    ${isLastColumn ? 'no-v-divider' : ''}
+                                                    ${isLastRow ? 'no-h-divider' : ''}
                                                     ${
                                                         isActiveDay
                                                             ? 'menu-grid__cell--active'
@@ -294,7 +241,6 @@ export default function EditMenu() {
                                                     <span className="menu-grid__activeDot" />
                                                 )}
 
-                                                {/* PRANZO */}
                                                 <div className="menu-grid__mealBlock">
                                                     <span className="menu-grid__mealTitle">
                                                         Pranzo
@@ -304,28 +250,27 @@ export default function EditMenu() {
                                                             pranzoCompleted
                                                                 ? 'primary'
                                                                 : pranzoHasIssues
-                                                                ? 'danger'
-                                                                : 'secondary'
+                                                                  ? 'danger'
+                                                                  : 'secondary'
                                                         }
                                                         size="md"
                                                         className="px-3 py-1 rounded-[6px]"
                                                         onClick={() =>
                                                             navigate(
                                                                 `/menu/edit/${encodeURIComponent(
-                                                                    menu.season_type
-                                                                )}/meal/${dayIndex}/pranzo`
+                                                                    menu.season_type,
+                                                                )}/meal/${dayIndex}/pranzo`,
                                                             )
                                                         }
                                                     >
                                                         {pranzoCompleted
                                                             ? 'Modifica'
                                                             : pranzoHasIssues
-                                                            ? 'Da correggere'
-                                                            : 'Componi'}
+                                                              ? 'Da correggere'
+                                                              : 'Componi'}
                                                     </Button>
                                                 </div>
 
-                                                {/* CENA */}
                                                 <div className="menu-grid__mealBlock">
                                                     <span className="menu-grid__mealTitle">
                                                         Cena
@@ -335,24 +280,24 @@ export default function EditMenu() {
                                                             cenaCompleted
                                                                 ? 'primary'
                                                                 : cenaHasIssues
-                                                                ? 'danger'
-                                                                : 'secondary'
+                                                                  ? 'danger'
+                                                                  : 'secondary'
                                                         }
                                                         size="md"
                                                         className="px-3 py-1 rounded-[6px]"
                                                         onClick={() =>
                                                             navigate(
                                                                 `/menu/edit/${encodeURIComponent(
-                                                                    menu.season_type
-                                                                )}/meal/${dayIndex}/cena`
+                                                                    menu.season_type,
+                                                                )}/meal/${dayIndex}/cena`,
                                                             )
                                                         }
                                                     >
                                                         {cenaCompleted
                                                             ? 'Modifica'
                                                             : cenaHasIssues
-                                                            ? 'Da correggere'
-                                                            : 'Componi'}
+                                                              ? 'Da correggere'
+                                                              : 'Componi'}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -365,39 +310,29 @@ export default function EditMenu() {
                 </div>
             </div>
 
-            {/* MODALE ELIMINA MENU' */}
             <DeleteMenuModal
                 menu={menuToDelete}
                 onClose={() => setMenuToDelete(null)}
-                onConfirm={async (menu) => {
+                onConfirm={async (m) => {
                     try {
-                        await deleteMenu(menu.season_type);
-                        console.log('Elimina menù', menu.season_type);
+                        await deleteMenu(m.season_type);
                         alert('Menù eliminato correttamente');
                         setMenuToDelete(null);
-                        navigate(`/menu`);
+                        navigate('/menu');
                     } catch (e) {
                         alert(e.message);
                     }
                 }}
             />
 
-            {/* MODALE MODIFICA MENU' */}
             <ModifyMenuModal
                 open={modifyMenu}
                 menu={menu}
                 onClose={() => setModifyMenu(false)}
                 onConfirm={async (updatedValues) => {
                     try {
-                        // update server
                         await updateMenu(menu.season_type, updatedValues);
-
-                        // aggiorna UI locale (minimo indispensabile)
-                        setMenu((prev) => ({
-                            ...prev,
-                            ...updatedValues,
-                        }));
-
+                        setMenu((prev) => ({ ...prev, ...updatedValues }));
                         alert('Menù modificato correttamente');
                         setModifyMenu(false);
                     } catch (e) {
@@ -407,8 +342,4 @@ export default function EditMenu() {
             />
         </AppLayout>
     );
-}
-
-{
-    /* <pre className="text-xs mt-4">{JSON.stringify(meals, null, 2)}</pre> */
 }

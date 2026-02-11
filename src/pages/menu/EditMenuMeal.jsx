@@ -9,6 +9,12 @@ import FormGroup from '../../components/ui/FormGroup';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import Button from '../../components/ui/Button';
 
+import { getAvailableFoodsForMenu } from '../../services/foodsApi';
+import {
+    getMenuMealComposition,
+    upsertMenuMealComposition,
+} from '../../services/menusApi';
+
 const COURSE_TYPES = [
     { key: 'primo', label: 'Primo' },
     { key: 'secondo', label: 'Secondo' },
@@ -49,25 +55,6 @@ export default function EditMenuMeal() {
 
     const [saving, setSaving] = useState(false);
 
-    async function loadFoodsByType(type) {
-        const qs = new URLSearchParams({
-            type,
-            season_type: seasonType,
-            meal_type: mealType,
-        });
-
-        const res = await fetch(
-            `/api/foods/available-for-menu?${qs.toString()}`,
-        );
-
-        if (!res.ok) {
-            throw new Error('Errore caricamento foods');
-        }
-
-        const json = await res.json();
-        return json.data;
-    }
-
     // 1) carico le option di tutti i tipi
     useEffect(() => {
         let alive = true;
@@ -75,12 +62,18 @@ export default function EditMenuMeal() {
         async function loadAllFoods() {
             try {
                 const results = await Promise.all(
-                    COURSE_TYPES.map((c) => loadFoodsByType(c.key)),
+                    COURSE_TYPES.map((c) =>
+                        getAvailableFoodsForMenu({
+                            type: c.key,
+                            season_type: seasonType,
+                            meal_type: mealType,
+                        }),
+                    ),
                 );
 
                 const map = {};
                 COURSE_TYPES.forEach((c, i) => {
-                    map[c.key] = results[i];
+                    map[c.key] = results[i]?.data ?? [];
                 });
 
                 if (alive) setFoodOptions(map);
@@ -93,49 +86,38 @@ export default function EditMenuMeal() {
         return () => {
             alive = false;
         };
-    }, []);
+    }, [seasonType, mealType]);
 
-    // 2) carico la composizione corrente dal backend e precompilo selectedFoods + snapshot iniziale ids
+    // 2) carico composizione corrente
     useEffect(() => {
         let alive = true;
-
-        console.log('Entrato 1');
 
         async function load() {
             setLoading(true);
             try {
-                const res = await fetch(
-                    `/api/menus/${encodeURIComponent(
-                        seasonType,
-                    )}/meals/${dayIndex}/${mealType}`,
+                const json = await getMenuMealComposition(
+                    seasonType,
+                    dayIndex,
+                    mealType,
                 );
-
-                if (!res.ok) throw new Error('Errore caricamento pasto');
-
-                const json = await res.json();
-                console.log('Entrato 2');
                 if (!alive) return;
 
                 setData(json);
 
                 const initialSelected = { ...EMPTY_SELECTED };
 
-                // json.dishes contiene i piatti già assegnati (se ci sono)
-                json.dishes.forEach((d) => {
-                    // d.type deve essere: primo/secondo/contorno/ultimo
+                (json?.dishes ?? []).forEach((d) => {
                     initialSelected[d.type] = d;
                 });
 
                 setSelectedFoods(initialSelected);
 
-                // snapshot degli id_food iniziali, per capire se ci sono modifiche
                 setInitialFoodIds({
                     primo: initialSelected.primo?.id_food ?? null,
                     secondo: initialSelected.secondo?.id_food ?? null,
                     contorno: initialSelected.contorno?.id_food ?? null,
                     ultimo: initialSelected.ultimo?.id_food ?? null,
                 });
-                console.log('Entrato 3');
             } catch (err) {
                 console.error(err);
                 if (alive) setData(null);
@@ -150,12 +132,9 @@ export default function EditMenuMeal() {
         };
     }, [seasonType, dayIndex, mealType]);
 
-    // --------- CALCOLI UI ---------
-
-    // nel DB ci sono già tutti e 4 i tipi?
     const hasAllFourSaved = useMemo(() => {
-        if (!data?.dishes) return false;
-        const types = new Set(data.dishes.map((d) => d.type));
+        const dishes = data?.dishes ?? [];
+        const types = new Set(dishes.map((d) => d.type));
         return (
             types.has('primo') &&
             types.has('secondo') &&
@@ -164,14 +143,12 @@ export default function EditMenuMeal() {
         );
     }, [data]);
 
-    // l'utente ha selezionato tutti e 4 ora?
     const allSelectedNow = useMemo(() => {
         return COURSE_TYPES.every((c) =>
             Boolean(selectedFoods[c.key]?.id_food),
         );
     }, [selectedFoods]);
 
-    // rispetto allo snapshot iniziale, c'è almeno una modifica?
     const hasChanges = useMemo(() => {
         return COURSE_TYPES.some((c) => {
             const now = selectedFoods[c.key]?.id_food ?? null;
@@ -183,10 +160,6 @@ export default function EditMenuMeal() {
     const buttonLabel = hasAllFourSaved ? 'Salva modifica' : 'Aggiungi pasto';
     const pageLabel = hasAllFourSaved ? 'Modifica pasto' : 'Composizione pasto';
 
-    // disabilita:
-    // - se sto salvando
-    // - se non ho tutte e 4 selezionate
-    // - se è una modifica ma non è cambiato nulla
     const disableSave =
         saving || !allSelectedNow || (hasAllFourSaved && !hasChanges);
 
@@ -206,7 +179,6 @@ export default function EditMenuMeal() {
     }, [selectedFoods]);
 
     async function handleSaveMeal() {
-        // Validazione
         for (const c of COURSE_TYPES) {
             if (!selectedFoods[c.key]?.id_food) {
                 alert(`Seleziona un piatto per: ${c.label}`);
@@ -214,7 +186,6 @@ export default function EditMenuMeal() {
             }
         }
 
-        // se è "Salva modifica" ma non è cambiato nulla, evito chiamata
         if (hasAllFourSaved && !hasChanges) {
             alert('Nessuna modifica da salvare');
             return;
@@ -231,21 +202,12 @@ export default function EditMenuMeal() {
 
         setSaving(true);
         try {
-            const res = await fetch(
-                `/api/menus/${encodeURIComponent(
-                    seasonType,
-                )}/meals/${dayIndex}/${mealType}`,
-                {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                },
+            await upsertMenuMealComposition(
+                seasonType,
+                dayIndex,
+                mealType,
+                payload,
             );
-
-            if (!res.ok) {
-                const errJson = await res.json().catch(() => null);
-                throw new Error(errJson?.error || 'Errore salvataggio');
-            }
 
             alert(
                 hasAllFourSaved
@@ -253,7 +215,6 @@ export default function EditMenuMeal() {
                     : 'Pasto aggiunto correttamente',
             );
 
-            // torna alla griglia del menu
             navigate(`/menu/edit/${seasonType}`);
         } catch (e) {
             console.error(e);
@@ -324,25 +285,29 @@ export default function EditMenuMeal() {
                                                 selectedFoods[course.key]
                                                     ?.id_food ?? '',
                                             )}
-                                            options={foodOptions[
-                                                course.key
-                                            ].map((f) => ({
+                                            options={(
+                                                foodOptions[course.key] ?? []
+                                            ).map((f) => ({
                                                 value: String(f.id_food),
                                                 label: f.name,
                                             }))}
                                             onChange={(idFoodStr) => {
                                                 const idFood =
                                                     Number(idFoodStr);
-                                                const fullFood = foodOptions[
-                                                    course.key
-                                                ].find(
-                                                    (f) => f.id_food === idFood,
-                                                );
+                                                const fullFood =
+                                                    (
+                                                        foodOptions[
+                                                            course.key
+                                                        ] ?? []
+                                                    ).find(
+                                                        (f) =>
+                                                            f.id_food ===
+                                                            idFood,
+                                                    ) ?? null;
 
                                                 setSelectedFoods((prev) => ({
                                                     ...prev,
-                                                    [course.key]:
-                                                        fullFood ?? null,
+                                                    [course.key]: fullFood,
                                                 }));
                                             }}
                                         />
@@ -353,23 +318,33 @@ export default function EditMenuMeal() {
                                             <>
                                                 <div>
                                                     <strong>Peso:</strong>{' '}
-                                                    {food.grammage_tot.toFixed(
-                                                        2,
-                                                    )}{' '}
+                                                    {Number(
+                                                        food.grammage_tot,
+                                                    ).toFixed(2)}{' '}
                                                     g
                                                 </div>
                                                 <div>
                                                     <strong>Kcal:</strong>{' '}
-                                                    {food.kcal_tot.toFixed(2)}
+                                                    {Number(
+                                                        food.kcal_tot,
+                                                    ).toFixed(2)}
                                                 </div>
                                                 <div>
                                                     <strong>
                                                         Macro nutrienti:
                                                     </strong>{' '}
                                                     🥩{' '}
-                                                    {food.proteins.toFixed(2)} |
-                                                    🍞 {food.carbs.toFixed(2)} |
-                                                    🧈 {food.fats.toFixed(2)}
+                                                    {Number(
+                                                        food.proteins,
+                                                    ).toFixed(2)}{' '}
+                                                    | 🍞{' '}
+                                                    {Number(food.carbs).toFixed(
+                                                        2,
+                                                    )}{' '}
+                                                    | 🧈{' '}
+                                                    {Number(food.fats).toFixed(
+                                                        2,
+                                                    )}
                                                 </div>
                                             </>
                                         ) : (
@@ -411,7 +386,15 @@ export default function EditMenuMeal() {
                         </div>
                     </Card>
 
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-8">
+                        <Button
+                            variant="secondary"
+                            className="px-5 py-2 mb-[-10px]"
+                            onClick={() => navigate(`/menu/edit/${seasonType}`)}
+                        >
+                            Indietro
+                        </Button>
+
                         <Button
                             className="px-5 py-2 mb-[-10px]"
                             onClick={handleSaveMeal}
