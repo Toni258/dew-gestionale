@@ -57,7 +57,7 @@ export default function EditMenuMeal() {
         });
 
         const res = await fetch(
-            `/api/foods/available-for-menu?${qs.toString()}`
+            `/api/foods/available-for-menu?${qs.toString()}`,
         );
 
         if (!res.ok) {
@@ -75,7 +75,7 @@ export default function EditMenuMeal() {
         async function loadAllFoods() {
             try {
                 const results = await Promise.all(
-                    COURSE_TYPES.map((c) => loadFoodsByType(c.key))
+                    COURSE_TYPES.map((c) => loadFoodsByType(c.key)),
                 );
 
                 const map = {};
@@ -99,18 +99,21 @@ export default function EditMenuMeal() {
     useEffect(() => {
         let alive = true;
 
+        console.log('Entrato 1');
+
         async function load() {
             setLoading(true);
             try {
                 const res = await fetch(
                     `/api/menus/${encodeURIComponent(
-                        seasonType
-                    )}/meals/${dayIndex}/${mealType}`
+                        seasonType,
+                    )}/meals/${dayIndex}/${mealType}`,
                 );
 
                 if (!res.ok) throw new Error('Errore caricamento pasto');
 
                 const json = await res.json();
+                console.log('Entrato 2');
                 if (!alive) return;
 
                 setData(json);
@@ -132,6 +135,7 @@ export default function EditMenuMeal() {
                     contorno: initialSelected.contorno?.id_food ?? null,
                     ultimo: initialSelected.ultimo?.id_food ?? null,
                 });
+                console.log('Entrato 3');
             } catch (err) {
                 console.error(err);
                 if (alive) setData(null);
@@ -163,7 +167,7 @@ export default function EditMenuMeal() {
     // l'utente ha selezionato tutti e 4 ora?
     const allSelectedNow = useMemo(() => {
         return COURSE_TYPES.every((c) =>
-            Boolean(selectedFoods[c.key]?.id_food)
+            Boolean(selectedFoods[c.key]?.id_food),
         );
     }, [selectedFoods]);
 
@@ -197,7 +201,7 @@ export default function EditMenuMeal() {
                 acc.fats += Number(f.fats || 0);
                 return acc;
             },
-            { weight: 0, kcal: 0, proteins: 0, carbs: 0, fats: 0 }
+            { weight: 0, kcal: 0, proteins: 0, carbs: 0, fats: 0 },
         );
     }, [selectedFoods]);
 
@@ -229,13 +233,13 @@ export default function EditMenuMeal() {
         try {
             const res = await fetch(
                 `/api/menus/${encodeURIComponent(
-                    seasonType
+                    seasonType,
                 )}/meals/${dayIndex}/${mealType}`,
                 {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
-                }
+                },
             );
 
             if (!res.ok) {
@@ -246,7 +250,7 @@ export default function EditMenuMeal() {
             alert(
                 hasAllFourSaved
                     ? 'Modifiche salvate correttamente'
-                    : 'Pasto aggiunto correttamente'
+                    : 'Pasto aggiunto correttamente',
             );
 
             // torna alla griglia del menu
@@ -318,7 +322,7 @@ export default function EditMenuMeal() {
                                             placeholder={`Seleziona ${course.label.toLowerCase()}`}
                                             value={String(
                                                 selectedFoods[course.key]
-                                                    ?.id_food ?? ''
+                                                    ?.id_food ?? '',
                                             )}
                                             options={foodOptions[
                                                 course.key
@@ -332,7 +336,7 @@ export default function EditMenuMeal() {
                                                 const fullFood = foodOptions[
                                                     course.key
                                                 ].find(
-                                                    (f) => f.id_food === idFood
+                                                    (f) => f.id_food === idFood,
                                                 );
 
                                                 setSelectedFoods((prev) => ({
@@ -350,7 +354,7 @@ export default function EditMenuMeal() {
                                                 <div>
                                                     <strong>Peso:</strong>{' '}
                                                     {food.grammage_tot.toFixed(
-                                                        2
+                                                        2,
                                                     )}{' '}
                                                     g
                                                 </div>

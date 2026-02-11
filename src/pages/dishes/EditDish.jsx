@@ -13,6 +13,7 @@ import AllergenCheckboxGroup from '../../components/ui/AllergenCheckboxGroup';
 import DatePicker from '../../components/ui/DatePicker';
 import TextArea from '../../components/ui/TextArea';
 import Modal from '../../components/ui/Modal';
+import SearchableSelect from '../../components/ui/SearchableSelect';
 import { hasDishChanged } from '../../utils/diffDish';
 import { useFormContext } from '../../components/ui/Form';
 
@@ -33,6 +34,14 @@ export default function EditDish() {
     const [suspensionPreview, setSuspensionPreview] = useState(null);
     const [expandedMenus, setExpandedMenus] = useState({});
     const [showUnsuspendHint, setShowUnsuspendHint] = useState(false);
+    const [replacementByPairing, setReplacementByPairing] = useState({});
+    const [optionsByType, setOptionsByType] = useState({});
+
+    const allConflictIds =
+        suspensionPreview?.conflicts?.map((c) => c.id_dish_pairing) ?? [];
+    const allSelected =
+        allConflictIds.length > 0 &&
+        allConflictIds.every((id) => !!replacementByPairing[id]);
 
     const isEmpty = (v) => v === '' || v === null || v === undefined; // Serve perchè se no non riconosce 0 come valore valido nei macro
 
@@ -63,7 +72,7 @@ export default function EditDish() {
 
         const suspensionChanged = hasSuspensionChanged(
             initialSuspension,
-            form.values
+            form.values,
         );
 
         const imageChanged = form.values.img instanceof File;
@@ -100,7 +109,7 @@ export default function EditDish() {
                 if (!res.ok) {
                     const text = await res.text().catch(() => '');
                     throw new Error(
-                        `GET /api/dishes/${dishId} -> ${res.status} ${text}`
+                        `GET /api/dishes/${dishId} -> ${res.status} ${text}`,
                     );
                 }
 
@@ -159,6 +168,49 @@ export default function EditDish() {
         loadDish();
     }, [dishId]);
 
+    useEffect(() => {
+        const loadOptions = async () => {
+            if (!suspensionPreview?.conflicts?.length) return;
+
+            const keySet = new Set();
+            for (const c of suspensionPreview.conflicts) {
+                keySet.add(
+                    `${c.season_type}__${c.meal_type}__${c.course_type}`,
+                );
+            }
+
+            const result = {};
+            for (const key of keySet) {
+                const [season_type, meal_type, type] = key.split('__');
+
+                const qs = new URLSearchParams({
+                    type,
+                    season_type,
+                    meal_type,
+                    date_from: suspensionPreview.suspension.valid_from,
+                    date_to: suspensionPreview.suspension.valid_to,
+                    exclude_id_food: String(dishId),
+                });
+
+                const res = await fetch(
+                    `/api/foods/available-for-menu?${qs.toString()}`,
+                );
+                const json = await res.json().catch(() => ({}));
+
+                // SearchableSelect vuole {value,label}
+                result[key] = (json.data ?? []).map((f) => ({
+                    value: String(f.id_food),
+                    label: f.name,
+                }));
+            }
+
+            setOptionsByType(result);
+            setReplacementByPairing({});
+        };
+
+        loadOptions();
+    }, [suspensionPreview, dishId]);
+
     if (loading) {
         return (
             <AppLayout title="GESTIONE PIATTI" username="Antonio">
@@ -199,16 +251,21 @@ export default function EditDish() {
         console.log(
             'conflicts:',
             dryJson?.conflicts?.length,
-            dryJson?.conflicts
+            dryJson?.conflicts,
         );
 
         if (!dryRes.ok) {
             throw new Error(dryJson?.error || 'Errore verifica sospensione');
         }
 
-        // Se NON ci sono conflitti → applica subito
         if (!dryJson.conflicts || dryJson.conflicts.length === 0) {
-            return applySuspension({ dishId, start_date, end_date, reason });
+            return applySuspension({
+                dishId,
+                start_date,
+                end_date,
+                reason,
+                action: 'disable-only',
+            });
         }
 
         // Se ci sono conflitti → mostra modale
@@ -222,7 +279,20 @@ export default function EditDish() {
         return { applied: false, pending: true };
     }
 
-    async function applySuspension({ dishId, start_date, end_date, reason }) {
+    async function applySuspension({
+        dishId,
+        start_date,
+        end_date,
+        reason,
+        action,
+    }) {
+        const replacements = Object.entries(replacementByPairing).map(
+            ([id_dish_pairing, id_food_new]) => ({
+                id_dish_pairing: Number(id_dish_pairing),
+                id_food_new: id_food_new ? Number(id_food_new) : null,
+            }),
+        );
+
         const applyRes = await fetch(`/api/dishes/${dishId}/suspend`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -231,13 +301,15 @@ export default function EditDish() {
                 valid_to: end_date,
                 reason: reason ?? '',
                 mode: 'apply',
+                action, // 'disable-only' | 'replace'
+                replacements,
             }),
         });
 
         const applyJson = await applyRes.json().catch(() => ({}));
         if (!applyRes.ok) {
             throw new Error(
-                applyJson?.error || 'Errore applicazione sospensione'
+                applyJson?.error || 'Errore applicazione sospensione',
             );
         }
 
@@ -264,7 +336,7 @@ export default function EditDish() {
                             const nextEnabled = !enabled;
                             form.setFieldValue(
                                 'suspension_enabled',
-                                nextEnabled
+                                nextEnabled,
                             );
 
                             // Se sto spegnendo una sospensione che esisteva già → mostra micro-alert
@@ -396,8 +468,8 @@ export default function EditDish() {
                         !v
                             ? 'Obbligatorio'
                             : v.length < 3
-                            ? 'Troppo corto'
-                            : null,
+                              ? 'Troppo corto'
+                              : null,
                     type: (v) => (!v ? 'Seleziona un tipo' : null),
 
                     grammage_tot: (v) =>
@@ -428,8 +500,8 @@ export default function EditDish() {
 
                         const res = await fetch(
                             `/api/dishes/exists?name=${encodeURIComponent(
-                                v
-                            )}&excludeId=${dishId}`
+                                v,
+                            )}&excludeId=${dishId}`,
                         );
 
                         if (!res.ok) {
@@ -487,7 +559,7 @@ export default function EditDish() {
                     ) {
                         const res = await fetch(
                             `/api/dishes/${dishId}/unsuspend`,
-                            { method: 'POST' }
+                            { method: 'POST' },
                         );
 
                         if (!res.ok) {
@@ -562,14 +634,14 @@ export default function EditDish() {
                         if (key === 'suspension_enabled') {
                             formData.append(
                                 'suspension_enabled',
-                                suspensionEnabled ? '1' : '0'
+                                suspensionEnabled ? '1' : '0',
                             );
                             return;
                         }
 
                         if (Array.isArray(value)) {
                             value.forEach((v) =>
-                                formData.append(`${key}[]`, v)
+                                formData.append(`${key}[]`, v),
                             );
                         } else {
                             formData.append(key, value);
@@ -584,7 +656,7 @@ export default function EditDish() {
                     if (!res.ok) {
                         const err = await res.json().catch(() => ({}));
                         alert(
-                            err.error || 'Errore aggiornamento piatto pagina'
+                            err.error || 'Errore aggiornamento piatto pagina',
                         );
                         return;
                     }
@@ -818,7 +890,7 @@ export default function EditDish() {
                                                         type="button"
                                                         onClick={() =>
                                                             toggleMenu(
-                                                                menu.season_type
+                                                                menu.season_type,
                                                             )
                                                         }
                                                         className="text-brand-primary hover:underline text-sm"
@@ -852,13 +924,16 @@ export default function EditDish() {
                                                                     <th className="p-1 text-left">
                                                                         Portata
                                                                     </th>
+                                                                    <th className="p-1 text-left">
+                                                                        Sostituzione
+                                                                    </th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 {menu.items.map(
                                                                     (
                                                                         c,
-                                                                        idx
+                                                                        idx,
                                                                     ) => (
                                                                         <tr
                                                                             key={
@@ -889,8 +964,40 @@ export default function EditDish() {
                                                                                     c.course_type
                                                                                 }
                                                                             </td>
+                                                                            <td className="p-1 w-[380px]">
+                                                                                <SearchableSelect
+                                                                                    value={
+                                                                                        replacementByPairing[
+                                                                                            c
+                                                                                                .id_dish_pairing
+                                                                                        ] ??
+                                                                                        ''
+                                                                                    }
+                                                                                    className="text-sm"
+                                                                                    onChange={(
+                                                                                        newVal,
+                                                                                    ) =>
+                                                                                        setReplacementByPairing(
+                                                                                            (
+                                                                                                prev,
+                                                                                            ) => ({
+                                                                                                ...prev,
+                                                                                                [c.id_dish_pairing]:
+                                                                                                    newVal,
+                                                                                            }),
+                                                                                        )
+                                                                                    }
+                                                                                    options={
+                                                                                        optionsByType[
+                                                                                            `${c.season_type}__${c.meal_type}__${c.course_type}`
+                                                                                        ] ??
+                                                                                        []
+                                                                                    }
+                                                                                    placeholder="Seleziona sostituto…"
+                                                                                />
+                                                                            </td>
                                                                         </tr>
-                                                                    )
+                                                                    ),
                                                                 )}
                                                             </tbody>
                                                         </table>
@@ -905,14 +1012,48 @@ export default function EditDish() {
 
                         <div className="flex justify-end gap-4">
                             <Button
-                                variant="secondary"
+                                variant="underline"
                                 onClick={() => setSuspensionPreview(null)}
                             >
                                 Annulla
                             </Button>
 
                             <Button
+                                variant="secondary"
+                                onClick={async () => {
+                                    try {
+                                        // forzo vuote le sostituzioni (evita ambiguità)
+                                        setReplacementByPairing({});
+                                        await applySuspension({
+                                            dishId,
+                                            start_date:
+                                                suspensionPreview.suspension
+                                                    .valid_from,
+                                            end_date:
+                                                suspensionPreview.suspension
+                                                    .valid_to,
+                                            reason: suspensionPreview.suspension
+                                                .reason,
+                                            action: 'disable-only',
+                                        });
+
+                                        alert(
+                                            'Sospensione salvata. Attenzione: dovrai completare i menù manualmente.',
+                                        );
+                                        navigate('/dishes');
+                                    } catch (e) {
+                                        alert(
+                                            e.message || 'Errore applicazione',
+                                        );
+                                    }
+                                }}
+                            >
+                                Salva sospensione (non sostituire)
+                            </Button>
+
+                            <Button
                                 variant="primary"
+                                disabled={!allSelected}
                                 onClick={async () => {
                                     try {
                                         await applySuspension({
@@ -925,20 +1066,21 @@ export default function EditDish() {
                                                     .valid_to,
                                             reason: suspensionPreview.suspension
                                                 .reason,
+                                            action: 'replace',
                                         });
 
                                         alert(
-                                            'Sospensione applicata e piatti rimossi dai menu.'
+                                            'Sospensione salvata e sostituzioni applicate.',
                                         );
                                         navigate('/dishes');
                                     } catch (e) {
                                         alert(
-                                            e.message || 'Errore applicazione'
+                                            e.message || 'Errore applicazione',
                                         );
                                     }
                                 }}
                             >
-                                Conferma e applica
+                                Salva e sostituisci
                             </Button>
                         </div>
                     </Card>

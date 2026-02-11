@@ -12,6 +12,7 @@ import {
     upsertMenuMealComposition,
     getMenuFixedDishes,
     upsertMenuFixedDishes,
+    getMenuFixedCheesesRotation,
 } from '../controllers/menusController.js';
 
 const router = Router();
@@ -22,6 +23,7 @@ router.get('/dates-overlap', checkMenuDatesOverlap);
 router.get('/:season_type/meals-status', getMenuMealsStatus);
 router.get('/:season_type/meals/:day_index/:meal_type', getMenuMealComposition);
 router.get('/:season_type/fixed-dishes', getMenuFixedDishes);
+router.get('/:season_type/fixed-cheeses-rotation', getMenuFixedCheesesRotation);
 router.get('/:season_type', getMenuBySeasonType);
 
 router.post('/', createMenu);

@@ -487,6 +487,7 @@ export async function getMenuMealComposition(req, res) {
                 AND m.day_index = ?
                 AND m.type = ?
                 AND m.first_choice = 0
+                AND dp.used = 1
 
                 ORDER BY dp.id_dish_pairing ASC
             `,
@@ -643,7 +644,8 @@ export async function getMenuFixedDishes(req, res) {
             JOIN meal m ON m.id_meal = dp.id_meal
             JOIN food f ON f.id_food = dp.id_food
             WHERE dp.season_type = ?
-              AND (m.first_choice = 1 OR f.type = "coperto")
+                AND dp.used = 1
+                AND (m.first_choice = 1 OR f.type = "coperto")
             GROUP BY f.id_food, m.type
             ORDER BY FIELD(m.type, 'pranzo', 'cena'), f.type, ripetizioni DESC;
             `,
@@ -677,6 +679,30 @@ export async function upsertMenuFixedDishes(req, res) {
         const pranzo = body.pranzo ?? {};
         const cena = body.cena ?? {};
 
+        const formaggi_rotation = body.formaggi_rotation ?? null;
+
+        const CHEESE_IDS = [195, 196, 197];
+
+        function validateCheeseRotation(rot) {
+            if (!rot || typeof rot !== 'object')
+                return 'FORMAGGI: blocco mancante';
+            if (!Array.isArray(rot.pranzo) || rot.pranzo.length !== 7)
+                return 'FORMAGGI: pranzo deve avere 7 elementi';
+            if (!Array.isArray(rot.cena) || rot.cena.length !== 7)
+                return 'FORMAGGI: cena deve avere 7 elementi';
+
+            const all = [...rot.pranzo, ...rot.cena].map((x) => Number(x));
+            if (all.some((n) => !Number.isInteger(n) || n <= 0))
+                return 'FORMAGGI: valori non validi';
+            if (all.some((n) => !CHEESE_IDS.includes(n)))
+                return 'FORMAGGI: id non ammesso (usa solo 195/196/197)';
+
+            return null;
+        }
+
+        const rotErr = validateCheeseRotation(formaggi_rotation);
+        if (rotErr) return res.status(400).json({ error: rotErr });
+
         const requiredLunch = [
             'primo',
             'secondo',
@@ -706,15 +732,33 @@ export async function upsertMenuFixedDishes(req, res) {
         };
 
         // validazione presenza campi + che siano tutti pieni (nessun buco)
+        // ECCEZIONE: "secondo" -> richiediamo SOLO i primi 2 (il terzo è opzionale)
         const validateBlock = (block, keys, label) => {
             for (const k of keys) {
                 if (!Array.isArray(block[k])) {
                     return `${label}: campo "${k}" mancante o non valido`;
                 }
-                // qui decidiamo "completo" = non devono esserci null/0/stringhe vuote
+
                 const ids = block[k].map((x) =>
                     x && typeof x === 'object' ? Number(x.id_food) : Number(x),
                 );
+
+                if (k === 'secondo') {
+                    // devono esserci almeno 2 slot e i primi due devono essere validi
+                    if (ids.length < 2) {
+                        return `${label}: campo "secondo" incompleto (servono almeno 2 piatti)`;
+                    }
+
+                    const firstTwo = ids.slice(0, 2);
+                    if (firstTwo.some((n) => !Number.isInteger(n) || n <= 0)) {
+                        return `${label}: campo "secondo" incompleto (i primi 2 sono obbligatori)`;
+                    }
+
+                    // il terzo può essere 0/null/undefined -> NON bloccare
+                    continue;
+                }
+
+                // per tutti gli altri campi: tutto obbligatorio
                 if (ids.some((n) => !Number.isInteger(n) || n <= 0)) {
                     return `${label}: campo "${k}" incompleto`;
                 }
@@ -832,7 +876,7 @@ export async function upsertMenuFixedDishes(req, res) {
 
                 const allIdsNoCoperto = [
                     ...src.primo,
-                    ...src.secondo,
+                    ...src.secondo.slice(0, 2),
                     ...src.contorno,
                     ...src.ultimo,
                     ...(isLunch ? [] : src.speciale),
@@ -841,6 +885,15 @@ export async function upsertMenuFixedDishes(req, res) {
                 for (const idFood of allIdsNoCoperto) {
                     values.push([m.id_meal, idFood, seasonType, 1]);
                 }
+
+                // aggiungo formaggio “a rotazione” per quel giorno
+                const weekday = Number(m.day_index) % 7; // 0..6
+                const cheeseId =
+                    m.type === 'pranzo'
+                        ? Number(formaggi_rotation.pranzo[weekday])
+                        : Number(formaggi_rotation.cena[weekday]);
+
+                values.push([m.id_meal, cheeseId, seasonType, 1]);
             }
 
             // 3b) Inserisco coperto (1) su dailyMeals
@@ -893,5 +946,61 @@ export async function upsertMenuFixedDishes(req, res) {
     } catch (err) {
         console.error('Errore upsertMenuFixedDishes:', err);
         return res.status(500).json({ error: 'Errore interno al server' });
+    }
+}
+
+export async function getMenuFixedCheesesRotation(req, res) {
+    try {
+        const seasonType = decodeURIComponent(
+            req.params.season_type ?? '',
+        ).trim();
+        if (!seasonType)
+            return res.status(400).json({ error: 'season_type non valido' });
+
+        const CHEESE_IDS = [195, 196, 197];
+
+        // Prendo solo i primi 7 giorni (0..6) perché identificano la “settimana tipo”.
+        const [rows] = await pool.query(
+            `
+            SELECT
+                m.type AS meal_type,
+                m.day_index,
+                f.id_food,
+                f.name
+            FROM dish_pairing dp
+            JOIN meal m ON m.id_meal = dp.id_meal
+            JOIN food f ON f.id_food = dp.id_food
+            WHERE dp.season_type = ?
+              AND dp.used = 1
+              AND m.first_choice = 1
+              AND m.day_index BETWEEN 0 AND 6
+              AND f.id_food IN (?)
+            `,
+            [seasonType, CHEESE_IDS],
+        );
+
+        const out = {
+            pranzo: Array(7).fill(null),
+            cena: Array(7).fill(null),
+        };
+
+        for (const r of rows) {
+            const idx = Number(r.day_index);
+            if (idx < 0 || idx > 6) continue;
+            if (r.meal_type !== 'pranzo' && r.meal_type !== 'cena') continue;
+
+            // salvo id_food (puoi salvare anche name se vuoi)
+            out[r.meal_type][idx] = {
+                id_food: r.id_food,
+                name: r.name,
+            };
+        }
+
+        return res.json({ data: out });
+    } catch (err) {
+        console.error('Errore getMenuFixedCheesesRotation:', err);
+        return res
+            .status(500)
+            .json({ error: 'Errore caricamento rotazione formaggi' });
     }
 }

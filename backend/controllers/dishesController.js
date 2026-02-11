@@ -21,7 +21,7 @@ export async function getFilteredDishes(req, res) {
         const pageNum = Math.max(1, parseInt(page, 10) || 1);
         const sizeNum = Math.min(
             100,
-            Math.max(1, parseInt(pageSize, 10) || 30)
+            Math.max(1, parseInt(pageSize, 10) || 30),
         );
         const offset = (pageNum - 1) * sizeNum;
 
@@ -243,7 +243,7 @@ export async function deleteDish(req, res) {
         // recupero immagine
         const [[dish]] = await pool.query(
             'SELECT image_url FROM food WHERE id_food = ?',
-            [id]
+            [id],
         );
 
         if (!dish) {
@@ -254,7 +254,7 @@ export async function deleteDish(req, res) {
 
         const [result] = await pool.query(
             'DELETE FROM food WHERE id_food = ?',
-            [id]
+            [id],
         );
 
         if (result.affectedRows === 0) {
@@ -389,7 +389,7 @@ export async function updateDish(req, res) {
         // recupera immagine attuale
         const [[current]] = await conn.query(
             'SELECT image_url FROM food WHERE id_food = ?',
-            [id]
+            [id],
         );
 
         if (!current) {
@@ -472,6 +472,8 @@ export async function suspendDish(req, res) {
             valid_to,
             reason = '',
             mode = 'dry-run',
+            action = 'disable-only', // 'disable-only' | 'replace'
+            replacements = [],
         } = req.body;
 
         if (!valid_from || !valid_to) {
@@ -492,10 +494,16 @@ export async function suspendDish(req, res) {
             });
         }
 
+        if (!['disable-only', 'replace'].includes(action)) {
+            return res.status(400).json({
+                error: 'action non valida (usa disable-only o replace)',
+            });
+        }
+
         // Verifica esistenza piatto (e recupero nome utile in risposta)
         const [[dish]] = await pool.query(
             `SELECT id_food, name FROM food WHERE id_food = ? LIMIT 1`,
-            [idFood]
+            [idFood],
         );
 
         if (!dish) {
@@ -534,6 +542,7 @@ export async function suspendDish(req, res) {
             JOIN food f   ON f.id_food = dp.id_food
 
             WHERE dp.id_food = ?
+            AND dp.used = 1
             AND s.start_date <= ?
             AND s.end_date   >= ?
 
@@ -551,12 +560,8 @@ export async function suspendDish(req, res) {
             valid_from,
         ]);
 
-        const activeConflicts = conflicts.some(
-            (c) => c.is_menu_active_today === 1
-        );
-
         const activeCount = conflicts.filter(
-            (c) => c.is_menu_active_today === 1
+            (c) => c.is_menu_active_today === 1,
         ).length;
 
         // Risposta “dry-run” (STEP B)
@@ -577,7 +582,7 @@ export async function suspendDish(req, res) {
                 },
                 message:
                     conflicts.length > 0
-                        ? 'La sospensione impatta alcuni menu. Conferma per applicare e rimuovere i piatti.'
+                        ? 'La sospensione impatta alcuni menu. Conferma per applicare (disabilitazione occorrenze) e, se vuoi, sostituire.'
                         : 'Nessuna interferenza: puoi applicare la sospensione.',
             });
         }
@@ -592,13 +597,13 @@ export async function suspendDish(req, res) {
             // 1) verifica se esiste già una sospensione attiva o futura
             const [[existing]] = await conn.query(
                 `
-    SELECT id_avail
-    FROM food_availability
-    WHERE id_food = ?
-      AND valid_to >= CURDATE()
-    LIMIT 1
-    `,
-                [idFood]
+                SELECT id_avail
+                FROM food_availability
+                WHERE id_food = ?
+                AND valid_to >= CURDATE()
+                LIMIT 1
+                `,
+                [idFood],
             );
 
             if (existing) {
@@ -617,7 +622,7 @@ export async function suspendDish(req, res) {
                         valid_to,
                         (reason ?? '').trim() || null,
                         existing.id_avail,
-                    ]
+                    ],
                 );
             } else {
                 // INSERT (prima sospensione)
@@ -631,27 +636,244 @@ export async function suspendDish(req, res) {
                         valid_from,
                         valid_to,
                         (reason ?? '').trim() || null,
-                    ]
+                    ],
                 );
             }
 
-            // 2) Rimuovi i dish_pairing che cadono nel periodo (used=1)
-            // (sia first_choice=0 che first_choice=1; non vogliamo che compaia in nessun menu durante la sospensione)
-            const deleteSql = `
-            DELETE dp
-            FROM dish_pairing dp
-            JOIN season s ON s.season_type = dp.season_type
-            WHERE dp.id_food = ?
-                AND dp.used = 1
-                AND s.start_date <= ?
-                AND s.end_date   >= ?
-        `;
+            // 2) Disabilita i dish_pairing nel periodo (soft delete)
+            // + opzionalmente crea i nuovi dish_pairing sostitutivi scelti dall’utente
 
-            const [delResult] = await conn.query(deleteSql, [
-                idFood,
-                valid_to,
-                valid_from,
-            ]);
+            const repArr = Array.isArray(replacements) ? replacements : [];
+
+            // mappa: id_dish_pairing -> id_food_new (può essere null/undefined se l’utente non sceglie)
+            const repMap = new Map(
+                repArr
+                    .filter((r) => Number.isFinite(Number(r.id_dish_pairing)))
+                    .map((r) => [
+                        Number(r.id_dish_pairing),
+                        r.id_food_new == null || r.id_food_new === ''
+                            ? null
+                            : Number(r.id_food_new),
+                    ]),
+            );
+
+            // per sicurezza: lavora SOLO sui pairing che hai trovato come conflicts (quelli nel range)
+            const conflictIds = conflicts
+                .map((c) => Number(c.id_dish_pairing))
+                .filter(Number.isFinite);
+
+            // Regole dei 2 pulsanti (coerenza UX)
+            if (action === 'replace') {
+                const missing = conflictIds.filter((id) => !repMap.get(id));
+                if (missing.length) {
+                    await conn.rollback();
+                    return res.status(400).json({
+                        error: 'Per "Salva e sostituisci" devi selezionare un piatto per ogni occorrenza.',
+                    });
+                }
+            }
+
+            if (action === 'disable-only') {
+                const hasAny = conflictIds.some((id) => !!repMap.get(id));
+                if (hasAny) {
+                    await conn.rollback();
+                    return res.status(400).json({
+                        error: 'Per "Salva sospensione (non sostituire)" le sostituzioni devono essere vuote.',
+                    });
+                }
+            }
+
+            let disabledPairings = 0;
+
+            // (A) set used=0 sui pairing del piatto sospeso (solo quelli trovati nella preview)
+            if (conflictIds.length > 0) {
+                const disableSql = `
+                    UPDATE dish_pairing
+                    SET used = 0
+                    WHERE id_dish_pairing IN (?)
+                    AND id_food = ?
+                    AND used = 1
+                `;
+
+                const [disableRes] = await conn.query(disableSql, [
+                    conflictIds,
+                    idFood,
+                ]);
+
+                disabledPairings = disableRes.affectedRows ?? 0;
+            }
+
+            // (B) Inserisci nuovi pairing per le occorrenze dove l’utente ha scelto un sostituto
+            // Regole di sicurezza:
+            // - il sostituto deve avere stesso food.type del piatto originale in quella occorrenza
+            // - evita duplicati: se esiste già un pairing used=1 con stesso (season_type,id_meal,id_food_new), non inserire
+
+            let insertedPairings = 0;
+            let skippedDuplicates = 0;
+
+            const getFoodTypeSql = `SELECT id_food, type FROM food WHERE id_food = ? LIMIT 1`;
+
+            // query per leggere “dati pairing” dell’occorrenza (serve per copiare id_meal e season_type)
+            const pairingInfoSql = `
+                SELECT dp.id_dish_pairing, dp.id_meal, dp.season_type, f.type AS old_type, m.type AS meal_type
+                FROM dish_pairing dp
+                JOIN food f ON f.id_food = dp.id_food
+                JOIN meal m ON m.id_meal = dp.id_meal
+                WHERE dp.id_dish_pairing = ?
+                    AND dp.id_food = ?
+                LIMIT 1
+            `;
+
+            // check duplicato
+            const existsSql = `
+                SELECT id_dish_pairing
+                FROM dish_pairing
+                WHERE season_type = ?
+                    AND id_meal = ?
+                    AND id_food = ?
+                    AND used = 1
+                LIMIT 1
+            `;
+
+            const insertSql = `
+                INSERT INTO dish_pairing (id_meal, id_food, season_type, used)
+                VALUES (?, ?, ?, 1)
+            `;
+
+            const isSuspendedInRangeSql = `
+                SELECT 1
+                FROM food_availability fa
+                WHERE fa.id_food = ?
+                AND NOT (? < fa.valid_from OR ? > fa.valid_to)
+                LIMIT 1
+            `;
+
+            const isFixedInMenuSql = `
+                SELECT 1
+                FROM dish_pairing dp
+                JOIN meal m ON m.id_meal = dp.id_meal
+                WHERE dp.id_food = ?
+                AND dp.season_type = ?
+                AND dp.used = 1
+                AND m.type = ?
+                AND m.first_choice = 1
+                LIMIT 1
+            `;
+
+            if (action !== 'replace') {
+                await conn.commit();
+                return res.json({
+                    ok: true,
+                    mode: 'apply',
+                    action,
+                    dish: { id_food: dish.id_food, name: dish.name },
+                    suspension: {
+                        valid_from,
+                        valid_to,
+                        reason: (reason ?? '').trim() || null,
+                    },
+                    disabled_pairings: disabledPairings,
+                    inserted_pairings: 0,
+                    skipped_duplicates: 0,
+                    conflicts_preview: conflicts,
+                    summary: {
+                        conflicts_total: conflicts.length,
+                        conflicts_in_active_menu: activeCount,
+                    },
+                    message:
+                        'Sospensione applicata: occorrenze disabilitate (menù da completare manualmente).',
+                });
+            }
+
+            for (const cId of conflictIds) {
+                const newFoodId = repMap.get(cId);
+
+                // se non selezionato: lasci solo used=0 (menu “buca”, come prima)
+                if (!newFoodId) continue;
+
+                if (newFoodId === idFood) {
+                    await conn.rollback();
+                    return res.status(400).json({
+                        error: 'Sostituzione non valida: stesso piatto.',
+                    });
+                }
+
+                // pairing info
+                const [[pinfo]] = await conn.query(pairingInfoSql, [
+                    cId,
+                    idFood,
+                ]);
+                if (!pinfo) {
+                    await conn.rollback();
+                    return res
+                        .status(400)
+                        .json({ error: `Occorrenza ${cId} non valida.` });
+                }
+
+                // tipo nuovo piatto
+                const [[newDishRow]] = await conn.query(getFoodTypeSql, [
+                    newFoodId,
+                ]);
+                if (!newDishRow) {
+                    await conn.rollback();
+                    return res.status(400).json({
+                        error: `Piatto sostitutivo ${newFoodId} non trovato.`,
+                    });
+                }
+
+                // vincolo: stesso tipo portata
+                if (newDishRow.type !== pinfo.old_type) {
+                    await conn.rollback();
+                    return res.status(400).json({
+                        error: `Tipo non compatibile per occorrenza ${cId}: serve ${pinfo.old_type}, hai scelto ${newDishRow.type}.`,
+                    });
+                }
+
+                // (1) non sospeso nel range selezionato
+                const [[sus]] = await conn.query(isSuspendedInRangeSql, [
+                    newFoodId,
+                    valid_to,
+                    valid_from,
+                ]);
+                if (sus) {
+                    await conn.rollback();
+                    return res.status(400).json({
+                        error: `Il piatto selezionato (${newFoodId}) è sospeso nel periodo scelto.`,
+                    });
+                }
+
+                // (2) non deve essere un piatto fisso del menu (per quel pasto)
+                const [[fixed]] = await conn.query(isFixedInMenuSql, [
+                    newFoodId,
+                    pinfo.season_type,
+                    pinfo.meal_type,
+                ]);
+                if (fixed) {
+                    await conn.rollback();
+                    return res.status(400).json({
+                        error: `Il piatto selezionato (${newFoodId}) è un piatto fisso nel menù "${pinfo.season_type}" (${pinfo.meal_type}).`,
+                    });
+                }
+
+                // evita duplicato
+                const [[exists]] = await conn.query(existsSql, [
+                    pinfo.season_type,
+                    pinfo.id_meal,
+                    newFoodId,
+                ]);
+
+                if (exists) {
+                    skippedDuplicates += 1;
+                    continue;
+                }
+
+                await conn.query(insertSql, [
+                    pinfo.id_meal,
+                    newFoodId,
+                    pinfo.season_type,
+                ]);
+                insertedPairings += 1;
+            }
 
             await conn.commit();
 
@@ -664,14 +886,16 @@ export async function suspendDish(req, res) {
                     valid_to,
                     reason: (reason ?? '').trim() || null,
                 },
-                removed_pairings: delResult.affectedRows ?? 0,
+                disabled_pairings: disabledPairings,
+                inserted_pairings: insertedPairings,
+                skipped_duplicates: skippedDuplicates,
                 conflicts_preview: conflicts,
                 summary: {
                     conflicts_total: conflicts.length,
                     conflicts_in_active_menu: activeCount,
                 },
                 message:
-                    'Sospensione applicata e piatti rimossi dai menu nel periodo indicato.',
+                    'Sospensione applicata: occorrenze disabilitate e sostituzioni inserite dove selezionate.',
             });
         } catch (e) {
             try {
@@ -702,11 +926,11 @@ export async function disableDishSuspension(req, res) {
         const [result] = await pool.query(
             `
             UPDATE food_availability
-            SET valid_to = NOW()
+            SET valid_to = DATE_SUB(NOW(), INTERVAL 1 SECOND)
             WHERE id_food = ?
               AND valid_to >= NOW()
             `,
-            [idFood]
+            [idFood],
         );
 
         return res.json({

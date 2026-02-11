@@ -37,9 +37,25 @@ function ensureInOptions(optionsMap, meal, courseKey, food) {
     }
 }
 
+const WEEKDAYS = [
+    'Lunedì',
+    'Martedì',
+    'Mercoledì',
+    'Giovedì',
+    'Venerdì',
+    'Sabato',
+    'Domenica',
+];
+
+function makeEmptyCheeseRotation() {
+    return {
+        pranzo: Array(7).fill(null),
+        cena: Array(7).fill(null),
+    };
+}
+
 export default function MenuPiattiFissi() {
     const { seasonType } = useParams();
-
     const navigate = useNavigate();
 
     const decodedSeasonType = useMemo(
@@ -72,6 +88,26 @@ export default function MenuPiattiFissi() {
     });
 
     const [saving, setSaving] = useState(false);
+    const [cheeseOptions, setCheeseOptions] = useState([]);
+    const [cheeseRotation, setCheeseRotation] = useState(
+        makeEmptyCheeseRotation(),
+    );
+
+    async function loadCheeses() {
+        const res = await fetch('/api/foods/cheeses');
+        if (!res.ok) throw new Error('Errore caricamento formaggi');
+        const json = await res.json();
+        return json.data;
+    }
+
+    async function loadCheeseRotation() {
+        const res = await fetch(
+            `/api/menus/${encodeURIComponent(decodedSeasonType)}/fixed-cheeses-rotation`,
+        );
+        if (!res.ok) throw new Error('Errore caricamento rotazione formaggi');
+        const json = await res.json();
+        return json.data; // {pranzo:[{id_food,name}|null...], cena:[...]}
+    }
 
     // Ritorna una lista di campi mancanti in formato "PRANZO - PRIMO #2"
     function getMissingFields(selected) {
@@ -86,6 +122,9 @@ export default function MenuPiattiFissi() {
 
             // --- PRANZO ---
             for (let i = 0; i < pranzoSlots; i++) {
+                // ✅ REGOLA: "SECONDO #3" non è più obbligatorio (rimpiazzato dalla tabella formaggi)
+                if (courseKey === 'secondo' && i === 2) continue;
+
                 const food = selected.pranzo?.[courseKey]?.[i] ?? null;
                 if (!food?.id_food) {
                     missing.push(`PRANZO - ${row.label} #${i + 1}`);
@@ -94,6 +133,9 @@ export default function MenuPiattiFissi() {
 
             // --- CENA ---
             for (let i = 0; i < cenaSlots; i++) {
+                // ✅ REGOLA: "SECONDO #3" non è più obbligatorio (rimpiazzato dalla tabella formaggi)
+                if (courseKey === 'secondo' && i === 2) continue;
+
                 const food = selected.cena?.[courseKey]?.[i] ?? null;
                 if (!food?.id_food) {
                     missing.push(`CENA - ${row.label} #${i + 1}`);
@@ -104,9 +146,15 @@ export default function MenuPiattiFissi() {
         return missing;
     }
 
+    const cheeseFilled = useMemo(() => {
+        const p = cheeseRotation.pranzo.every((x) => x?.id_food);
+        const c = cheeseRotation.cena.every((x) => x?.id_food);
+        return p && c;
+    }, [cheeseRotation]);
+
     const allFilled = useMemo(() => {
-        return getMissingFields(selectedFoods).length === 0;
-    }, [selectedFoods]);
+        return getMissingFields(selectedFoods).length === 0 && cheeseFilled;
+    }, [selectedFoods, cheeseFilled]);
 
     async function handleSaveFixedDishes() {
         // 1) validazione: nessun null in nessuno slot richiesto
@@ -129,6 +177,14 @@ export default function MenuPiattiFissi() {
         const hasEmpty = (meal, keys) => {
             for (const k of keys) {
                 const arr = selectedFoods?.[meal]?.[k] ?? [];
+
+                // ✅ "secondo[2]" non è obbligatorio (rimpiazzato dai formaggi)
+                if (k === 'secondo') {
+                    const firstTwo = [arr[0], arr[1]];
+                    if (firstTwo.some((x) => !x?.id_food)) return true;
+                    continue;
+                }
+
                 if (arr.some((x) => !x?.id_food)) return true;
             }
             return false;
@@ -136,9 +192,12 @@ export default function MenuPiattiFissi() {
 
         if (
             hasEmpty('pranzo', requiredRowsLunch) ||
-            hasEmpty('cena', requiredRowsDinner)
+            hasEmpty('cena', requiredRowsDinner) ||
+            !cheeseFilled
         ) {
-            alert('Compila tutti i campi dei piatti fissi prima di salvare.');
+            alert(
+                'Compila tutti i campi (inclusi i formaggi a rotazione) prima di salvare.',
+            );
             return;
         }
 
@@ -146,6 +205,8 @@ export default function MenuPiattiFissi() {
         const payload = {
             pranzo: {
                 primo: toIdsArray(selectedFoods.pranzo.primo),
+                // ⚠️ secondo: mando comunque 3 elementi, ma il terzo può essere 0/null.
+                // Il backend deve ignorare secondo[2] oppure tu puoi lasciarlo 0.
                 secondo: toIdsArray(selectedFoods.pranzo.secondo),
                 contorno: toIdsArray(selectedFoods.pranzo.contorno),
                 ultimo: toIdsArray(selectedFoods.pranzo.ultimo),
@@ -158,6 +219,12 @@ export default function MenuPiattiFissi() {
                 ultimo: toIdsArray(selectedFoods.cena.ultimo),
                 coperto: toIdsArray(selectedFoods.cena.coperto),
                 speciale: toIdsArray(selectedFoods.cena.speciale),
+            },
+            formaggi_rotation: {
+                pranzo: cheeseRotation.pranzo.map((x) =>
+                    Number(x?.id_food ?? 0),
+                ),
+                cena: cheeseRotation.cena.map((x) => Number(x?.id_food ?? 0)),
             },
         };
 
@@ -178,7 +245,6 @@ export default function MenuPiattiFissi() {
             }
 
             alert('Piatti fissi salvati correttamente');
-
             navigate(`/menu/edit/${decodedSeasonType}`);
         } catch (e) {
             console.error(e);
@@ -242,6 +308,87 @@ export default function MenuPiattiFissi() {
                 </div>
             </div>
         );
+    }
+
+    function CheeseRotationTable({ meal }) {
+        // meal = 'pranzo' | 'cena'
+        return (
+            <div className="mt-4 border border-brand-divider rounded-xl">
+                {WEEKDAYS.map((label, idx) => {
+                    const sel = cheeseRotation[meal]?.[idx] ?? null;
+
+                    return (
+                        <div
+                            key={`${meal}-${label}`}
+                            className="grid grid-cols-[110px_1fr] gap-2 items-center px-3 py-2 bg-white/40"
+                        >
+                            <div className="font-semibold text-sm text-brand-textSecondary">
+                                {label}
+                            </div>
+
+                            <SearchableSelect
+                                placeholder="Seleziona formaggio"
+                                value={String(sel?.id_food ?? '')}
+                                options={cheeseOptions.map((f) => ({
+                                    value: String(f.id_food),
+                                    label: f.name,
+                                }))}
+                                onChange={(idStr) => {
+                                    const id = Number(idStr);
+                                    const full =
+                                        cheeseOptions.find(
+                                            (x) => Number(x.id_food) === id,
+                                        ) ?? null;
+
+                                    setCheeseRotation((prev) => {
+                                        const copy = structuredClone(prev);
+                                        copy[meal][idx] = full;
+                                        return copy;
+                                    });
+                                }}
+                            />
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    function getUsedIdsForMeal(selectedFoods, meal, { skip } = {}) {
+        const ids = [];
+
+        for (const row of COURSE_ROWS) {
+            const courseKey = row.key;
+
+            // pranzo: speciale non esiste
+            if (meal === 'pranzo' && courseKey === 'speciale') continue;
+
+            const arr = selectedFoods?.[meal]?.[courseKey] ?? [];
+            for (let i = 0; i < arr.length; i++) {
+                // secondo[2] non lo consideriamo (non è più usato)
+                if (courseKey === 'secondo' && i === 2) continue;
+
+                // skip slot corrente
+                if (
+                    skip &&
+                    skip.meal === meal &&
+                    skip.courseKey === courseKey &&
+                    skip.idx === i
+                ) {
+                    continue;
+                }
+
+                const id = Number(arr[i]?.id_food ?? 0);
+                if (Number.isInteger(id) && id > 0) ids.push(id);
+            }
+        }
+
+        return new Set(ids);
+    }
+
+    function isDuplicateInMeal(selectedFoods, meal, idFood, skip) {
+        const used = getUsedIdsForMeal(selectedFoods, meal, { skip });
+        return used.has(Number(idFood));
     }
 
     // ---------------- API helpers ----------------
@@ -350,6 +497,17 @@ export default function MenuPiattiFissi() {
                 const fixed = await loadFixedDishes();
                 const nextSelected = makeEmptySelected();
 
+                const cheeses = await loadCheeses();
+                const rot = await loadCheeseRotation();
+
+                if (!alive) return;
+
+                setCheeseOptions(cheeses);
+                setCheeseRotation({
+                    pranzo: rot.pranzo.map((x) => x ?? null),
+                    cena: rot.cena.map((x) => x ?? null),
+                });
+
                 // distribuisco i piatti fissi dentro gli slot
                 for (const dish of fixed) {
                     const meal = dish.pasto; // 'pranzo' | 'cena'
@@ -359,12 +517,18 @@ export default function MenuPiattiFissi() {
                     if (!nextSelected[meal][course]) continue;
                     if (meal === 'pranzo' && course === 'speciale') continue;
 
+                    // ✅ NON mettere i formaggi dentro "secondo" (li gestiamo con la tabella)
+                    const isCheese = [195, 196, 197].includes(
+                        Number(dish.id_food),
+                    );
+                    if (isCheese) continue;
+
                     const arr = nextSelected[meal][course];
                     const firstNull = arr.findIndex((x) => x === null);
                     if (firstNull !== -1) arr[firstNull] = dish;
                 }
 
-                // ✅ 3) FIX: se un piatto selezionato NON è nelle options, lo aggiungo
+                // FIX: se un piatto selezionato NON è nelle options, lo aggiungo
                 for (const meal of ['pranzo', 'cena']) {
                     const mealCourses = nextSelected[meal] ?? {};
                     for (const courseKey of Object.keys(mealCourses)) {
@@ -398,6 +562,78 @@ export default function MenuPiattiFissi() {
         const mealOptions = options[meal]?.[courseKey] ?? [];
         const selectedArr = selectedFoods[meal]?.[courseKey] ?? [];
 
+        // CASO SPECIALE: SECONDO -> 2 select normali + tabella formaggi
+        if (courseKey === 'secondo' && slots === 3) {
+            const food0 = selectedArr[0] ?? null;
+            const food1 = selectedArr[1] ?? null;
+
+            const renderSelect = (idx, food) => (
+                <div key={`${meal}-${courseKey}-${idx}`}>
+                    <SearchableSelect
+                        placeholder="Seleziona un piatto fisso"
+                        value={String(food?.id_food ?? '')}
+                        options={mealOptions.map((f) => ({
+                            value: String(f.id_food),
+                            label: f.name,
+                        }))}
+                        onChange={(idFoodStr) => {
+                            const idFood = Number(idFoodStr);
+
+                            if (
+                                Number.isInteger(idFood) &&
+                                idFood > 0 &&
+                                isDuplicateInMeal(selectedFoods, meal, idFood, {
+                                    meal,
+                                    courseKey,
+                                    idx,
+                                })
+                            ) {
+                                alert(
+                                    'Questo piatto è già stato selezionato per questo pasto.',
+                                );
+                                return;
+                            }
+
+                            const fullFood =
+                                mealOptions.find(
+                                    (f) => Number(f.id_food) === idFood,
+                                ) ?? null;
+
+                            setSelectedFoods((prev) => {
+                                const copy = structuredClone(prev);
+                                copy[meal][courseKey][idx] = fullFood;
+                                return copy;
+                            });
+                        }}
+                        loading={loading}
+                    />
+                    <InfoMacro food={food} />
+                </div>
+            );
+
+            return (
+                <div className="bg-brand-sidebar px-8 py-6">
+                    {renderSelect(0, food0)}
+                    <div className="my-6 h-[2px] w-full bg-[repeating-linear-gradient(to_right,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
+                    {renderSelect(1, food1)}
+
+                    <div className="my-6 h-[2px] w-full bg-[repeating-linear-gradient(to_right,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
+
+                    <div className="text-lg font-semibold">
+                        Formaggi a rotazione
+                    </div>
+                    <CheeseRotationTable meal={meal} />
+
+                    {!cheeseFilled && (
+                        <div className="mt-3 text-brand-textSecondary italic opacity-80">
+                            Seleziona un formaggio per ogni giorno ({meal}).
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // DEFAULT: comportamento normale
         return (
             <div className="bg-brand-sidebar px-8 py-6">
                 {Array.from({ length: slots }).map((_, idx) => {
@@ -414,6 +650,24 @@ export default function MenuPiattiFissi() {
                                 }))}
                                 onChange={(idFoodStr) => {
                                     const idFood = Number(idFoodStr);
+
+                                    // blocco duplicati nello stesso pasto
+                                    if (
+                                        Number.isInteger(idFood) &&
+                                        idFood > 0 &&
+                                        isDuplicateInMeal(
+                                            selectedFoods,
+                                            meal,
+                                            idFood,
+                                            { meal, courseKey, idx },
+                                        )
+                                    ) {
+                                        alert(
+                                            'Questo piatto è già stato selezionato per questo pasto.',
+                                        );
+                                        return;
+                                    }
+
                                     const fullFood =
                                         mealOptions.find(
                                             (f) => Number(f.id_food) === idFood,
