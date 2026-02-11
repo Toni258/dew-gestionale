@@ -54,13 +54,13 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
 
                         const computedDayIndex = weekDayToDayIndex(
                             settimana,
-                            giorno
+                            giorno,
                         );
                         if (computedDayIndex === null) {
                             form.setFieldError('giorno', 'Valore non valido');
                             form.setFieldError(
                                 'settimana',
-                                'Valore non valido'
+                                'Valore non valido',
                             );
                             return;
                         }
@@ -68,18 +68,18 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                         // 1) overlap check (ESCLUDI il menu corrente)
                         const overlapRes = await fetch(
                             `/api/menus/dates-overlap?start_date=${encodeURIComponent(
-                                start_date
+                                start_date,
                             )}&end_date=${encodeURIComponent(
-                                end_date
+                                end_date,
                             )}&excludeName=${encodeURIComponent(
-                                menu.season_type
-                            )}`
+                                menu.season_type,
+                            )}`,
                         );
 
                         if (!overlapRes.ok) {
                             form.setFieldError(
                                 'start_date',
-                                'Impossibile verificare overlap'
+                                'Impossibile verificare overlap',
                             );
                             return;
                         }
@@ -89,11 +89,11 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                         if (overlapData.overlap) {
                             form.setFieldError(
                                 'start_date',
-                                'Intervallo date già in uso'
+                                'Intervallo date già in uso',
                             );
                             form.setFieldError(
                                 'end_date',
-                                `Intervallo già usato nel menù "${overlapData.season_type}"`
+                                `Intervallo già usato nel menù "${overlapData.season_type}"`,
                             );
                             return;
                         }
@@ -155,7 +155,7 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                                             { value: '6', label: '6' },
                                             { value: '7', label: '7' },
                                         ]}
-                                        className="flex-[1] shadow-card" // [&>div>button]:rounded-full
+                                        className="flex-[1]" // [&>div>button]:rounded-full
                                     />
                                 </div>
                                 <div className="flex items-center gap-3 mt-2">
@@ -168,7 +168,7 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                                             { value: '3', label: '3' },
                                             { value: '4', label: '4' },
                                         ]}
-                                        className="flex-[1] shadow-card" // [&>div>button]:rounded-full
+                                        className="flex-[1]" // [&>div>button]:rounded-full
                                     />
                                 </div>
                             </div>

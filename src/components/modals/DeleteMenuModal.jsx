@@ -47,7 +47,7 @@ export default function DeleteMenuModal({ menu, onClose, onConfirm }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="bg-brand-sidebar text-black px-6 py-2 rounded-xl font-semibold"
+                        className="bg-brand-secondary text-white px-6 py-2 rounded-xl font-semibold"
                     >
                         Annulla
                     </button>
