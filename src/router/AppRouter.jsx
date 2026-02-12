@@ -16,7 +16,7 @@ import CreateDish from '../pages/dishes/CreateDish';
 import EditDish from '../pages/dishes/EditDish';
 
 import Report from '../pages/Report';
-import UserManager from '../pages/UserManager';
+import UserManager from '../pages/users/UserManager';
 
 import Test from '../pages/Test';
 
