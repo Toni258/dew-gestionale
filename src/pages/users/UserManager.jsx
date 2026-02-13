@@ -7,13 +7,13 @@ import Form from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
 import Button from '../../components/ui/Button';
 import DeleteUserModal from '../../components/modals/DeleteUserModal';
+import Pagination from '../../components/ui/Pagination';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 export default function UserManager() {
     const [query, setQuery] = useState('');
     const [appliedFilters, setAppliedFilters] = useState({
-        stato: '',
-        tipologia: '',
-        allergeni: [],
+        ruolo: '',
     });
 
     const [showModifyModal, setShowModifyModal] = useState(false);
@@ -36,6 +36,11 @@ export default function UserManager() {
         setAppliedFilters({
             ruolo: values.ruolo || '',
         });
+        setPage(1);
+    };
+
+    const handlePageSizeChange = (e) => {
+        setPageSize(Number(e.target.value));
         setPage(1);
     };
 
@@ -67,7 +72,7 @@ export default function UserManager() {
             setRows(json.data || []);
             setTotal(json.total || 0);
         } catch {
-            setError('Errore nel caricamento piatti.');
+            setError('Errore nel caricamento degli utenti.');
             setRows([]);
             setTotal(0);
         } finally {
@@ -161,48 +166,60 @@ export default function UserManager() {
                             </tr>
                         )}
 
-                        <tr>
-                            <td className="px-4 py-3">
-                                <span>Super user</span>
-                            </td>
-                            <td className="px-4 py-3">
-                                <span>antonio.hlibey@studenti.unimi.it</span>
-                            </td>
-                            <td className="px-4 py-3">
-                                <span>Antonio Hlibey</span>
-                            </td>
-                            <td className="px-4 py-3">
-                                <span>03/02/2026 - 14:32</span>
-                            </td>
-                            <td className="px-4 py-3">
-                                <button
-                                    className="ml-3 text-red-500"
-                                    onClick={() => setShowModifyModal(true)}
-                                >
-                                    ✏
-                                </button>
-                                <button
-                                    className="ml-3 text-red-500"
-                                    onClick={() =>
-                                        setShowPasswordChangeModal(true)
-                                    }
-                                >
-                                    🔑
-                                </button>
-                                {
-                                    //r.status === 'non_attivo' && (
+                        {rows.map((r) => (
+                            <tr key={r.id_caregiver}>
+                                <td className="px-4 py-3">
+                                    <span>{r.role}</span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span>{r.email}</span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span>
+                                        {r.name} {r.surname}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span>
+                                        {formatDateTime(r.acceptance_time)}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <button
+                                        className="text-red-500"
+                                        onClick={() => setShowModifyModal(true)}
+                                    >
+                                        ✏
+                                    </button>
+                                    <button
+                                        className="ml-3 text-red-500"
+                                        onClick={() =>
+                                            setShowPasswordChangeModal(true)
+                                        }
+                                    >
+                                        🔑
+                                    </button>
                                     <button
                                         className="ml-3 text-red-500"
                                         onClick={() => setUserToDelete(r)}
                                     >
                                         🗑
                                     </button>
-                                    //)
-                                }
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
+
+                <Pagination
+                    total={total}
+                    page={page}
+                    totalPages={totalPages}
+                    pageSize={pageSize}
+                    loading={loading}
+                    onPageChange={setPage}
+                    onPageSizeChange={handlePageSizeChange}
+                />
             </div>
 
             {/* MODALE ELIMINA UTENTE */}

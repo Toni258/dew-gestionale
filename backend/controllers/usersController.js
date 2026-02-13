@@ -11,10 +11,6 @@ export async function getFilteredUsers(req, res) {
             pageSize = '30',
         } = req.query;
 
-        let allergeni = req.query.allergeni ?? [];
-        if (!Array.isArray(allergeni)) allergeni = [allergeni];
-        allergeni = allergeni.filter(Boolean);
-
         const pageNum = Math.max(1, parseInt(page, 10) || 1);
         const sizeNum = Math.min(
             100,
@@ -29,70 +25,23 @@ export async function getFilteredUsers(req, res) {
         const params = [];
 
         if (search.trim()) {
-            where += ` AND f.name LIKE ? `;
-            params.push(`%${search.trim()}%`);
+            where += ` AND ( c.name LIKE ? OR c.surname LIKE ?)`;
+
+            const term = `%${search.trim()}%`;
+            params.push(term, term);
         }
 
-        if (tipologia) {
-            where += ` AND f.type = ? `;
-            params.push(tipologia);
+        if (ruolo) {
+            where += ` AND c.role = ? `;
+            params.push(ruolo);
         }
-
-        if (stato === 'sospeso') {
-            where += ` AND susp.id_food IS NOT NULL `;
-        }
-
-        if (stato === 'attivo') {
-            where += `
-                AND susp.id_food IS NULL
-                AND act.id_food IS NOT NULL
-            `;
-        }
-
-        if (stato === 'non_attivo') {
-            where += `
-                AND susp.id_food IS NULL
-                AND act.id_food IS NULL
-            `;
-        }
-
-        for (const a of allergeni) {
-            where += ` AND (f.allergy_notes IS NULL OR f.allergy_notes NOT LIKE ?) `;
-            params.push(`%${a}%`);
-        }
-
-        // ===============================
-        // QUERY BASE CON STATO CALCOLATO
-        // ===============================
-        const baseQuery = `
-            FROM food f
-
-            -- SOSPESI oggi (1 riga per id_food)
-            LEFT JOIN (
-                SELECT DISTINCT id_food
-                FROM food_availability
-                WHERE NOW() BETWEEN valid_from AND valid_to
-            ) susp
-                ON susp.id_food = f.id_food
-
-            -- ATTIVI oggi (1 riga per id_food)
-            LEFT JOIN (
-                SELECT DISTINCT dp.id_food
-                FROM dish_pairing dp
-                JOIN season s
-                    ON s.season_type = dp.season_type
-                AND NOW() BETWEEN s.start_date AND s.end_date
-                WHERE dp.used = 1
-            ) act
-                ON act.id_food = f.id_food
-        `;
 
         // ===============================
         // COUNT
         // ===============================
         const countSql = `
-            SELECT COUNT(DISTINCT f.id_food) AS total
-            ${baseQuery}
+            SELECT COUNT(DISTINCT c.id_caregiver) AS total
+            FROM caregiver c
             ${where}
         `;
 
@@ -103,27 +52,19 @@ export async function getFilteredUsers(req, res) {
         // DATA
         // ===============================
         const dataSql = `
-            SELECT
-                f.id_food,
-                f.name,
-                f.type,
-                f.grammage_tot,
-                f.kcal_tot,
-                f.proteins,
-                f.carbs,
-                f.fats,
-                f.allergy_notes,
+            SELECT 
+                c.id_caregiver,
+                c.email,
+                c.name,
+                c.surname,
+                c.role,
+                c.acceptance_time
+            
+            FROM caregiver c
 
-                CASE
-                    WHEN susp.id_food IS NOT NULL THEN 'sospeso'
-                    WHEN act.id_food IS NOT NULL THEN 'attivo'
-                    ELSE 'non_attivo'
-                END AS status
-
-            ${baseQuery}
             ${where}
 
-            ORDER BY f.name ASC
+            ORDER BY c.id_caregiver ASC
             LIMIT ? OFFSET ?
         `;
 

@@ -1,11 +1,12 @@
 import { memo } from 'react';
 
 import { NavLink } from 'react-router-dom';
-import PageButton from '../ui/PageButton';
 import { extractAllergenEmojis } from '../../utils/extractAllergens';
 import { formatNumber } from '../../utils/format';
 import { capitalize } from '../../utils/capitalize';
 import StatusDot from './StatusDot';
+import PageButton from '../ui/PageButton';
+import Pagination from '../ui/Pagination';
 
 export default memo(function DishesTable({
     rows,
@@ -96,7 +97,7 @@ export default memo(function DishesTable({
                                 <td className="px-4 py-3">
                                     <div className="flex gap-2 flex-wrap">
                                         {extractAllergenEmojis(
-                                            r.allergy_notes
+                                            r.allergy_notes,
                                         ).map((a) => (
                                             <span
                                                 key={a.key}
@@ -133,128 +134,15 @@ export default memo(function DishesTable({
             </div>
 
             {/* PAGINAZIONE */}
-            <div className="px-4 py-3 border-t border-brand-divider grid grid-cols-3 items-center">
-                {/* RISULTATI */}
-                <div className="text-sm text-brand-textSecondary">
-                    Risultati:{' '}
-                    <span className="font-semibold text-brand-text">
-                        {total}
-                    </span>
-                </div>
-
-                {/* CAROSELLO PAGINE */}
-                <div className="flex justify-center items-center gap-2">
-                    {/* PREV */}
-                    <button
-                        type="button"
-                        disabled={page === 1 || loading}
-                        onClick={() => onPageChange(page - 1)}
-                        className="
-                            p-2 rounded-full border border-brand-divider
-                            disabled:opacity-40 disabled:cursor-not-allowed
-                            hover:bg-black/5 transition
-                        "
-                        aria-label="Pagina precedente"
-                    >
-                        <img
-                            src="/Chevron sinistra nero.png"
-                            draggable="false"
-                            alt="Precedente"
-                            className="w-5 h-5 select-none"
-                        />
-                    </button>
-
-                    {/* PAGINA 1 */}
-                    <PageButton
-                        pageNum={1}
-                        current={page}
-                        onClick={onPageChange}
-                    />
-
-                    {/* ... prima */}
-                    {page > 3 && (
-                        <span className="px-2 text-brand-textSecondary select-none">
-                            …
-                        </span>
-                    )}
-
-                    {/* PAGINE CENTRALI */}
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                        .filter(
-                            (p) =>
-                                p !== 1 &&
-                                p !== totalPages &&
-                                Math.abs(p - page) <= 1
-                        )
-                        .map((p) => (
-                            <PageButton
-                                key={p}
-                                pageNum={p}
-                                current={page}
-                                onClick={onPageChange}
-                            />
-                        ))}
-
-                    {/* ... dopo */}
-                    {page < totalPages - 2 && (
-                        <span className="px-2 text-brand-textSecondary select-none">
-                            …
-                        </span>
-                    )}
-
-                    {/* ULTIMA PAGINA */}
-                    {totalPages > 1 && (
-                        <PageButton
-                            pageNum={totalPages}
-                            current={page}
-                            onClick={onPageChange}
-                        />
-                    )}
-
-                    {/* NEXT */}
-                    <button
-                        type="button"
-                        disabled={page === totalPages || loading}
-                        onClick={() => onPageChange(page + 1)}
-                        className="
-                                p-2 rounded-full border border-brand-divider
-                                disabled:opacity-40 disabled:cursor-not-allowed
-                                hover:bg-black/5 transition
-                            "
-                        aria-label="Pagina successiva"
-                    >
-                        <img
-                            src="/Chevron destra nero.png"
-                            draggable="false"
-                            alt="Successiva"
-                            className="w-5 h-5 select-none"
-                        />
-                    </button>
-                </div>
-
-                {/* PAGINE TOTALI */}
-                <div className="flex justify-end items-center gap-2 text-sm">
-                    <span className="text-brand-textSecondary">Mostra</span>
-
-                    <select
-                        value={pageSize}
-                        onChange={onPageSizeChange}
-                        className="
-                                border border-brand-divider
-                                rounded-full px-3 py-1
-                                bg-white text-brand-text
-                                focus:outline-none focus:ring-2 focus:ring-brand-primary
-                                cursor-pointer
-                            "
-                    >
-                        {[10, 15, 20, 30, 40, 50].map((n) => (
-                            <option key={n} value={n}>
-                                {n}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
+            <Pagination
+                total={total}
+                page={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                loading={loading}
+                onPageChange={onPageChange}
+                onPageSizeChange={onPageSizeChange}
+            />
         </div>
     );
 });
