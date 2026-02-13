@@ -32,7 +32,6 @@ export default function CreateDish() {
                     carbohydrates: '',
                     fats: '',
                     allergy_notes: [],
-                    // campi sospensione NON servono in create
                 }}
                 validate={{
                     name: (v) =>

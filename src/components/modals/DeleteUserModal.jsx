@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 
-export default function DeleteUserModal({ user, onClose, onConfirm }) {
+export default function DeleteUserModal({ show, user, onClose, onConfirm }) {
     const [confirmText, setConfirmText] = useState('');
 
     useEffect(() => {
         if (!user) setConfirmText('');
     }, [user]);
 
-    if (!user) return null;
+    if (!show || !user) return null;
 
     const isValid = confirmText === 'ELIMINA';
 

@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button';
 import DeleteUserModal from '../../components/modals/DeleteUserModal';
 import Pagination from '../../components/ui/Pagination';
 import { formatDateTime } from '../../utils/formatDateTime';
+import ModifyUserPasswordModal from '../../components/modals/ModifyUserPasswordModal';
 
 export default function UserManager() {
     const [query, setQuery] = useState('');
@@ -19,7 +20,8 @@ export default function UserManager() {
     const [showModifyModal, setShowModifyModal] = useState(false);
     const [showPasswordChangeModal, setShowPasswordChangeModal] =
         useState(false);
-    const [userToDelete, setUserToDelete] = useState(null);
+    const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+    const [userSelected, setUserSelected] = useState(null);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -193,15 +195,27 @@ export default function UserManager() {
                                     </button>
                                     <button
                                         className="ml-3 text-red-500"
-                                        onClick={() =>
-                                            setShowPasswordChangeModal(true)
-                                        }
+                                        onClick={() => {
+                                            setUserSelected(r);
+                                            setShowPasswordChangeModal(true);
+                                            console.log(
+                                                'Reimposta password: ',
+                                                showPasswordChangeModal,
+                                            );
+                                        }}
                                     >
                                         🔑
                                     </button>
                                     <button
                                         className="ml-3 text-red-500"
-                                        onClick={() => setUserToDelete(r)}
+                                        onClick={() => {
+                                            setUserSelected(r);
+                                            setShowDeleteUserModal(true);
+                                            console.log(
+                                                'Cancella utente: ',
+                                                showDeleteUserModal,
+                                            );
+                                        }}
                                     >
                                         🗑
                                     </button>
@@ -222,10 +236,41 @@ export default function UserManager() {
                 />
             </div>
 
+            {/* MODALE REIMPOSTA PASSWORD UTENTE */}
+            <ModifyUserPasswordModal
+                show={showPasswordChangeModal}
+                user={userSelected}
+                onClose={() => {
+                    setUserSelected(null);
+                    setShowPasswordChangeModal(false);
+                }}
+                onConfirm={async (user) => {
+                    try {
+                        await modifyUserPassword(user.id_caregiver); // Chiamata ancora da implementare
+                        console.log(
+                            'Reimposta password per user',
+                            user.id_caregiver,
+                            user.name,
+                            user.surname,
+                        );
+                        alert('Password reimpostata correttamente');
+                        setUserSelected(null);
+                        setShowPasswordChangeModal(false);
+                        await fetchUsers();
+                    } catch (e) {
+                        alert(e.message);
+                    }
+                }}
+            />
+
             {/* MODALE ELIMINA UTENTE */}
             <DeleteUserModal
-                user={userToDelete}
-                onClose={() => setUserToDelete(null)}
+                show={showDeleteUserModal}
+                user={userSelected}
+                onClose={() => {
+                    setUserSelected(null);
+                    setShowDeleteUserModal(false);
+                }}
                 onConfirm={async (user) => {
                     try {
                         await deleteUser(user.id_caregiver); // Chiamata ancora da implementare
@@ -236,8 +281,9 @@ export default function UserManager() {
                             user.surname,
                         );
                         alert('Utente eliminato correttamente');
-                        setUserToDelete(null);
-                        await fetchUsers(); // Chiamata ancora da implementare
+                        setUserSelected(null);
+                        setShowDeleteUserModal(false);
+                        await fetchUsers();
                     } catch (e) {
                         alert(e.message);
                     }
