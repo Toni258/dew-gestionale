@@ -1,4 +1,4 @@
-export default function Modal({ children, onClose }) {
+export default function Modal({ children, onClose, contentClassName = '' }) {
     return (
         <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm 
@@ -6,7 +6,7 @@ export default function Modal({ children, onClose }) {
             onClick={onClose}
         >
             <div
-                className="modal-animation"
+                className={`modal-animation ${contentClassName}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {children}

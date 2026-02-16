@@ -6,10 +6,13 @@ import CustomSelect from '../../components/ui/CustomSelect';
 import Form from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
 import Button from '../../components/ui/Button';
-import DeleteUserModal from '../../components/modals/DeleteUserModal';
 import Pagination from '../../components/ui/Pagination';
+
 import { formatDateTime } from '../../utils/formatDateTime';
+
+import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import ModifyUserPasswordModal from '../../components/modals/ModifyUserPasswordModal';
+import DeleteUserModal from '../../components/modals/DeleteUserModal';
 
 export default function UserManager() {
     const [query, setQuery] = useState('');
@@ -17,7 +20,8 @@ export default function UserManager() {
         ruolo: '',
     });
 
-    const [showModifyModal, setShowModifyModal] = useState(false);
+    const [showModifyUserInfoModal, setShowModifyUserInfoModal] =
+        useState(false);
     const [showPasswordChangeModal, setShowPasswordChangeModal] =
         useState(false);
     const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
@@ -189,7 +193,10 @@ export default function UserManager() {
                                 <td className="px-4 py-3">
                                     <button
                                         className="text-red-500"
-                                        onClick={() => setShowModifyModal(true)}
+                                        onClick={() => {
+                                            setUserSelected(r);
+                                            setShowModifyUserInfoModal(true);
+                                        }}
                                     >
                                         ✏
                                     </button>
@@ -198,10 +205,6 @@ export default function UserManager() {
                                         onClick={() => {
                                             setUserSelected(r);
                                             setShowPasswordChangeModal(true);
-                                            console.log(
-                                                'Reimposta password: ',
-                                                showPasswordChangeModal,
-                                            );
                                         }}
                                     >
                                         🔑
@@ -211,10 +214,6 @@ export default function UserManager() {
                                         onClick={() => {
                                             setUserSelected(r);
                                             setShowDeleteUserModal(true);
-                                            console.log(
-                                                'Cancella utente: ',
-                                                showDeleteUserModal,
-                                            );
                                         }}
                                     >
                                         🗑
@@ -236,6 +235,30 @@ export default function UserManager() {
                 />
             </div>
 
+            {/* MODALE MODIFICA INFO UTENTE */}
+            <ModifyUserInfoModal
+                show={showModifyUserInfoModal}
+                user={userSelected}
+                onClose={() => {
+                    setUserSelected(null);
+                    setShowModifyUserInfoModal(false);
+                }}
+                onConfirm={async (payload) => {
+                    try {
+                        console.log('Cambio info utente', payload);
+
+                        // await modifyUserInfo(userSelected?.id_caregiver, values); // Chiamata ancora da implementare
+                        // alert('Informazioni reimpostate correttamente');
+
+                        setUserSelected(null);
+                        setShowModifyUserInfoModal(false);
+                        await fetchUsers();
+                    } catch (e) {
+                        alert(e.message);
+                    }
+                }}
+            />
+
             {/* MODALE REIMPOSTA PASSWORD UTENTE */}
             <ModifyUserPasswordModal
                 show={showPasswordChangeModal}
@@ -244,16 +267,17 @@ export default function UserManager() {
                     setUserSelected(null);
                     setShowPasswordChangeModal(false);
                 }}
-                onConfirm={async (user) => {
+                onConfirm={async (values) => {
                     try {
-                        await modifyUserPassword(user.id_caregiver); // Chiamata ancora da implementare
-                        console.log(
-                            'Reimposta password per user',
-                            user.id_caregiver,
-                            user.name,
-                            user.surname,
-                        );
-                        alert('Password reimpostata correttamente');
+                        console.log('Cambio password', {
+                            id_caregiver: userSelected?.id_caregiver,
+                            email: userSelected?.email,
+                            new_password: values.new_password,
+                        });
+
+                        // await modifyUserPassword(userSelected?.id_caregiver); // Chiamata ancora da implementare
+                        // alert('Password reimpostata correttamente');
+
                         setUserSelected(null);
                         setShowPasswordChangeModal(false);
                         await fetchUsers();

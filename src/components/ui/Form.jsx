@@ -36,9 +36,9 @@ export default function Form({
     // VALIDAZIONI
     // ------------------------------------------------------------
 
-    const runSyncValidation = (name, value) => {
+    const runSyncValidation = (name, value, allValues = values) => {
         if (!validate[name]) return null;
-        return validate[name](value);
+        return validate[name](value, allValues);
     };
 
     const runAsyncValidationForField = async (name, value) => {
@@ -58,7 +58,7 @@ export default function Form({
             return null;
         }
 
-        // 🔐 TOKEN
+        // TOKEN
         const token = (asyncValidationToken.current[name] ?? 0) + 1;
         asyncValidationToken.current[name] = token;
 
@@ -67,7 +67,7 @@ export default function Form({
 
         const result = await asyncValidate[name](value);
 
-        // ❌ risposta vecchia → ignora
+        // Risposta vecchia → ignora
         if (asyncValidationToken.current[name] !== token) {
             return null;
         }
@@ -117,17 +117,19 @@ export default function Form({
         name,
         value: values[name] ?? '',
         onChange: (e) => setFieldValue(name, e.target.value),
-        onBlur: async () => {
+        onBlur: async (e) => {
             setTouched((prev) => ({ ...prev, [name]: true }));
 
             if (validateOnBlur) {
-                const current = values[name];
-                const syncErr = runSyncValidation(name, current);
+                const current = e?.target?.value ?? values[name];
+                const snapshot = { ...values, [name]: current };
+
+                const syncErr = runSyncValidation(name, current, snapshot);
                 setErrors((prev) => ({ ...prev, [name]: syncErr }));
 
                 const asyncErr = await runAsyncValidationForField(
                     name,
-                    current
+                    current,
                 );
                 setErrors((prev) => ({
                     ...prev,
@@ -160,7 +162,8 @@ export default function Form({
         // 1) Validazione sync
         let syncErrors = {};
         for (const field in validate) {
-            const err = validate[field](values[field]);
+            const err = validate[field](values[field], values);
+
             if (err) syncErrors[field] = err;
         }
 

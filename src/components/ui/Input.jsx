@@ -1,5 +1,5 @@
 import { useFormContext } from './Form';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function Input({
     name,
@@ -9,9 +9,44 @@ export default function Input({
 }) {
     const form = useFormContext();
 
+    // Stato toggle password (solo per type=password)
+    const isPasswordField = props.type === 'password';
+    const [showPassword, setShowPassword] = useState(false);
+
     // Nessun form: input standalone
     if (!form || !name) {
-        return <input className={`input-default ${className}`} {...props} />;
+        const standaloneType = isPasswordField
+            ? showPassword
+                ? 'text'
+                : 'password'
+            : props.type;
+
+        return (
+            <div className={`flex flex-col ${className}`}>
+                <div className="relative h-[38px]">
+                    <input
+                        {...props}
+                        type={standaloneType}
+                        className={`input-default w-full pr-10 h-full border border-brand-divider`}
+                    />
+
+                    {isPasswordField && (
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-textSecondary hover:text-brand-text transition"
+                            aria-label={
+                                showPassword
+                                    ? 'Nascondi password'
+                                    : 'Mostra password'
+                            }
+                        >
+                            {showPassword ? '🙈' : '👁️'}
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
     }
 
     const field = form.registerField(name);
@@ -34,26 +69,39 @@ export default function Input({
         value &&
         value.length >= 3;
 
-    const [showTooltip, setShowTooltip] = useState(false);
+    // Decidiamo quante "icone" ci sono a destra per dare padding giusto
+    const rightIconsCount = useMemo(() => {
+        let c = 0;
+        if (shouldShowSpinner || shouldShowSuccess) c += 1;
+        if (isPasswordField) c += 1;
+        return c;
+    }, [shouldShowSpinner, shouldShowSuccess, isPasswordField]);
+
+    const rightPaddingClass =
+        rightIconsCount >= 2
+            ? 'pr-16'
+            : rightIconsCount === 1
+              ? 'pr-10'
+              : 'pr-3';
 
     // --- handler combinati ---
     const handleFocus = (e) => {
-        // Se vuoi mostrare il tooltip solo in caso di errore
-        if (error) setShowTooltip(true);
-        // se in futuro passi onFocus da props, puoi chiamarlo qui
         if (props.onFocus) props.onFocus(e);
     };
 
     const handleBlur = async (e) => {
-        // IMPORTANTISSIMO: chiamare l'onBlur del form
         if (field.onBlur) {
             await field.onBlur(e);
         }
-
-        setShowTooltip(false);
-
         if (props.onBlur) props.onBlur(e);
     };
+
+    // Tipo finale
+    const inputType = isPasswordField
+        ? showPassword
+            ? 'text'
+            : 'password'
+        : props.type;
 
     return (
         <div className={`flex flex-col ${className}`}>
@@ -61,25 +109,53 @@ export default function Input({
                 <input
                     {...field}
                     {...props}
+                    type={inputType}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
-                    className={`input-default w-full pr-10 h-full ${
+                    className={`input-default w-full h-full ${rightPaddingClass} ${
                         error ? 'border-brand-error' : 'border-brand-divider'
                     }`}
                 />
 
-                {/* Spinner async */}
-                {shouldShowSpinner && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <span className="block w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                {/* Spinner async / Success: lo mettiamo "più a sinistra" se c'è anche l'occhio */}
+                {(shouldShowSpinner || shouldShowSuccess) && (
+                    <div
+                        className={`absolute top-1/2 -translate-y-1/2 ${
+                            isPasswordField ? 'right-10' : 'right-2'
+                        }`}
+                    >
+                        {shouldShowSpinner && (
+                            <span className="block w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                        )}
+
+                        {shouldShowSuccess && (
+                            <span className="text-green-600 text-lg">✔</span>
+                        )}
                     </div>
                 )}
 
-                {/* Check di successo */}
-                {shouldShowSuccess && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 text-lg pointer-events-none">
-                        ✔
-                    </div>
+                {/* Toggle visibilità password */}
+                {isPasswordField && (
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-textSecondary hover:text-brand-text transition"
+                        aria-label={
+                            showPassword
+                                ? 'Nascondi password'
+                                : 'Mostra password'
+                        }
+                    >
+                        <img
+                            src={
+                                showPassword
+                                    ? '/eye open.png'
+                                    : '/eye closed.png'
+                            }
+                            className="w-5 h-5"
+                            alt=""
+                        />
+                    </button>
                 )}
             </div>
         </div>

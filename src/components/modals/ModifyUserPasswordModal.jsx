@@ -4,6 +4,7 @@ import Form from '../ui/Form';
 import FormGroup from '../ui/FormGroup';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import AlertBox from '../ui/AlertBox';
 
 export default function ModifyUserPasswordModal({
     show,
@@ -14,19 +15,23 @@ export default function ModifyUserPasswordModal({
     if (!show || !user) return null;
 
     return (
-        <Modal onClose={onClose}>
-            <div className="bg-white rounded-xl p-8 w-[500px] flex flex-col items-center text-center">
-                <span className="text-lg font-bold">
-                    <span className="text-brand-text text-xl font-semibold">
-                        Reimposta password per l'utente:
-                    </span>{' '}
-                    <span className="text-brand-primary">
-                        {user.name} {user.surname}
+        <Modal onClose={onClose} contentClassName="w-[760px] max-w-[90vw]">
+            <div className="bg-white rounded-xl p-8 min-w-[500px] flex flex-col">
+                <div className="flex flex-col gap-1">
+                    <span className="text-brand-text text-2xl font-semibold">
+                        Reimposta password
                     </span>
-                </span>
+
+                    <span className="text-lg font-semibold">
+                        {'Utente: '}
+                        <span className="text-brand-primary">
+                            {user.name} {user.surname}
+                        </span>
+                    </span>
+                </div>
 
                 <Form
-                    className="mt-6 w-full flex gap-8"
+                    className="mt-6"
                     initialValues={{
                         new_password: '',
                         confirm_new_password: '',
@@ -35,8 +40,8 @@ export default function ModifyUserPasswordModal({
                         new_password: (v) =>
                             !v
                                 ? 'Obbligatorio'
-                                : v.length < 3
-                                  ? 'Troppo corto'
+                                : v.length < 8
+                                  ? 'Minimo 8 caratteri'
                                   : null,
                         confirm_new_password: (v, values) => {
                             if (!v) return 'Obbligatorio';
@@ -47,65 +52,65 @@ export default function ModifyUserPasswordModal({
                     }}
                     validateOnBlur
                     validateOnSubmit
-                    onSubmit={async (values) => {
-                        const formData = new FormData();
-
-                        const res = await fetch('/api/dishes', {
-                            // Chiamata da implementare
-                            method: 'POST',
-                            body: formData,
-                        });
-
-                        if (!res.ok) {
-                            alert('Errore modifica password utente');
-                            return;
-                        }
-
-                        alert('Password modificata correttamente');
-                        onClose();
-                    }}
+                    onSubmit={onConfirm}
                 >
-                    <FormGroup label="Nuova password" name="new_password">
-                        <Input type="password" className="w-full" />
-                    </FormGroup>
-                    <FormGroup
-                        label="Conferma password"
-                        name="confirm_new_password"
-                    >
-                        <Input type="password" className="w-full" />
-                    </FormGroup>
+                    <div className="flex flex-row justify-between w-full gap-12">
+                        <FormGroup
+                            label="Nuova password"
+                            name="new_password"
+                            required
+                        >
+                            <Input
+                                name="new_password"
+                                type="password"
+                                className="w-[320px]"
+                            />
+                        </FormGroup>
+                        <FormGroup
+                            label="Conferma password"
+                            name="confirm_new_password"
+                            required
+                        >
+                            <Input
+                                name="confirm_new_password"
+                                type="password"
+                                className="w-[320px]"
+                            />
+                        </FormGroup>
+                    </div>
+
+                    <div className="w-full flex justify-center mt-6">
+                        <AlertBox
+                            variant="info"
+                            title="Nota importante"
+                            className="w-[92%]"
+                        >
+                            L'utente riceverà un'email con le credenziali di
+                            accesso temporanee. Sarà richiesto di modificare la
+                            password al primo accesso.
+                        </AlertBox>
+                    </div>
+
+                    <div className="flex mt-8 gap-6">
+                        <Button
+                            type="submit"
+                            size="md"
+                            variant="primary"
+                            className="rounded-lg"
+                        >
+                            Reimposta password
+                        </Button>
+                        <Button
+                            type="button"
+                            size="md"
+                            variant="secondary"
+                            className="rounded-lg"
+                            onClick={onClose}
+                        >
+                            Annulla
+                        </Button>
+                    </div>
                 </Form>
-
-                {/*
-                
-                <div className="flex justify-center gap-8">
-                    <button
-                        type="button"
-                        disabled={!isValid}
-                        onClick={() => onConfirm(user)}
-                        className={`
-                            px-6 py-2 rounded-xl font-semibold text-white
-                            transition
-                            ${
-                                isValid
-                                    ? 'bg-red-600 hover:opacity-80'
-                                    : 'bg-red-300 cursor-not-allowed'
-                            }
-                        `}
-                    >
-                        Reimposta password
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="bg-brand-secondary text-white px-6 py-2 rounded-xl font-semibold"
-                    >
-                        Annulla
-                    </button>
-                </div>
-                
-                */}
             </div>
         </Modal>
     );
