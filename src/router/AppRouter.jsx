@@ -17,6 +17,7 @@ import EditDish from '../pages/dishes/EditDish';
 
 import Report from '../pages/Report';
 import UserManager from '../pages/users/UserManager';
+import CreateUser from '../pages/users/CreateUser';
 
 import Test from '../pages/Test';
 
@@ -48,6 +49,7 @@ export default function AppRouter() {
 
                 <Route path="/statistics" element={<Report />} />
                 <Route path="/user-manager" element={<UserManager />} />
+                <Route path="/user-manager/create" element={<CreateUser />} />
 
                 <Route path="/test" element={<Test />} />
             </Routes>

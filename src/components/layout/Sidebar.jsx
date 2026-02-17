@@ -47,7 +47,21 @@ export default function Sidebar() {
 
             {/* SEZIONE GESTIONE UTENTE */}
             <SidebarSection title="Gestione Utenti">
-                <SidebarItem to="/user-manager" label="Elenco utenti" />
+                <SidebarItem
+                    to="/user-manager"
+                    label="Elenco utenti"
+                    isActiveOverride={(pathname) =>
+                        pathname.startsWith('/user-manager') &&
+                        !pathname.startsWith('/user-manager/create')
+                    }
+                />
+                <SidebarItem
+                    to="/user-manager/create"
+                    label="Crea nuovo utente"
+                    isActiveOverride={(pathname) =>
+                        pathname === '/user-manager/create'
+                    }
+                />
             </SidebarSection>
 
             {/* ---- LOGOUT IN FONDO ---- */}
