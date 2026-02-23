@@ -9,6 +9,7 @@ async function safeJson(res) {
 async function requestJson(url, { method = 'GET', body, headers } = {}) {
     const res = await fetch(url, {
         method,
+        credentials: 'include', // Per inviare cookie di sessione
         headers: {
             ...(body ? { 'Content-Type': 'application/json' } : {}),
             ...(headers ?? {}),
@@ -44,7 +45,11 @@ export function putJson(url, body, options) {
 }
 
 export async function delJson(url, options) {
-    const res = await fetch(url, { method: 'DELETE', ...(options ?? {}) });
+    const res = await fetch(url, {
+        method: 'DELETE',
+        credentials: 'include',
+        ...(options ?? {}),
+    });
 
     if (!res.ok) {
         const data = await safeJson(res);

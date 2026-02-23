@@ -1,4 +1,10 @@
-export default function Header({ title, username }) {
+import { useAuth } from '../../context/AuthContext';
+
+export default function Header({ title }) {
+    const { user } = useAuth();
+
+    const username = user ? `${user.name} ${user.surname}` : '';
+
     return (
         <header
             className="

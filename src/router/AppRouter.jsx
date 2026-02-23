@@ -16,42 +16,62 @@ import CreateDish from '../pages/dishes/CreateDish';
 import EditDish from '../pages/dishes/EditDish';
 
 import Report from '../pages/Report';
-import UserManager from '../pages/users/UserManager';
+import UserManagerGestionale from '../pages/users/UserManagerGestionale.jsx';
+import UserManagerMobileApp from '../pages/users/UserManagerMobileApp';
 import CreateUser from '../pages/users/CreateUser';
-
 import Test from '../pages/Test';
+
+import ProtectedRoute from './ProtectedRoute';
 
 export default function AppRouter() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                {/* PUBLIC */}
+                <Route path="/login" element={<Login />} />
 
-                {/* Menu routes */}
-                <Route path="/menu" element={<MenuList />} />
-                <Route path="/menu/create" element={<CreateMenu />} />
-                <Route path="/menu/edit/:seasonType" element={<EditMenu />} />
-                <Route path="/menu/history" element={<MenuHistory />} />
-                <Route
-                    path="/menu/edit/:seasonType/meal/:dayIndex/:mealType"
-                    element={<EditMenuMeal />}
-                />
-                <Route
-                    path="/menu/edit/:seasonType/piatti_fissi"
-                    element={<MenuPiattiFissi />}
-                />
+                {/* PRIVATE */}
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
 
-                {/* Dishes routes */}
-                <Route path="/dishes" element={<DishesList />} />
-                <Route path="/dishes/create" element={<CreateDish />} />
-                <Route path="/dishes/edit/:dishId" element={<EditDish />} />
+                    {/* Menu routes */}
+                    <Route path="/menu" element={<MenuList />} />
+                    <Route path="/menu/create" element={<CreateMenu />} />
+                    <Route
+                        path="/menu/edit/:seasonType"
+                        element={<EditMenu />}
+                    />
+                    <Route path="/menu/history" element={<MenuHistory />} />
+                    <Route
+                        path="/menu/edit/:seasonType/meal/:dayIndex/:mealType"
+                        element={<EditMenuMeal />}
+                    />
+                    <Route
+                        path="/menu/edit/:seasonType/piatti_fissi"
+                        element={<MenuPiattiFissi />}
+                    />
 
-                <Route path="/statistics" element={<Report />} />
-                <Route path="/user-manager" element={<UserManager />} />
-                <Route path="/user-manager/create" element={<CreateUser />} />
+                    {/* Dishes routes */}
+                    <Route path="/dishes" element={<DishesList />} />
+                    <Route path="/dishes/create" element={<CreateDish />} />
+                    <Route path="/dishes/edit/:dishId" element={<EditDish />} />
 
-                <Route path="/test" element={<Test />} />
+                    <Route path="/statistics" element={<Report />} />
+                    <Route
+                        path="/user-manager/mobile"
+                        element={<UserManagerMobileApp />}
+                    />
+                    <Route
+                        path="/user-manager/gestionale"
+                        element={<UserManagerGestionale />}
+                    />
+                    <Route
+                        path="/user-manager/create"
+                        element={<CreateUser />}
+                    />
+
+                    <Route path="/test" element={<Test />} />
+                </Route>
             </Routes>
         </BrowserRouter>
     );

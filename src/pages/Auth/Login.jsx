@@ -1,35 +1,66 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import Form, { useFormContext } from '../../components/ui/Form';
+import FormGroup from '../../components/ui/FormGroup';
 import Input from '../../components/ui/Input';
+
 import ForgotPasswordModal from './ForgotPasswordModal';
 import Button from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
 import Card from '../../components/ui/Card';
+import AlertBox from '../../components/ui/AlertBox';
+
+import { useAuth } from '../../context/AuthContext';
+
+// Bottone submit che legge lo stato del form (submitting + values)
+function SubmitButton() {
+    const form = useFormContext();
+    const email = (form?.values?.email ?? '').trim();
+    const password = form?.values?.password ?? '';
+
+    return (
+        <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            className="w-[85%]"
+            disabled={form?.submitting || !email || !password}
+        >
+            {form?.submitting ? 'Accesso...' : 'Accedi'}
+        </Button>
+    );
+}
 
 export default function Login() {
+    const location = useLocation();
+    const reason = location.state?.reason;
+    const from = location.state?.from;
+
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [animateOut, setAnimateOut] = useState(false);
+    const [error, setError] = useState('');
 
-    // Passaggio LOGIN → MODAL
     function openForgotPassword() {
         setAnimateOut(true);
         setTimeout(() => {
-            setShowForgot(true);
+            setShowForgotPassword(true);
             setAnimateOut(false);
-        }, 200); // durata della fade-out
+        }, 100);
     }
 
-    // Passaggio MODAL → LOGIN
     function closeForgotPassword() {
         setAnimateOut(true);
         setTimeout(() => {
-            setShowForgot(false);
+            setShowForgotPassword(false);
             setAnimateOut(false);
-        }, 200);
+        }, 100);
     }
 
     return (
         <div className="bg-brand-background h-screen flex items-center justify-center">
-            {/* POPUP LOGIN */}
             {!showForgotPassword && (
                 <Card
                     className={`flex flex-col items-center ${
@@ -48,39 +79,93 @@ export default function Login() {
                         </h1>
                     </div>
 
+                    {reason === 'auth_required' && (
+                        <div className="w-[85%] mt-6">
+                            <AlertBox
+                                variant="warning"
+                                title="Accesso richiesto"
+                            >
+                                Devi effettuare l&apos;accesso per visualizzare
+                                quella pagina.
+                            </AlertBox>
+                        </div>
+                    )}
+
                     {/* FORM */}
-                    <Input
-                        placeholder="Inserisci la tua email"
-                        className="mt-10 mb-2 w-[85%]"
-                        type="email"
-                    />
-                    <Input
-                        placeholder="Inserisci la tua password"
-                        className="mt-2 mb-8 w-[85%]"
-                        type="password"
-                    />
+                    <Form
+                        className="w-full flex flex-col items-center"
+                        initialValues={{ email: '', password: '' }}
+                        validate={{
+                            email: (v) =>
+                                !v
+                                    ? 'Obbligatorio'
+                                    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+                                      ? 'Email non valida'
+                                      : null,
+                            password: (v) => (!v ? 'Obbligatorio' : null),
+                        }}
+                        validateOnBlur
+                        validateOnSubmit
+                        onSubmit={async (values) => {
+                            setError('');
 
-                    {/* Link: password dimenticata */}
-                    <div className="w-[85%] flex justify-end mb-2">
-                        <button
-                            className="text-brand-textSecondary text-sm hover:underline"
-                            onClick={() => setShowForgotPassword(true)}
-                        >
-                            Password dimenticata?
-                        </button>
-                    </div>
+                            try {
+                                await login(values.email, values.password);
+                                navigate(from || '/dashboard', {
+                                    replace: true,
+                                });
+                            } catch (e) {
+                                setError(e.message || 'Errore login');
+                                // opzionale: per far vedere l'errore subito anche se non hai "toccato" i campi
+                            }
+                        }}
+                    >
+                        <div className="w-[85%] mt-10 mb-2">
+                            <FormGroup name="email">
+                                <Input
+                                    name="email"
+                                    placeholder="Inserisci la tua email"
+                                    type="email"
+                                    className="w-full"
+                                />
+                            </FormGroup>
+                        </div>
 
-                    <Button variant="primary" size="md" className="w-[85%]">
-                        Accedi
-                    </Button>
+                        <div className="w-[85%] mt-2 mb-2">
+                            <FormGroup name="password">
+                                <Input
+                                    name="password"
+                                    placeholder="Inserisci la tua password"
+                                    type="password"
+                                    className="w-full"
+                                />
+                            </FormGroup>
+                        </div>
+
+                        {error && (
+                            <div className="w-[85%] text-sm text-brand-error mb-3">
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Link: password dimenticata */}
+                        <div className="w-[85%] flex justify-end mb-2">
+                            <button
+                                type="button"
+                                className="text-brand-textSecondary text-sm hover:underline"
+                                onClick={openForgotPassword}
+                            >
+                                Password dimenticata?
+                            </button>
+                        </div>
+
+                        <SubmitButton />
+                    </Form>
                 </Card>
             )}
 
-            {/* MODALE RECUPERO PASSWORD */}
             {showForgotPassword && (
-                <ForgotPasswordModal
-                    onClose={() => setShowForgotPassword(false)}
-                />
+                <ForgotPasswordModal onClose={closeForgotPassword} />
             )}
         </div>
     );

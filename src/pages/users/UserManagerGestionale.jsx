@@ -14,7 +14,7 @@ import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import ModifyUserPasswordModal from '../../components/modals/ModifyUserPasswordModal';
 import DeleteUserModal from '../../components/modals/DeleteUserModal';
 
-export default function UserManager() {
+export default function UserManagerGestionale() {
     const [query, setQuery] = useState('');
     const [appliedFilters, setAppliedFilters] = useState({
         ruolo: '',
@@ -36,6 +36,12 @@ export default function UserManager() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
+
+    const STATUS_LABELS = {
+        active: 'Attivo',
+        suspended: 'Sospeso',
+        must_change_password: 'Password da cambiare',
+    };
 
     // Applica filtri: li “blocchi” e resetti pagina a 1
     const handleFilters = (values) => {
@@ -71,7 +77,7 @@ export default function UserManager() {
             qs.set('page', String(requestParams.page));
             qs.set('pageSize', String(requestParams.pageSize));
 
-            const res = await fetch(`/api/users?${qs.toString()}`);
+            const res = await fetch(`/api/users/gestionale?${qs.toString()}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             const json = await res.json();
@@ -93,7 +99,9 @@ export default function UserManager() {
 
     return (
         <AppLayout title="GESTIONE UTENTI" username="Antonio">
-            <h1 className="text-3xl font-semibold">Elenco utenti</h1>
+            <h1 className="text-3xl font-semibold">
+                Elenco utenti del gestionale
+            </h1>
 
             {/* BARRA FILTRI */}
             <div className="mt-1 mb-3 h-[60px] flex justify-between items-center">
@@ -122,13 +130,12 @@ export default function UserManager() {
                                 name="ruolo"
                                 placeholder="Ruolo utente"
                                 options={[
-                                    { value: '', label: '— Ruolo —' },
+                                    { value: '', label: '— Tutti —' },
                                     {
                                         value: 'super_user',
                                         label: 'Super User',
                                     },
-                                    { value: 'caregiver', label: 'Caregiver' },
-                                    { value: 'altro', label: 'Altro' },
+                                    { value: 'operator', label: 'Operatore' },
                                 ]}
                                 height="h-[45px]"
                                 className="w-full [&>div>button]:rounded-full"
@@ -154,8 +161,13 @@ export default function UserManager() {
                             <th className="px-4 py-3 text-left">RUOLO</th>
                             <th className="px-4 py-3 text-left">EMAIL</th>
                             <th className="px-4 py-3 text-left">UTENTE</th>
+                            <th className="px-4 py-3 text-left">STATO</th>
                             <th className="px-4 py-3 text-left">
                                 ULTIMO ACCESSO
+                            </th>
+                            <th className="px-4 py-3 text-left">CREATO IL</th>
+                            <th className="px-4 py-3 text-left">
+                                ULTIMA MODIFICA
                             </th>
                             <th className="px-4 py-3 text-left">AZIONI</th>
                         </tr>
@@ -172,29 +184,49 @@ export default function UserManager() {
                             </tr>
                         )}
 
-                        {rows.map((r) => (
-                            <tr key={r.id_caregiver}>
+                        {rows.map((user) => (
+                            <tr key={user.id}>
                                 <td className="px-4 py-3">
-                                    <span>{r.role}</span>
+                                    <span>
+                                        {user.role == 'super_user'
+                                            ? 'Super user'
+                                            : 'Operatore'}
+                                    </span>
                                 </td>
                                 <td className="px-4 py-3">
-                                    <span>{r.email}</span>
+                                    <span>{user.email}</span>
                                 </td>
                                 <td className="px-4 py-3">
                                     <span>
-                                        {r.name} {r.surname}
+                                        {user.name} {user.surname}
                                     </span>
                                 </td>
                                 <td className="px-4 py-3">
                                     <span>
-                                        {formatDateTime(r.acceptance_time)}
+                                        {STATUS_LABELS[user.status] ||
+                                            user.status}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span>
+                                        {formatDateTime(user.last_login_at)}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span>
+                                        {formatDateTime(user.created_at)}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span>
+                                        {formatDateTime(user.updated_at)}
                                     </span>
                                 </td>
                                 <td className="px-4 py-3">
                                     <button
                                         className="text-red-500"
                                         onClick={() => {
-                                            setUserSelected(r);
+                                            setUserSelected(user);
                                             setShowModifyUserInfoModal(true);
                                         }}
                                     >
@@ -203,7 +235,7 @@ export default function UserManager() {
                                     <button
                                         className="ml-3 text-red-500"
                                         onClick={() => {
-                                            setUserSelected(r);
+                                            setUserSelected(user);
                                             setShowPasswordChangeModal(true);
                                         }}
                                     >
@@ -212,7 +244,7 @@ export default function UserManager() {
                                     <button
                                         className="ml-3 text-red-500"
                                         onClick={() => {
-                                            setUserSelected(r);
+                                            setUserSelected(user);
                                             setShowDeleteUserModal(true);
                                         }}
                                     >
@@ -247,7 +279,7 @@ export default function UserManager() {
                     try {
                         console.log('Cambio info utente', payload);
 
-                        // await modifyUserInfo(userSelected?.id_caregiver, values); // Chiamata ancora da implementare
+                        // await modifyUserInfo(userSelected?.id, values); // Chiamata ancora da implementare
                         // alert('Informazioni reimpostate correttamente');
 
                         setUserSelected(null);
@@ -270,12 +302,12 @@ export default function UserManager() {
                 onConfirm={async (values) => {
                     try {
                         console.log('Cambio password', {
-                            id_caregiver: userSelected?.id_caregiver,
+                            id: userSelected?.id,
                             email: userSelected?.email,
                             new_password: values.new_password,
                         });
 
-                        // await modifyUserPassword(userSelected?.id_caregiver); // Chiamata ancora da implementare
+                        // await modifyUserPassword(userSelected?.id); // Chiamata ancora da implementare
                         // alert('Password reimpostata correttamente');
 
                         setUserSelected(null);
@@ -297,10 +329,10 @@ export default function UserManager() {
                 }}
                 onConfirm={async (user) => {
                     try {
-                        await deleteUser(user.id_caregiver); // Chiamata ancora da implementare
+                        await deleteUser(user.id); // Chiamata ancora da implementare
                         console.log(
                             'Elimina user',
-                            user.id_caregiver,
+                            user.id,
                             user.name,
                             user.surname,
                         );
