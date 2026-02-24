@@ -9,67 +9,38 @@ export default function Input({
 }) {
     const form = useFormContext();
 
-    // Stato toggle password (solo per type=password)
     const isPasswordField = props.type === 'password';
     const [showPassword, setShowPassword] = useState(false);
 
-    // Nessun form: input standalone
-    if (!form || !name) {
-        const standaloneType = isPasswordField
-            ? showPassword
-                ? 'text'
-                : 'password'
-            : props.type;
+    // Se c'è il form e c'è name, usiamo il field del form; altrimenti standalone
+    const field = form && name ? form.registerField(name) : null;
 
-        return (
-            <div className={`flex flex-col ${className}`}>
-                <div className="relative h-[38px]">
-                    <input
-                        {...props}
-                        type={standaloneType}
-                        className={`input-default w-full pr-10 h-full border border-brand-divider`}
-                    />
+    // --- error handling (solo se form) ---
+    const showError =
+        form && name ? form.touched[name] || form.submitting : false;
+    const error = showError ? form.errors?.[name] : null;
 
-                    {isPasswordField && (
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-textSecondary hover:text-brand-text transition"
-                            aria-label={
-                                showPassword
-                                    ? 'Nascondi password'
-                                    : 'Mostra password'
-                            }
-                        >
-                            {showPassword ? '🙈' : '👁️'}
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    const field = form.registerField(name);
-
-    const showError = form.touched[name] || form.submitting;
-    const error = showError ? form.errors[name] : null;
-
-    const loading = form.asyncLoading?.[name];
-    const success = form.asyncSuccess?.[name];
-    const value = form.values[name];
+    // --- async state (solo se form) ---
+    const loading = form && name ? form.asyncLoading?.[name] : false;
+    const success = form && name ? form.asyncSuccess?.[name] : false;
+    const value = form && name ? form.values?.[name] : (props.value ?? '');
 
     const shouldShowSpinner =
-        asyncValidate && loading && !error && value && value.length >= 3;
+        asyncValidate &&
+        !!loading &&
+        !error &&
+        value &&
+        String(value).length >= 3;
 
     const shouldShowSuccess =
         asyncValidate &&
-        success &&
+        !!success &&
         !loading &&
         !error &&
         value &&
-        value.length >= 3;
+        String(value).length >= 3;
 
-    // Decidiamo quante "icone" ci sono a destra per dare padding giusto
+    // padding a destra in base al numero di “icone”
     const rightIconsCount = useMemo(() => {
         let c = 0;
         if (shouldShowSpinner || shouldShowSuccess) c += 1;
@@ -84,40 +55,40 @@ export default function Input({
               ? 'pr-10'
               : 'pr-3';
 
-    // --- handler combinati ---
-    const handleFocus = (e) => {
-        if (props.onFocus) props.onFocus(e);
-    };
-
-    const handleBlur = async (e) => {
-        if (field.onBlur) {
-            await field.onBlur(e);
-        }
-        if (props.onBlur) props.onBlur(e);
-    };
-
-    // Tipo finale
+    // tipo finale (password toggle)
     const inputType = isPasswordField
         ? showPassword
             ? 'text'
             : 'password'
         : props.type;
 
+    // handler combinati (se form)
+    const handleFocus = (e) => {
+        props.onFocus?.(e);
+    };
+
+    const handleBlur = async (e) => {
+        if (field?.onBlur) await field.onBlur(e);
+        props.onBlur?.(e);
+    };
+
+    // props input: se field esiste, lo spalmiamo; altrimenti no
+    const inputProps = field
+        ? { ...field, ...props, onFocus: handleFocus, onBlur: handleBlur }
+        : { ...props };
+
     return (
         <div className={`flex flex-col ${className}`}>
             <div className="relative h-[38px]">
                 <input
-                    {...field}
-                    {...props}
+                    {...inputProps}
                     type={inputType}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
                     className={`input-default w-full h-full ${rightPaddingClass} ${
                         error ? 'border-brand-error' : 'border-brand-divider'
                     }`}
                 />
 
-                {/* Spinner async / Success: lo mettiamo "più a sinistra" se c'è anche l'occhio */}
+                {/* Spinner / Success */}
                 {(shouldShowSpinner || shouldShowSuccess) && (
                     <div
                         className={`absolute top-1/2 -translate-y-1/2 ${
@@ -127,14 +98,13 @@ export default function Input({
                         {shouldShowSpinner && (
                             <span className="block w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
                         )}
-
                         {shouldShowSuccess && (
                             <span className="text-green-600 text-lg">✔</span>
                         )}
                     </div>
                 )}
 
-                {/* Toggle visibilità password */}
+                {/* Toggle password: SEMPRE immagini (niente emoji) */}
                 {isPasswordField && (
                     <button
                         type="button"
@@ -145,6 +115,7 @@ export default function Input({
                                 ? 'Nascondi password'
                                 : 'Mostra password'
                         }
+                        tabIndex={0}
                     >
                         <img
                             src={

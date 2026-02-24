@@ -24,21 +24,34 @@ export function AuthProvider({ children }) {
 
     const value = useMemo(() => {
         const isAuthenticated = !!user;
+        const mustChangePassword = user?.status === 'must_change_password';
 
         return {
             user,
             loading,
             isAuthenticated,
+            mustChangePassword,
+
             login: async (email, password) => {
-                console.log('Entrato in login');
                 const data = await authApi.login(email, password);
                 setUser(data.user);
                 return data.user;
             },
+
             logout: async () => {
                 await authApi.logout();
                 setUser(null);
             },
+
+            changePassword: async (currentPassword, newPassword) => {
+                const data = await authApi.changePassword(
+                    currentPassword,
+                    newPassword,
+                );
+                setUser(data.user); // status diventa "active"
+                return data.user;
+            },
+
             refreshMe,
         };
     }, [user, loading]);

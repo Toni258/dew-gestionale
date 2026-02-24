@@ -11,3 +11,10 @@ export function me() {
 export function logout() {
     return postJson('/api/auth/logout', {});
 }
+
+export function changePassword(currentPassword, newPassword) {
+    return postJson('/api/auth/change-password', {
+        currentPassword,
+        newPassword,
+    });
+}

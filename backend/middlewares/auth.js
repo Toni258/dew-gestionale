@@ -8,6 +8,13 @@ export function requireAuth(req, res, next) {
 
     try {
         const payload = jwt.verify(token, JWT_SECRET);
+
+        // se admin sospende un utente dopo il login, lo blocchi comunque
+        if (payload?.status === 'suspended') {
+            res.clearCookie('dew_session', { sameSite: 'lax', secure: false });
+            return res.status(403).json({ message: 'Utente sospeso' });
+        }
+
         req.user = payload; // { id, role, name, surname, email }
         next();
     } catch {
