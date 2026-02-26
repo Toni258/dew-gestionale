@@ -25,12 +25,14 @@ export function AuthProvider({ children }) {
     const value = useMemo(() => {
         const isAuthenticated = !!user;
         const mustChangePassword = user?.status === 'must_change_password';
+        const isSuperUser = user?.role === 'super_user';
 
         return {
             user,
             loading,
             isAuthenticated,
             mustChangePassword,
+            isSuperUser,
 
             login: async (email, password) => {
                 const data = await authApi.login(email, password);

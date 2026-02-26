@@ -3,6 +3,7 @@ import Form, { useFormContext } from '../ui/Form';
 import FormGroup from '../ui/FormGroup';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import CustomSelect from '../ui/CustomSelect';
 
 function HDivider() {
     return (
@@ -23,12 +24,10 @@ function SubmitRow({ initialValues, onClose }) {
     const isDirty =
         (values.name ?? '') !== (initialValues.name ?? '') ||
         (values.surname ?? '') !== (initialValues.surname ?? '') ||
-        (values.email ?? '') !== (initialValues.email ?? '');
+        (values.email ?? '') !== (initialValues.email ?? '') ||
+        (values.role ?? '') !== (initialValues.role ?? '');
 
-    // errori presenti (anche non "toccati"): qui vogliamo bloccare submit
     const hasErrors = Object.values(errors).some(Boolean);
-
-    // blocco finale
     const disabled = !isDirty || hasErrors || form?.submitting;
 
     return (
@@ -64,11 +63,11 @@ export default function ModifyUserInfoModal({
 }) {
     if (!show || !user) return null;
 
-    // Snapshot dei valori iniziali (quelli “originali” dell’utente)
     const initialValues = {
         name: user.name || '',
         surname: user.surname || '',
         email: user.email || '',
+        role: user.role || 'operator',
     };
 
     return (
@@ -109,14 +108,19 @@ export default function ModifyUserInfoModal({
                                 : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
                                   ? 'Email non valida'
                                   : null,
+                        role: (v) =>
+                            !v
+                                ? 'Obbligatorio'
+                                : !['super_user', 'operator'].includes(v)
+                                  ? 'Ruolo non valido'
+                                  : null,
                     }}
                     validateOnBlur
                     validateOnSubmit
                     validateOnChange
                     onSubmit={(values) => {
-                        // Qui passi al parent i valori aggiornati + id utente
                         onConfirm({
-                            id_caregiver: user.id_caregiver,
+                            id: user.id,
                             ...values,
                         });
                     }}
@@ -141,12 +145,27 @@ export default function ModifyUserInfoModal({
 
                     <HDivider />
 
-                    <div>
+                    <div className="flex flex-row justify-between w-full gap-12">
                         <FormGroup label="Email" name="email" required>
                             <Input
                                 name="email"
                                 type="text"
                                 className="w-[320px]"
+                            />
+                        </FormGroup>
+
+                        <FormGroup label="Ruolo" name="role" required>
+                            <CustomSelect
+                                name="role"
+                                options={[
+                                    {
+                                        value: 'super_user',
+                                        label: 'Super User',
+                                    },
+                                    { value: 'operator', label: 'Operatore' },
+                                ]}
+                                height="h-[45px]"
+                                className="w-[320px] [&>div>button]:rounded-lg"
                             />
                         </FormGroup>
                     </div>

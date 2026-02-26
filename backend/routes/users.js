@@ -1,16 +1,50 @@
 import { Router } from 'express';
-import { getFilteredUsersMobileApp } from '../controllers/usersController.js';
-import { getFilteredUsersGestionale } from '../controllers/usersController.js';
+import { requireAuth, requireRole } from '../middlewares/auth.js';
+import {
+    getFilteredUsersMobileApp,
+    getFilteredUsersGestionale,
+    resetPasswordAdmin,
+    suspendUser,
+    unsuspendUser,
+    deleteUser,
+    updateUserInfo,
+} from '../controllers/usersController.js';
 
 const router = Router();
 
-router.get('/mobile', getFilteredUsersMobileApp);
-router.get('/gestionale', getFilteredUsersGestionale);
+// Liste: basta essere autenticati
+router.get('/mobile', requireAuth, getFilteredUsersMobileApp);
+router.get('/gestionale', requireAuth, getFilteredUsersGestionale);
 
-//router.post('/:id/unsuspend', disableDishSuspension);
+// Azioni: SOLO super_user
+router.post(
+    '/:id/reset-password',
+    requireAuth,
+    requireRole('super_user'),
+    resetPasswordAdmin,
+);
 
-//router.put('/:id', uploadFoodImage.single('img'), updateDish);
+router.post(
+    '/:id/suspend',
+    requireAuth,
+    requireRole('super_user'),
+    suspendUser,
+);
 
-//router.delete('/:id', deleteDish);
+router.post(
+    '/:id/unsuspend',
+    requireAuth,
+    requireRole('super_user'),
+    unsuspendUser,
+);
+
+router.post(
+    '/:id/update-info',
+    requireAuth,
+    requireRole('super_user'),
+    updateUserInfo,
+);
+
+router.post('/:id/delete', requireAuth, requireRole('super_user'), deleteUser);
 
 export default router;

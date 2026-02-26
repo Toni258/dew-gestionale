@@ -175,7 +175,7 @@ export default function UserManagerMobileApp() {
                         )}
 
                         {rows.map((r) => (
-                            <tr key={r.id_caregiver}>
+                            <tr key={r.id_caregiver} className="border-b">
                                 <td className="px-4 py-3">
                                     <span>{r.role}</span>
                                 </td>

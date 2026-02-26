@@ -9,15 +9,22 @@ import Button from '../../components/ui/Button';
 import Pagination from '../../components/ui/Pagination';
 
 import { formatDateTime } from '../../utils/formatDateTime';
+import { useAuth } from '../../context/AuthContext';
 
 import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import ModifyUserPasswordModal from '../../components/modals/ModifyUserPasswordModal';
 import DeleteUserModal from '../../components/modals/DeleteUserModal';
+import SuspendUserModal from '../../components/modals/SuspendUserModal';
+import EnableUserModal from '../../components/modals/EnableUserModal';
 
 export default function UserManagerGestionale() {
+    const { user, isSuperUser, refreshMe } = useAuth();
+    const myId = user?.id;
+
     const [query, setQuery] = useState('');
     const [appliedFilters, setAppliedFilters] = useState({
         ruolo: '',
+        status: '',
     });
 
     const [showModifyUserInfoModal, setShowModifyUserInfoModal] =
@@ -25,6 +32,8 @@ export default function UserManagerGestionale() {
     const [showPasswordChangeModal, setShowPasswordChangeModal] =
         useState(false);
     const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+    const [showDisableUserModal, setShowDisableUserModal] = useState(false);
+    const [showEnableUserModal, setShowEnableUserModal] = useState(false);
     const [userSelected, setUserSelected] = useState(null);
 
     const [page, setPage] = useState(1);
@@ -47,6 +56,7 @@ export default function UserManagerGestionale() {
     const handleFilters = (values) => {
         setAppliedFilters({
             ruolo: values.ruolo || '',
+            status: values.status || '',
         });
         setPage(1);
     };
@@ -61,6 +71,7 @@ export default function UserManagerGestionale() {
         return {
             search: query,
             ruolo: appliedFilters.ruolo || '',
+            status: appliedFilters.status || '',
             page,
             pageSize,
         };
@@ -74,10 +85,14 @@ export default function UserManagerGestionale() {
             const qs = new URLSearchParams();
             if (requestParams.search) qs.set('search', requestParams.search);
             if (requestParams.ruolo) qs.set('ruolo', requestParams.ruolo);
+            if (requestParams.status) qs.set('status', requestParams.status);
             qs.set('page', String(requestParams.page));
             qs.set('pageSize', String(requestParams.pageSize));
 
-            const res = await fetch(`/api/users/gestionale?${qs.toString()}`);
+            const res = await fetch(`/api/users/gestionale?${qs.toString()}`, {
+                method: 'GET',
+                credentials: 'include',
+            });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             const json = await res.json();
@@ -118,9 +133,8 @@ export default function UserManagerGestionale() {
                 {/* FILTRI */}
                 <Form
                     initialValues={{
-                        stato: appliedFilters.stato,
-                        allergeni: appliedFilters.allergeni,
-                        tipologia: appliedFilters.tipologia,
+                        ruolo: appliedFilters.ruolo,
+                        status: appliedFilters.status,
                     }}
                     onSubmit={handleFilters}
                 >
@@ -136,6 +150,27 @@ export default function UserManagerGestionale() {
                                         label: 'Super User',
                                     },
                                     { value: 'operator', label: 'Operatore' },
+                                ]}
+                                height="h-[45px]"
+                                className="w-full [&>div>button]:rounded-full"
+                            />
+                        </FormGroup>
+
+                        <FormGroup name="status" className="w-[210px]">
+                            <CustomSelect
+                                name="status"
+                                placeholder="Stato utente"
+                                options={[
+                                    { value: '', label: '— Tutti —' },
+                                    {
+                                        value: 'active',
+                                        label: 'Attivo',
+                                    },
+                                    {
+                                        value: 'must_change_password',
+                                        label: 'Password da cambiare',
+                                    },
+                                    { value: 'suspended', label: 'Sospeso' },
                                 ]}
                                 height="h-[45px]"
                                 className="w-full [&>div>button]:rounded-full"
@@ -169,14 +204,16 @@ export default function UserManagerGestionale() {
                             <th className="px-4 py-3 text-left">
                                 ULTIMA MODIFICA
                             </th>
-                            <th className="px-4 py-3 text-left">AZIONI</th>
+                            {isSuperUser && (
+                                <th className="px-4 py-3 text-left">AZIONI</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
                         {!loading && rows.length === 0 && (
                             <tr>
                                 <td
-                                    colSpan={8}
+                                    colSpan={isSuperUser ? 8 : 7}
                                     className="px-4 py-4 text-brand-textSecondary"
                                 >
                                     Nessun utente trovato.
@@ -184,75 +221,120 @@ export default function UserManagerGestionale() {
                             </tr>
                         )}
 
-                        {rows.map((user) => (
-                            <tr key={user.id}>
-                                <td className="px-4 py-3">
-                                    <span>
-                                        {user.role == 'super_user'
-                                            ? 'Super user'
-                                            : 'Operatore'}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span>{user.email}</span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span>
-                                        {user.name} {user.surname}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span>
-                                        {STATUS_LABELS[user.status] ||
-                                            user.status}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span>
-                                        {formatDateTime(user.last_login_at)}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span>
-                                        {formatDateTime(user.created_at)}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span>
-                                        {formatDateTime(user.updated_at)}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <button
-                                        className="text-red-500"
-                                        onClick={() => {
-                                            setUserSelected(user);
-                                            setShowModifyUserInfoModal(true);
-                                        }}
-                                    >
-                                        ✏
-                                    </button>
-                                    <button
-                                        className="ml-3 text-red-500"
-                                        onClick={() => {
-                                            setUserSelected(user);
-                                            setShowPasswordChangeModal(true);
-                                        }}
-                                    >
-                                        🔑
-                                    </button>
-                                    <button
-                                        className="ml-3 text-red-500"
-                                        onClick={() => {
-                                            setUserSelected(user);
-                                            setShowDeleteUserModal(true);
-                                        }}
-                                    >
-                                        🗑
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                        {rows.map((user) => {
+                            const isDisabled = user.status === 'suspended';
+                            const isMe = myId === user.id;
+
+                            return (
+                                <tr key={user.id} className="border-b">
+                                    <td className="px-4 py-3">
+                                        <span>
+                                            {user.role == 'super_user'
+                                                ? 'Super user'
+                                                : 'Operatore'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span>{user.email}</span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span>
+                                            {user.name} {user.surname}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span>
+                                            {STATUS_LABELS[user.status] ||
+                                                user.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span>
+                                            {formatDateTime(user.last_login_at)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span>
+                                            {formatDateTime(user.created_at)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span>
+                                            {formatDateTime(user.updated_at)}
+                                        </span>
+                                    </td>
+
+                                    {isSuperUser && (
+                                        <td className="px-4 py-3">
+                                            <button
+                                                className="text-red-500"
+                                                onClick={() => {
+                                                    setUserSelected(user);
+                                                    setShowModifyUserInfoModal(
+                                                        true,
+                                                    );
+                                                }}
+                                            >
+                                                ✏
+                                            </button>
+                                            <button
+                                                className="ml-3 text-red-500"
+                                                onClick={() => {
+                                                    setUserSelected(user);
+                                                    setShowPasswordChangeModal(
+                                                        true,
+                                                    );
+                                                }}
+                                            >
+                                                🔑
+                                            </button>
+                                            {isDisabled && !isMe && (
+                                                <button
+                                                    className="ml-3 text-red-500"
+                                                    onClick={() => {
+                                                        setUserSelected(user);
+                                                        setShowEnableUserModal(
+                                                            true,
+                                                        );
+                                                    }}
+                                                >
+                                                    🔓
+                                                </button>
+                                            )}
+
+                                            {!isDisabled && !isMe && (
+                                                <button
+                                                    className="ml-3 text-red-500"
+                                                    onClick={() => {
+                                                        setUserSelected(user);
+                                                        setShowDisableUserModal(
+                                                            true,
+                                                        );
+                                                    }}
+                                                >
+                                                    🚫
+                                                </button>
+                                            )}
+
+                                            {/* delete: non puoi eliminare te stesso */}
+                                            {!isMe && (
+                                                <button
+                                                    className="ml-3 text-red-500"
+                                                    onClick={() => {
+                                                        setUserSelected(user);
+                                                        setShowDeleteUserModal(
+                                                            true,
+                                                        );
+                                                    }}
+                                                >
+                                                    🗑
+                                                </button>
+                                            )}
+                                        </td>
+                                    )}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
 
@@ -277,10 +359,31 @@ export default function UserManagerGestionale() {
                 }}
                 onConfirm={async (payload) => {
                     try {
-                        console.log('Cambio info utente', payload);
+                        const res = await fetch(
+                            `/api/users/${userSelected.id}/update-info`,
+                            {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: payload.name,
+                                    surname: payload.surname,
+                                    email: payload.email,
+                                    role: payload.role,
+                                }),
+                            },
+                        );
 
-                        // await modifyUserInfo(userSelected?.id, values); // Chiamata ancora da implementare
-                        // alert('Informazioni reimpostate correttamente');
+                        const json = await res.json().catch(() => null);
+                        if (!res.ok)
+                            throw new Error(
+                                json?.message || `HTTP ${res.status}`,
+                            );
+
+                        // se ho modificato me stesso, riallineo subito i dati in AuthContext
+                        if (userSelected?.id === user?.id) {
+                            await refreshMe();
+                        }
 
                         setUserSelected(null);
                         setShowModifyUserInfoModal(false);
@@ -307,11 +410,86 @@ export default function UserManagerGestionale() {
                             new_password: values.new_password,
                         });
 
-                        // await modifyUserPassword(userSelected?.id); // Chiamata ancora da implementare
-                        // alert('Password reimpostata correttamente');
+                        const res = await fetch(
+                            `/api/users/${userSelected.id}/reset-password`,
+                            {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    newPassword: values.new_password,
+                                }),
+                            },
+                        );
 
                         setUserSelected(null);
                         setShowPasswordChangeModal(false);
+                        await fetchUsers();
+                    } catch (e) {
+                        alert(e.message);
+                    }
+                }}
+            />
+
+            {/* MODALE DISABILITA UTENTE */}
+            <SuspendUserModal
+                show={showDisableUserModal}
+                user={userSelected}
+                onClose={() => {
+                    setUserSelected(null);
+                    setShowDisableUserModal(false);
+                }}
+                onConfirm={async () => {
+                    try {
+                        const res = await fetch(
+                            `/api/users/${userSelected.id}/suspend`,
+                            {
+                                method: 'POST',
+                                credentials: 'include',
+                            },
+                        );
+
+                        const json = await res.json().catch(() => null);
+                        if (!res.ok)
+                            throw new Error(
+                                json?.message || `HTTP ${res.status}`,
+                            );
+
+                        setUserSelected(null);
+                        setShowDisableUserModal(false);
+                        await fetchUsers();
+                    } catch (e) {
+                        alert(e.message);
+                    }
+                }}
+            />
+
+            {/* MODALE DISABILITA UTENTE */}
+            <EnableUserModal
+                show={showEnableUserModal}
+                user={userSelected}
+                onClose={() => {
+                    setUserSelected(null);
+                    setShowEnableUserModal(false);
+                }}
+                onConfirm={async () => {
+                    try {
+                        const res = await fetch(
+                            `/api/users/${userSelected.id}/unsuspend`,
+                            {
+                                method: 'POST',
+                                credentials: 'include',
+                            },
+                        );
+
+                        const json = await res.json().catch(() => null);
+                        if (!res.ok)
+                            throw new Error(
+                                json?.message || `HTTP ${res.status}`,
+                            );
+
+                        setUserSelected(null);
+                        setShowEnableUserModal(false);
                         await fetchUsers();
                     } catch (e) {
                         alert(e.message);
@@ -327,15 +505,22 @@ export default function UserManagerGestionale() {
                     setUserSelected(null);
                     setShowDeleteUserModal(false);
                 }}
-                onConfirm={async (user) => {
+                onConfirm={async () => {
                     try {
-                        await deleteUser(user.id); // Chiamata ancora da implementare
-                        console.log(
-                            'Elimina user',
-                            user.id,
-                            user.name,
-                            user.surname,
+                        const res = await fetch(
+                            `/api/users/${userSelected.id}/delete`,
+                            {
+                                method: 'POST',
+                                credentials: 'include',
+                            },
                         );
+
+                        const json = await res.json().catch(() => null);
+                        if (!res.ok)
+                            throw new Error(
+                                json?.message || `HTTP ${res.status}`,
+                            );
+
                         alert('Utente eliminato correttamente');
                         setUserSelected(null);
                         setShowDeleteUserModal(false);

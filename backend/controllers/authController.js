@@ -12,9 +12,11 @@ export async function login(req, res, next) {
         }
 
         const [rows] = await pool.query(
-            `SELECT id, role, email, name, surname, status, password_hash
-             FROM backoffice_users
-             WHERE email = ?`,
+            `
+                SELECT id, role, email, name, surname, status, password_hash
+                FROM backoffice_users
+                WHERE email = ?
+            `,
             [email.trim().toLowerCase()],
         );
 
@@ -77,18 +79,18 @@ export async function changePassword(req, res, next) {
             return res.status(401).json({ message: 'Non autenticato' });
 
         if (!newPassword || newPassword.length < 8) {
-            return res
-                .status(400)
-                .json({
-                    message: 'La nuova password deve avere almeno 8 caratteri',
-                });
+            return res.status(400).json({
+                message: 'La nuova password deve avere almeno 8 caratteri',
+            });
         }
 
         // Prendo utente + hash
         const [rows] = await pool.query(
-            `SELECT id, role, email, name, surname, status, password_hash
-       FROM backoffice_users
-       WHERE id = ?`,
+            `
+                SELECT id, role, email, name, surname, status, password_hash
+                FROM backoffice_users
+                WHERE id = ?
+            `,
             [userId],
         );
         const user = rows?.[0];
@@ -114,9 +116,11 @@ export async function changePassword(req, res, next) {
         const newHash = await bcrypt.hash(newPassword, 10);
 
         await pool.query(
-            `UPDATE backoffice_users
-       SET password_hash = ?, status = 'active'
-       WHERE id = ?`,
+            `
+                UPDATE backoffice_users
+                SET password_hash = ?, status = 'active'
+                WHERE id = ?
+            `,
             [newHash, userId],
         );
 

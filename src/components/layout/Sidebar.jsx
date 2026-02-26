@@ -1,10 +1,10 @@
 import SidebarItem from './SidebarItem';
 import SidebarSection from './SidebarSection';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext'; // <-- controlla il path corretto
+import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar() {
-    const { logout } = useAuth();
+    const { logout, isSuperUser } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -78,13 +78,16 @@ export default function Sidebar() {
                         pathname.startsWith('/user-manager/mobile')
                     }
                 />
-                <SidebarItem
-                    to="/user-manager/create"
-                    label="Crea nuovo utente"
-                    isActiveOverride={(pathname) =>
-                        pathname === '/user-manager/create'
-                    }
-                />
+
+                {isSuperUser && (
+                    <SidebarItem
+                        to="/user-manager/create"
+                        label="Crea nuovo utente"
+                        isActiveOverride={(pathname) =>
+                            pathname === '/user-manager/create'
+                        }
+                    />
+                )}
             </SidebarSection>
 
             {/* ---- LOGOUT IN FONDO ---- */}
