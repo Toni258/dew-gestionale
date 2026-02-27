@@ -9,20 +9,23 @@ import Button from '../../components/ui/Button';
 import Pagination from '../../components/ui/Pagination';
 
 import { formatDateTime } from '../../utils/formatDateTime';
+import { useAuth } from '../../context/AuthContext';
 
-import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
-import ModifyUserPasswordModal from '../../components/modals/ModifyUserPasswordModal';
+import ModifyAppUserInfoModal from '../../components/modals/ModifyAppUserInfoModal';
+import DisableAppUserPassword from '../../components/modals/DisableAppUserPassword';
 import DeleteUserModal from '../../components/modals/DeleteUserModal';
 
 export default function UserManagerMobileApp() {
+    const { isSuperUser } = useAuth();
+
     const [query, setQuery] = useState('');
     const [appliedFilters, setAppliedFilters] = useState({
         ruolo: '',
     });
 
-    const [showModifyUserInfoModal, setShowModifyUserInfoModal] =
+    const [showModifyAppUserInfoModal, setShowModifyAppUserInfoModal] =
         useState(false);
-    const [showPasswordChangeModal, setShowPasswordChangeModal] =
+    const [showDisableAppUserModal, setShowDisableAppUserModal] =
         useState(false);
     const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
     const [userSelected, setUserSelected] = useState(null);
@@ -159,7 +162,9 @@ export default function UserManagerMobileApp() {
                             <th className="px-4 py-3 text-left">
                                 ULTIMO ACCESSO
                             </th>
-                            <th className="px-4 py-3 text-left">AZIONI</th>
+                            {isSuperUser && (
+                                <th className="px-4 py-3 text-left">AZIONI</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -192,35 +197,41 @@ export default function UserManagerMobileApp() {
                                         {formatDateTime(r.acceptance_time)}
                                     </span>
                                 </td>
-                                <td className="px-4 py-3">
-                                    <button
-                                        className="text-red-500"
-                                        onClick={() => {
-                                            setUserSelected(r);
-                                            setShowModifyUserInfoModal(true);
-                                        }}
-                                    >
-                                        ✏
-                                    </button>
-                                    <button
-                                        className="ml-3 text-red-500"
-                                        onClick={() => {
-                                            setUserSelected(r);
-                                            setShowPasswordChangeModal(true);
-                                        }}
-                                    >
-                                        🔑
-                                    </button>
-                                    <button
-                                        className="ml-3 text-red-500"
-                                        onClick={() => {
-                                            setUserSelected(r);
-                                            setShowDeleteUserModal(true);
-                                        }}
-                                    >
-                                        🗑
-                                    </button>
-                                </td>
+                                {isSuperUser && (
+                                    <td className="px-4 py-3">
+                                        <button
+                                            className="text-red-500"
+                                            onClick={() => {
+                                                setUserSelected(r);
+                                                setShowModifyAppUserInfoModal(
+                                                    true,
+                                                );
+                                            }}
+                                        >
+                                            ✏
+                                        </button>
+                                        <button
+                                            className="ml-3 text-red-500"
+                                            onClick={() => {
+                                                setUserSelected(r);
+                                                setShowDisableAppUserModal(
+                                                    true,
+                                                );
+                                            }}
+                                        >
+                                            🚫
+                                        </button>
+                                        <button
+                                            className="ml-3 text-red-500"
+                                            onClick={() => {
+                                                setUserSelected(r);
+                                                setShowDeleteUserModal(true);
+                                            }}
+                                        >
+                                            🗑
+                                        </button>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
@@ -238,12 +249,12 @@ export default function UserManagerMobileApp() {
             </div>
 
             {/* MODALE MODIFICA INFO UTENTE */}
-            <ModifyUserInfoModal
-                show={showModifyUserInfoModal}
+            <ModifyAppUserInfoModal
+                show={showModifyAppUserInfoModal}
                 user={userSelected}
                 onClose={() => {
                     setUserSelected(null);
-                    setShowModifyUserInfoModal(false);
+                    setShowModifyAppUserInfoModal(false);
                 }}
                 onConfirm={async (payload) => {
                     try {
@@ -253,7 +264,7 @@ export default function UserManagerMobileApp() {
                         // alert('Informazioni reimpostate correttamente');
 
                         setUserSelected(null);
-                        setShowModifyUserInfoModal(false);
+                        setShowModifyAppUserInfoModal(false);
                         await fetchUsers();
                     } catch (e) {
                         alert(e.message);
@@ -262,26 +273,25 @@ export default function UserManagerMobileApp() {
             />
 
             {/* MODALE REIMPOSTA PASSWORD UTENTE */}
-            <ModifyUserPasswordModal
-                show={showPasswordChangeModal}
+            <DisableAppUserPassword
+                show={showDisableAppUserModal}
                 user={userSelected}
                 onClose={() => {
                     setUserSelected(null);
-                    setShowPasswordChangeModal(false);
+                    setShowDisableAppUserModal(false);
                 }}
                 onConfirm={async (values) => {
                     try {
-                        console.log('Cambio password', {
+                        console.log('Disabilita utente', {
                             id_caregiver: userSelected?.id_caregiver,
                             email: userSelected?.email,
-                            new_password: values.new_password,
                         });
 
                         // await modifyUserPassword(userSelected?.id_caregiver); // Chiamata ancora da implementare
                         // alert('Password reimpostata correttamente');
 
                         setUserSelected(null);
-                        setShowPasswordChangeModal(false);
+                        setShowDisableAppUserModal(false);
                         await fetchUsers();
                     } catch (e) {
                         alert(e.message);
@@ -299,7 +309,9 @@ export default function UserManagerMobileApp() {
                 }}
                 onConfirm={async (user) => {
                     try {
-                        await deleteUser(user.id_caregiver); // Chiamata ancora da implementare
+                        // await deleteUser(userSelected?.id_caregiver); // Chiamata ancora da implementare
+                        // alert('Utente eliminato correttamente');
+
                         console.log(
                             'Elimina user',
                             user.id_caregiver,
