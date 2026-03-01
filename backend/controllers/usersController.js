@@ -59,7 +59,9 @@ export async function getFilteredUsersMobileApp(req, res) {
                 c.name,
                 c.surname,
                 c.role,
-                c.acceptance_time
+                c.acceptance_time,
+                c.acceptance_ip,
+                (c.password_hash = 'Utente disabilitato') AS is_disabled
             
             FROM caregiver c
 
@@ -235,10 +237,10 @@ export async function suspendUser(req, res, next) {
 
         await pool.query(
             `
-        UPDATE backoffice_users
-        SET status = 'suspended', updated_at = NOW()
-        WHERE id = ?
-      `,
+                UPDATE backoffice_users
+                SET status = 'suspended', updated_at = NOW()
+                WHERE id = ?
+            `,
             [targetUserId],
         );
 
@@ -257,10 +259,10 @@ export async function unsuspendUser(req, res, next) {
 
         await pool.query(
             `
-        UPDATE backoffice_users
-        SET status = 'active', updated_at = NOW()
-        WHERE id = ?
-      `,
+                UPDATE backoffice_users
+                SET status = 'active', updated_at = NOW()
+                WHERE id = ?
+            `,
             [targetUserId],
         );
 
@@ -270,7 +272,7 @@ export async function unsuspendUser(req, res, next) {
     }
 }
 
-export async function deleteUser(req, res, next) {
+export async function deleteUserGestionale(req, res, next) {
     try {
         const targetUserId = Number(req.params.id);
         if (!targetUserId) {
@@ -314,7 +316,43 @@ export async function deleteUser(req, res, next) {
     }
 }
 
-export async function updateUserInfo(req, res, next) {
+export async function deleteUserApp(req, res, next) {
+    try {
+        console.log('Entrato 1');
+        const targetUserId = Number(req.params.id);
+        if (!targetUserId) {
+            return res.status(400).json({ message: 'ID utente non valido' });
+        }
+
+        console.log('Entrato e con ID:', targetUserId);
+
+        // verifica esistenza
+        const [rows] = await pool.query(
+            `SELECT id_caregiver FROM caregiver WHERE id_caregiver = ?`,
+            [targetUserId],
+        );
+        const target = rows?.[0];
+
+        if (!target) {
+            return res.status(404).json({ message: 'Utente non trovato' });
+        }
+
+        const [result] = await pool.query(
+            `DELETE FROM caregiver WHERE id_caregiver = ?`,
+            [targetUserId],
+        );
+
+        if (!result.affectedRows) {
+            return res.status(404).json({ message: 'Utente non trovato' });
+        }
+
+        return res.json({ ok: true });
+    } catch (e) {
+        next(e);
+    }
+}
+
+export async function updateUserInfoGestionale(req, res, next) {
     try {
         const targetUserId = Number(req.params.id);
         const { name, surname, email, role } = req.body || {};
@@ -345,7 +383,7 @@ export async function updateUserInfo(req, res, next) {
             return res.status(400).json({ message: 'Ruolo non valido' });
         }
 
-        // ✅ evita che un super user si tolga i permessi da solo
+        // evita che un super user si tolga i permessi da solo
         if (req.user?.id === targetUserId && newRole !== req.user?.role) {
             return res
                 .status(400)
@@ -373,24 +411,121 @@ export async function updateUserInfo(req, res, next) {
         // update
         await pool.query(
             `
-        UPDATE backoffice_users
-        SET name = ?, surname = ?, email = ?, role = ?, updated_at = NOW()
-        WHERE id = ?
-      `,
+                UPDATE backoffice_users
+                SET name = ?, surname = ?, email = ?, role = ?, updated_at = NOW()
+                WHERE id = ?
+            `,
             [cleanName, cleanSurname, cleanEmail, newRole, targetUserId],
         );
 
         // ritorno utente aggiornato (utile se vuoi usarlo)
         const [rows] = await pool.query(
             `
-        SELECT id, email, name, surname, role, status, last_login_at, created_at, updated_at
-        FROM backoffice_users
-        WHERE id = ?
-      `,
+                SELECT id, email, name, surname, role, status, last_login_at, created_at, updated_at
+                FROM backoffice_users
+                WHERE id = ?
+            `,
             [targetUserId],
         );
 
         return res.json({ ok: true, user: rows?.[0] });
+    } catch (e) {
+        next(e);
+    }
+}
+
+export async function updateUserInfoApp(req, res, next) {
+    try {
+        const targetUserId = Number(req.params.id);
+        const { name, surname, email, role } = req.body || {};
+
+        if (!targetUserId) {
+            return res.status(400).json({ message: 'ID utente non valido' });
+        }
+
+        const cleanName = String(name ?? '').trim();
+        const cleanSurname = String(surname ?? '').trim();
+        const cleanEmail = String(email ?? '')
+            .trim()
+            .toLowerCase();
+        const newRole = String(role ?? '').trim();
+
+        if (!cleanName || cleanName.length < 2) {
+            return res.status(400).json({ message: 'Nome non valido' });
+        }
+        if (!cleanSurname || cleanSurname.length < 2) {
+            return res.status(400).json({ message: 'Cognome non valido' });
+        }
+        if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+            return res.status(400).json({ message: 'Email non valida' });
+        }
+
+        const allowedRoles = ['super_user', 'caregiver', 'Altro'];
+        if (!newRole || !allowedRoles.includes(newRole)) {
+            return res.status(400).json({ message: 'Ruolo non valido' });
+        }
+
+        // verifica esistenza utente
+        const [existsRows] = await pool.query(
+            `SELECT id_caregiver FROM caregiver WHERE id_caregiver = ?`,
+            [targetUserId],
+        );
+        if (!existsRows?.[0]) {
+            return res.status(404).json({ message: 'Utente non trovato' });
+        }
+
+        // controllo email duplicata
+        const [dupRows] = await pool.query(
+            `SELECT id_caregiver FROM caregiver WHERE email = ? AND id_caregiver <> ?`,
+            [cleanEmail, targetUserId],
+        );
+        if (dupRows?.length) {
+            return res.status(409).json({ message: 'Email già in uso' });
+        }
+
+        // update
+        await pool.query(
+            `
+                UPDATE caregiver
+                SET name = ?, surname = ?, email = ?, role = ?
+                WHERE id_caregiver = ?
+            `,
+            [cleanName, cleanSurname, cleanEmail, newRole, targetUserId],
+        );
+
+        // ritorno utente aggiornato (utile se poi voglio usarlo)
+        const [rows] = await pool.query(
+            `
+                SELECT id_caregiver, email, name, surname, role
+                FROM caregiver
+                WHERE id_caregiver = ?
+            `,
+            [targetUserId],
+        );
+
+        return res.json({ ok: true, user: rows?.[0] });
+    } catch (e) {
+        next(e);
+    }
+}
+
+export async function disableUserApp(req, res, next) {
+    try {
+        const targetUserId = Number(req.params.id);
+        if (!targetUserId) {
+            return res.status(400).json({ message: 'ID utente non valido' });
+        }
+
+        await pool.query(
+            `
+                UPDATE caregiver
+                SET password_hash = "Utente disabilitato"
+                WHERE id_caregiver = ?
+            `,
+            [targetUserId],
+        );
+
+        return res.json({ ok: true });
     } catch (e) {
         next(e);
     }

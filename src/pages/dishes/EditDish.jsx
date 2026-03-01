@@ -189,7 +189,7 @@ export default function EditDish() {
     // ====== RENDER ======
     if (loading) {
         return (
-            <AppLayout title="GESTIONE PIATTI" username="Antonio">
+            <AppLayout title="GESTIONE PIATTI">
                 <div>Caricamento…</div>
             </AppLayout>
         );
@@ -197,7 +197,7 @@ export default function EditDish() {
 
     if (error) {
         return (
-            <AppLayout title="GESTIONE PIATTI" username="Antonio">
+            <AppLayout title="GESTIONE PIATTI">
                 <div className="text-brand-error">{error}</div>
             </AppLayout>
         );
@@ -206,7 +206,7 @@ export default function EditDish() {
     const isEmpty = (v) => v === '' || v === null || v === undefined;
 
     return (
-        <AppLayout title="GESTIONE PIATTI" username="Antonio">
+        <AppLayout title="GESTIONE PIATTI">
             <h1 className="text-3xl font-semibold">Modifica del piatto</h1>
 
             <Form

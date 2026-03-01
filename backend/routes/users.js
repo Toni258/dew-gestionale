@@ -6,8 +6,11 @@ import {
     resetPasswordAdmin,
     suspendUser,
     unsuspendUser,
-    deleteUser,
-    updateUserInfo,
+    deleteUserGestionale,
+    updateUserInfoGestionale,
+    updateUserInfoApp,
+    deleteUserApp,
+    disableUserApp,
 } from '../controllers/usersController.js';
 
 const router = Router();
@@ -39,12 +42,37 @@ router.post(
 );
 
 router.post(
-    '/:id/update-info',
+    '/:id/disable/app',
     requireAuth,
     requireRole('super_user'),
-    updateUserInfo,
+    disableUserApp,
 );
 
-router.post('/:id/delete', requireAuth, requireRole('super_user'), deleteUser);
+router.post(
+    '/:id/update-info/gestionale',
+    requireAuth,
+    requireRole('super_user'),
+    updateUserInfoGestionale,
+);
+
+router.post(
+    '/:id/update-info/app',
+    requireAuth,
+    requireRole('super_user'),
+    updateUserInfoApp,
+);
+
+router.post(
+    '/:id/delete/gestionale',
+    requireAuth,
+    requireRole('super_user'),
+    deleteUserGestionale,
+);
+router.post(
+    '/:id/delete/app',
+    requireAuth,
+    requireRole('super_user'),
+    deleteUserApp,
+);
 
 export default router;

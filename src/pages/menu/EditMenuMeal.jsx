@@ -34,7 +34,7 @@ export default function EditMenuMeal() {
 
     if (loading) {
         return (
-            <AppLayout title="GESTIONE MENÙ" username="Antonio">
+            <AppLayout title="GESTIONE MENÙ">
                 <p>Caricamento…</p>
             </AppLayout>
         );
@@ -42,14 +42,14 @@ export default function EditMenuMeal() {
 
     if (!data) {
         return (
-            <AppLayout title="GESTIONE MENÙ" username="Antonio">
+            <AppLayout title="GESTIONE MENÙ">
                 <p>Errore</p>
             </AppLayout>
         );
     }
 
     return (
-        <AppLayout title="GESTIONE MENÙ" username="Antonio">
+        <AppLayout title="GESTIONE MENÙ">
             <MenuMealHeader
                 pageLabel={pageLabel}
                 giorno={giorno}

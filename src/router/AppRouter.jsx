@@ -15,7 +15,8 @@ import DishesList from '../pages/dishes/DishesList';
 import CreateDish from '../pages/dishes/CreateDish';
 import EditDish from '../pages/dishes/EditDish';
 
-import Report from '../pages/Report';
+import StatisticheConsumi from '../pages/Statistiche/StatisticheConsumi.jsx';
+import StatisticheScelte from '../pages/Statistiche/StatisticheScelte.jsx';
 import UserManagerGestionale from '../pages/users/UserManagerGestionale.jsx';
 import UserManagerMobileApp from '../pages/users/UserManagerMobileApp';
 import CreateUser from '../pages/users/CreateUser';
@@ -56,7 +57,15 @@ export default function AppRouter() {
                     <Route path="/dishes/create" element={<CreateDish />} />
                     <Route path="/dishes/edit/:dishId" element={<EditDish />} />
 
-                    <Route path="/statistics" element={<Report />} />
+                    {/* Statistiche routes */}
+                    <Route
+                        path="/statistiche/consumi"
+                        element={<StatisticheConsumi />}
+                    />
+                    <Route
+                        path="/statistiche/scelte"
+                        element={<StatisticheScelte />}
+                    />
                     <Route
                         path="/user-manager/mobile"
                         element={<UserManagerMobileApp />}

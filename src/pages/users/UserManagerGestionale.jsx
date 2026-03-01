@@ -113,7 +113,7 @@ export default function UserManagerGestionale() {
     }, [fetchUsers]);
 
     return (
-        <AppLayout title="GESTIONE UTENTI" username="Antonio">
+        <AppLayout title="GESTIONE UTENTI">
             <h1 className="text-3xl font-semibold">
                 Elenco utenti del gestionale
             </h1>
@@ -353,6 +353,13 @@ export default function UserManagerGestionale() {
             <ModifyUserInfoModal
                 show={showModifyUserInfoModal}
                 user={userSelected}
+                ruoli={[
+                    {
+                        value: 'super_user',
+                        label: 'Super User',
+                    },
+                    { value: 'operator', label: 'Operatore' },
+                ]}
                 onClose={() => {
                     setUserSelected(null);
                     setShowModifyUserInfoModal(false);
@@ -360,7 +367,7 @@ export default function UserManagerGestionale() {
                 onConfirm={async (payload) => {
                     try {
                         const res = await fetch(
-                            `/api/users/${userSelected.id}/update-info`,
+                            `/api/users/${userSelected.id}/update-info/gestionale`,
                             {
                                 method: 'POST',
                                 credentials: 'include',
@@ -508,7 +515,7 @@ export default function UserManagerGestionale() {
                 onConfirm={async () => {
                     try {
                         const res = await fetch(
-                            `/api/users/${userSelected.id}/delete`,
+                            `/api/users/${userSelected.id}/delete/gestionale`,
                             {
                                 method: 'POST',
                                 credentials: 'include',

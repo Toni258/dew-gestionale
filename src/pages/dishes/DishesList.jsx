@@ -117,7 +117,7 @@ export default function DishesList() {
     };
 
     return (
-        <AppLayout title="GESTIONE PIATTI" username="Antonio">
+        <AppLayout title="GESTIONE PIATTI">
             <h1 className="text-3xl font-semibold">Elenco piatti</h1>
 
             {/* BARRA FILTRI */}

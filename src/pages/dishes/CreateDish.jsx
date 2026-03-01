@@ -18,7 +18,7 @@ export default function CreateDish() {
     const navigate = useNavigate();
 
     return (
-        <AppLayout title="GESTIONE PIATTI" username="Antonio">
+        <AppLayout title="GESTIONE PIATTI">
             <h1 className="text-3xl font-semibold">Crea un piatto nuovo</h1>
 
             <Form

@@ -25,7 +25,7 @@ export default function EditMenu() {
     }, [fetchMenus]);
 
     return (
-        <AppLayout title="GESTIONE MENÙ" username="Antonio">
+        <AppLayout title="GESTIONE MENÙ">
             <h1 className="text-3xl font-semibold">
                 Elenco Menù attivi e futuri
             </h1>

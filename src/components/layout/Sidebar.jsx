@@ -58,8 +58,15 @@ export default function Sidebar() {
             </SidebarSection>
 
             {/* SEZIONE STATISTICHE */}
-            <SidebarSection title="Report Consumi">
-                <SidebarItem to="/statistics" label="Statistiche" />
+            <SidebarSection title="Report">
+                <SidebarItem
+                    to="/statistiche/consumi"
+                    label="Statistiche consumi"
+                />
+                <SidebarItem
+                    to="/statistiche/scelte"
+                    label="Statistiche scelte"
+                />
             </SidebarSection>
 
             {/* SEZIONE GESTIONE UTENTE */}

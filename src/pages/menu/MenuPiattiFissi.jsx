@@ -42,7 +42,7 @@ export default function MenuPiattiFissi() {
 
     if (loading) {
         return (
-            <AppLayout title="GESTIONE MENÙ" username="Antonio">
+            <AppLayout title="GESTIONE MENÙ">
                 <h1 className="text-3xl font-semibold">Scelta piatti fissi</h1>
                 <div className="mx-4 my-6">Caricamento…</div>
             </AppLayout>
@@ -50,7 +50,7 @@ export default function MenuPiattiFissi() {
     }
 
     return (
-        <AppLayout title="GESTIONE MENÙ" username="Antonio">
+        <AppLayout title="GESTIONE MENÙ">
             <h1 className="text-3xl font-semibold">Scelta piatti fissi</h1>
 
             <div className="mx-4 my-6">

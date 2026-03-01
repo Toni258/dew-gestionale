@@ -21,7 +21,7 @@ export default function CreateMenu() {
     const navigate = useNavigate();
 
     return (
-        <AppLayout title="GESTIONE MENÙ" username="Antonio">
+        <AppLayout title="GESTIONE MENÙ">
             <h1 className="text-3xl font-semibold">Creazione nuovo menù</h1>
 
             <Form

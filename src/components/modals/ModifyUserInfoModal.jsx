@@ -60,6 +60,7 @@ export default function ModifyUserInfoModal({
     user,
     onClose,
     onConfirm,
+    ruoli,
 }) {
     if (!show || !user) return null;
 
@@ -67,7 +68,7 @@ export default function ModifyUserInfoModal({
         name: user.name || '',
         surname: user.surname || '',
         email: user.email || '',
-        role: user.role || 'operator',
+        role: user.role || 'Altro',
     };
 
     return (
@@ -111,7 +112,12 @@ export default function ModifyUserInfoModal({
                         role: (v) =>
                             !v
                                 ? 'Obbligatorio'
-                                : !['super_user', 'operator'].includes(v)
+                                : ![
+                                        'super_user',
+                                        'operator',
+                                        'caregiver',
+                                        'Altro',
+                                    ].includes(v)
                                   ? 'Ruolo non valido'
                                   : null,
                     }}
@@ -157,13 +163,7 @@ export default function ModifyUserInfoModal({
                         <FormGroup label="Ruolo" name="role" required>
                             <CustomSelect
                                 name="role"
-                                options={[
-                                    {
-                                        value: 'super_user',
-                                        label: 'Super User',
-                                    },
-                                    { value: 'operator', label: 'Operatore' },
-                                ]}
+                                options={ruoli}
                                 height="h-[45px]"
                                 className="w-[320px] [&>div>button]:rounded-lg"
                             />

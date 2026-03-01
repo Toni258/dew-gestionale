@@ -30,7 +30,7 @@ export default function EditMenu() {
     if (!menu) return <p>Menù non trovato</p>;
 
     return (
-        <AppLayout title="GESTIONE MENÙ" username="Antonio">
+        <AppLayout title="GESTIONE MENÙ">
             <h1 className="text-3xl font-semibold">Composizione menù</h1>
 
             <MenuHeaderCard
