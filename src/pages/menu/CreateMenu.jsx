@@ -6,11 +6,11 @@ import Input from '../../components/ui/Input';
 import DateRangePicker from '../../components/ui/DateRangePicker';
 import Button from '../../components/ui/Button';
 
-import { useNavigate } from 'react-router-dom';
-
 import AlertBox from '../../components/ui/AlertBox';
 import DashedDivider from '../../components/menu/DashedDivider';
 
+import { useNavigate } from 'react-router-dom';
+import { notify } from '../../services/notify';
 import {
     checkMenuNameExists,
     checkMenuDatesOverlap,
@@ -143,7 +143,7 @@ export default function CreateMenu() {
                                 throw new Error('Creazione menù fallita');
                             }
 
-                            alert('Menù creato correttamente');
+                            notify.success('Menù creato correttamente');
                             navigate('/menu');
                         } catch (e) {
                             console.error('Errore creazione menù:', e);
@@ -151,7 +151,7 @@ export default function CreateMenu() {
                                 'form',
                                 e?.message || 'Errore creazione menù',
                             );
-                            alert(e?.message || 'Errore creazione menù');
+                            notify.error(e?.message || 'Errore creazione menù');
                         }
                     }}
                 >

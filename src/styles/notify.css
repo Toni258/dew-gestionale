@@ -1,0 +1,138 @@
+@keyframes notifyFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes notifyFadeOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes notifyProgress {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+.notify-toast {
+    position: relative;
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 14px 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(10px);
+}
+
+.notify-toast--enter {
+    animation: notifyFadeInUp 160ms ease-out;
+}
+
+.notify-toast--exit {
+    animation: notifyFadeOutUp 180ms ease-in forwards;
+}
+
+/* progress container */
+.notify-progress {
+    margin-top: 10px;
+    height: 3px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+/* green bar that shrinks to 0 */
+.notify-progress__bar {
+    height: 100%;
+    width: 100%;
+    background: #22c55e;
+    transform-origin: left center;
+    animation-name: notifyProgress;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+@keyframes notifyPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.notify-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    animation: notifyPopIn 120ms ease-out;
+}
+
+.notify-modal {
+    position: relative;
+    width: min(520px, calc(100vw - 32px));
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 18px;
+    padding: 18px 18px;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.22);
+    animation: notifyPopIn 160ms ease-out;
+    z-index: 1;
+}
+
+.notify-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    margin-top: 6px;
+}
+
+.notify-dot-success {
+    background: #22c55e;
+}
+
+.notify-dot-error {
+    background: #ef4444;
+}
+
+/* dots */
+.notify-dot-info {
+    background: #3b82f6; /* blue */
+}
+
+.notify-dot-warning {
+    background: #f59e0b; /* amber */
+}
+
+/* progress bar base resta uguale, aggiungiamo varianti colore */
+.notify-progress__bar--success {
+    background: #22c55e;
+}
+
+.notify-progress__bar--info {
+    background: #3b82f6;
+}
+
+.notify-progress__bar--warning {
+    background: #f59e0b;
+}

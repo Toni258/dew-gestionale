@@ -2,6 +2,8 @@ import SearchableSelect from '../../ui/SearchableSelect';
 import InfoMacro from './InfoMacro';
 import CheeseRotationTable from './CheeseRotationTable';
 
+import { notify } from '../../../services/notify';
+
 export default function FixedDishesCell({
     meal,
     courseKey,
@@ -48,7 +50,7 @@ export default function FixedDishesCell({
                         });
 
                         if (!res?.ok && res?.reason === 'duplicate') {
-                            alert(
+                            notify.error(
                                 'Questo piatto è già stato selezionato per questo pasto.',
                             );
                         }
@@ -117,7 +119,7 @@ export default function FixedDishesCell({
                                 });
 
                                 if (!res?.ok && res?.reason === 'duplicate') {
-                                    alert(
+                                    notify.error(
                                         'Questo piatto è già stato selezionato per questo pasto.',
                                     );
                                 }

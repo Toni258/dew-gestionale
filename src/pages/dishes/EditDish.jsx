@@ -13,6 +13,7 @@ import DishFormFields from '../../components/dishes/DishFormFields';
 import SuspensionBlock from '../../components/dishes/SuspensionBlock';
 import StickySaveBar from '../../components/dishes/StickySaveBar';
 
+import { notify } from '../../services/notify';
 import { useDish } from '../../hooks/useDish';
 import { hasDishChanged } from '../../utils/diffDish';
 import {
@@ -291,7 +292,7 @@ export default function EditDish() {
                         try {
                             await unsuspendDish(dishId);
                         } catch (e) {
-                            alert(e.message);
+                            notify.error(e.message);
                             return;
                         }
                     }
@@ -318,11 +319,11 @@ export default function EditDish() {
 
                             if (result.pending) return;
                             if (result.applied === false) {
-                                alert('Operazione annullata');
+                                notify.warning('Operazione annullata');
                                 return;
                             }
                         } catch (e) {
-                            alert(e.message);
+                            notify.error(e.message);
                             return;
                         }
                     }
@@ -330,7 +331,7 @@ export default function EditDish() {
                     // se NON è cambiato nulla (piatto) e immagine non è File
                     const imageChanged = values.img instanceof File;
                     if (!changed && !imageChanged) {
-                        alert('Nessuna modifica da salvare');
+                        notify.info('Nessuna modifica da salvare');
                         navigate('/dishes');
                         return;
                     }
@@ -366,10 +367,12 @@ export default function EditDish() {
 
                     try {
                         await updateDish(dishId, formData);
-                        alert('Piatto aggiornato correttamente');
+                        notify.success('Piatto aggiornato correttamente');
                         navigate('/dishes');
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(
+                            e.message || 'Errore aggiornamento piatto',
+                        );
                     }
                 }}
             >
@@ -620,12 +623,17 @@ export default function EditDish() {
                                             action: 'disable-only',
                                         });
 
-                                        alert(
-                                            'Sospensione salvata. Attenzione: dovrai completare i menù manualmente.',
-                                        );
+                                        notify.success({
+                                            title: 'Sospensione salvata',
+                                            description:
+                                                'Attenzione: dovrai completare i menù manualmente.',
+                                        });
                                         navigate('/dishes');
                                     } catch (e) {
-                                        alert(e.message);
+                                        notify.error(
+                                            e.message ||
+                                                'Errore salvataggio sospensione',
+                                        );
                                     }
                                 }}
                             >
@@ -649,12 +657,15 @@ export default function EditDish() {
                                             action: 'replace',
                                         });
 
-                                        alert(
+                                        notify.success(
                                             'Sospensione salvata e sostituzioni applicate.',
                                         );
                                         navigate('/dishes');
                                     } catch (e) {
-                                        alert(e.message);
+                                        notify.error(
+                                            e.message ||
+                                                'Errore salvataggio sospensione',
+                                        );
                                     }
                                 }}
                             >

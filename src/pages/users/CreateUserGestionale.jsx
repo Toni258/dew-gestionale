@@ -10,6 +10,8 @@ import CustomSelect from '../../components/ui/CustomSelect';
 import AlertBox from '../../components/ui/AlertBox';
 import DashedDivider from '../../components/menu/DashedDivider';
 
+import { notify } from '../../services/notify';
+
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -208,7 +210,7 @@ export default function CreateUserGestionale() {
                                 throw new Error('Creazione utente fallita');
                             }
 
-                            alert('Utente creato correttamente');
+                            notify.success('Utente creato correttamente');
                             navigate('/user-manager/gestionale');
                         } catch (e) {
                             console.error('Errore creazione utente:', e);
@@ -216,7 +218,9 @@ export default function CreateUserGestionale() {
                                 'form',
                                 e?.message || 'Errore creazione utente',
                             );
-                            alert(e?.message || 'Errore creazione utente');
+                            notify.error(
+                                e?.message || 'Errore creazione utente',
+                            );
                         }
                     }}
                 >

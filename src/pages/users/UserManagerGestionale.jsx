@@ -10,6 +10,7 @@ import Pagination from '../../components/ui/Pagination';
 
 import { formatDateTime } from '../../utils/formatDateTime';
 import { useAuth } from '../../context/AuthContext';
+import { notify } from '../../services/notify';
 
 import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import ModifyUserPasswordModal from '../../components/modals/ModifyUserPasswordModal';
@@ -392,11 +393,15 @@ export default function UserManagerGestionale() {
                             await refreshMe();
                         }
 
+                        notify.success(
+                            'Informazioni utente modificate correttamente',
+                        );
+
                         setUserSelected(null);
                         setShowModifyUserInfoModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message);
                     }
                 }}
             />
@@ -429,11 +434,13 @@ export default function UserManagerGestionale() {
                             },
                         );
 
+                        notify.success('Password modificata correttamente');
+
                         setUserSelected(null);
                         setShowPasswordChangeModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message);
                     }
                 }}
             />
@@ -462,11 +469,13 @@ export default function UserManagerGestionale() {
                                 json?.message || `HTTP ${res.status}`,
                             );
 
+                        notify.success('Utente sospeso correttamente');
+
                         setUserSelected(null);
                         setShowDisableUserModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message);
                     }
                 }}
             />
@@ -495,11 +504,13 @@ export default function UserManagerGestionale() {
                                 json?.message || `HTTP ${res.status}`,
                             );
 
+                        notify.success('Utente riabilitato correttamente');
+
                         setUserSelected(null);
                         setShowEnableUserModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message);
                     }
                 }}
             />
@@ -528,12 +539,13 @@ export default function UserManagerGestionale() {
                                 json?.message || `HTTP ${res.status}`,
                             );
 
-                        alert('Utente eliminato correttamente');
+                        notify.success('Utente eliminato correttamente');
+
                         setUserSelected(null);
                         setShowDeleteUserModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message);
                     }
                 }}
             />

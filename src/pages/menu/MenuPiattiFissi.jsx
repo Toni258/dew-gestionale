@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import FixedDishesGrid from '../../components/menu/fixedDishes/FixedDishesGrid';
 import { useFixedDishesMenu } from '../../hooks/menus/useFixedDishesMenu';
+import { notify } from '../../services/notify';
 
 export default function MenuPiattiFissi() {
     const { seasonType } = useParams();
@@ -33,10 +34,10 @@ export default function MenuPiattiFissi() {
     async function handleSave() {
         const res = await save();
         if (!res.ok) {
-            alert(res.message || 'Errore salvataggio');
+            notify.error(res.message || 'Errore salvataggio');
             return;
         }
-        alert('Piatti fissi salvati correttamente');
+        notify.success('Piatti fissi salvati correttamente');
         navigate(`/menu/edit/${decodedSeasonType}`);
     }
 

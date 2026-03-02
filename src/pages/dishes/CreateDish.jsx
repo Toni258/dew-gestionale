@@ -7,6 +7,8 @@ import Button from '../../components/ui/Button';
 
 import DishFormFields from '../../components/dishes/DishFormFields';
 
+import { notify } from '../../services/notify';
+
 import {
     isDecimal,
     isPositive,
@@ -93,11 +95,11 @@ export default function CreateDish() {
                     });
 
                     if (!res.ok) {
-                        alert('Errore creazione piatto');
+                        notify.error('Errore creazione piatto');
                         return;
                     }
 
-                    alert('Piatto creato correttamente');
+                    notify.success('Piatto creato correttamente');
                     navigate('/dishes');
                 }}
             >

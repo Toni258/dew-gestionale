@@ -10,6 +10,7 @@ import Pagination from '../../components/ui/Pagination';
 
 import { formatDateTime } from '../../utils/formatDateTime';
 import { useAuth } from '../../context/AuthContext';
+import { notify } from '../../services/notify';
 
 import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import DisableAppUserPassword from '../../components/modals/DisableAppUserPassword';
@@ -298,13 +299,18 @@ export default function UserManagerMobileApp() {
                                 json?.message || `HTTP ${res.status}`,
                             );
 
-                        alert('Informazioni utente aggiornate correttamente');
+                        notify.success(
+                            'Informazioni utente aggiornate correttamente',
+                        );
 
                         setUserSelected(null);
                         setShowModifyUserInfoModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(
+                            e?.message ||
+                                'Errore aggiornamento informazioni utente',
+                        );
                     }
                 }}
             />
@@ -333,7 +339,7 @@ export default function UserManagerMobileApp() {
                             },
                         );
 
-                        alert('Utente disabilitato correttamente');
+                        notify.success('Utente disabilitato correttamente');
 
                         const json = await res.json().catch(() => null);
                         if (!res.ok)
@@ -345,7 +351,9 @@ export default function UserManagerMobileApp() {
                         setShowDisableAppUserModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(
+                            e?.message || 'Errore disabilitazione utente',
+                        );
                     }
                 }}
             />
@@ -381,12 +389,14 @@ export default function UserManagerMobileApp() {
                                 json?.message || `HTTP ${res.status}`,
                             );
 
-                        alert('Utente eliminato correttamente');
+                        notify.success('Utente eliminato correttamente');
                         setUserSelected(null);
                         setShowDeleteUserModal(false);
                         await fetchUsers();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(
+                            e?.message || 'Errore eliminazione utente',
+                        );
                     }
                 }}
             />

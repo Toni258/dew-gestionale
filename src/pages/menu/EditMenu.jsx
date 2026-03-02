@@ -8,6 +8,8 @@ import ModifyMenuModal from '../../components/modals/ModifyMenuModal';
 import MenuHeaderCard from '../../components/menu/MenuHeaderCard';
 import MenuGrid from '../../components/menu/MenuGrid';
 
+import { notify } from '../../services/notify';
+
 import { useEditMenu } from '../../hooks/menus/useEditMenu';
 import { updateMenu, deleteMenu } from '../../services/menusApi';
 
@@ -60,11 +62,11 @@ export default function EditMenu() {
                 onConfirm={async (m) => {
                     try {
                         await deleteMenu(m.season_type);
-                        alert('Menù eliminato correttamente');
+                        notify.success('Menù eliminato correttamente');
                         setMenuToDelete(null);
                         navigate('/menu');
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message || 'Errore eliminazione menù');
                     }
                 }}
             />
@@ -77,10 +79,10 @@ export default function EditMenu() {
                     try {
                         await updateMenu(menu.season_type, updatedValues);
                         setMenu((prev) => ({ ...prev, ...updatedValues }));
-                        alert('Menù modificato correttamente');
+                        notify.success('Menù modificato correttamente');
                         setModifyMenu(false);
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message || 'Errore modifica menù');
                     }
                 }}
             />

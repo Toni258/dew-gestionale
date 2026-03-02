@@ -4,6 +4,7 @@ import {
     getMenuMealComposition,
     upsertMenuMealComposition,
 } from '../../services/menusApi';
+import { notify } from '../../services/notify';
 
 const COURSE_TYPES = [
     { key: 'primo', label: 'Primo' },
@@ -180,13 +181,13 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         // validazione
         for (const c of COURSE_TYPES) {
             if (!selectedFoods[c.key]?.id_food) {
-                alert(`Seleziona un piatto per: ${c.label}`);
+                notify.warning(`Seleziona un piatto per: ${c.label}`);
                 return { ok: false };
             }
         }
 
         if (hasAllFourSaved && !hasChanges) {
-            alert('Nessuna modifica da salvare');
+            notify.info('Nessuna modifica da salvare');
             return { ok: false };
         }
 
@@ -208,7 +209,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
                 payload,
             );
 
-            alert(
+            notify.success(
                 hasAllFourSaved
                     ? 'Modifiche salvate correttamente'
                     : 'Pasto aggiunto correttamente',
@@ -217,7 +218,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
             return { ok: true };
         } catch (e) {
             console.error(e);
-            alert(e.message || 'Errore salvataggio');
+            notify.error(e.message || 'Errore salvataggio');
             return { ok: false, error: e };
         } finally {
             setSaving(false);

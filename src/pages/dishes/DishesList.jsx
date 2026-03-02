@@ -12,6 +12,8 @@ import DishesTable from '../../components/dishes/DishesTable';
 import DeleteDishModal from '../../components/modals/DeleteDishModal';
 import AllergensModal from '../../components/modals/AllergensModal';
 
+import { notify } from '../../services/notify';
+
 import { ALLERGEN_OPTIONS } from '../../domain/allergens';
 import { TIPOLOGIA_OPTIONS } from '../../domain/tipologia';
 import { STATO_OPTIONS } from '../../domain/stato';
@@ -206,11 +208,11 @@ export default function DishesList() {
                     try {
                         await deleteDish(dish.id_food);
                         console.log('Elimina piatto', dish.id_food, dish.name);
-                        alert('Piatto eliminato correttamente');
+                        notify.success('Piatto eliminato correttamente');
                         setDishToDelete(null);
                         await fetchDishes();
                     } catch (e) {
-                        alert(e.message);
+                        notify.error(e.message || 'Errore eliminazione piatto');
                     }
                 }}
             />
