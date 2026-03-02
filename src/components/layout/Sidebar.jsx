@@ -89,7 +89,7 @@ export default function Sidebar() {
                 {isSuperUser && (
                     <SidebarItem
                         to="/user-manager/create"
-                        label="Crea nuovo utente"
+                        label="Crea nuovo utente gestionale"
                         isActiveOverride={(pathname) =>
                             pathname === '/user-manager/create'
                         }

@@ -15,11 +15,11 @@ import DishesList from '../pages/dishes/DishesList';
 import CreateDish from '../pages/dishes/CreateDish';
 import EditDish from '../pages/dishes/EditDish';
 
-import StatisticheConsumi from '../pages/Statistiche/StatisticheConsumi.jsx';
-import StatisticheScelte from '../pages/Statistiche/StatisticheScelte.jsx';
-import UserManagerGestionale from '../pages/users/UserManagerGestionale.jsx';
+import StatisticheConsumi from '../pages/Statistiche/StatisticheConsumi';
+import StatisticheScelte from '../pages/Statistiche/StatisticheScelte';
+import UserManagerGestionale from '../pages/users/UserManagerGestionale';
 import UserManagerMobileApp from '../pages/users/UserManagerMobileApp';
-import CreateUser from '../pages/users/CreateUser';
+import CreateUserGestionale from '../pages/users/CreateUserGestionale';
 import Test from '../pages/Test';
 
 import ProtectedRoute from './ProtectedRoute';
@@ -76,7 +76,7 @@ export default function AppRouter() {
                     />
                     <Route
                         path="/user-manager/create"
-                        element={<CreateUser />}
+                        element={<CreateUserGestionale />}
                     />
 
                     <Route path="/test" element={<Test />} />

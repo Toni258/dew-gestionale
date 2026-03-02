@@ -203,8 +203,8 @@ export default function CustomSelect({
                                         highlighted
                                             ? 'bg-brand-primary/20 text-brand-primary font-semibold'
                                             : active
-                                            ? 'bg-brand-primary/10 text-brand-primary font-semibold'
-                                            : 'hover:bg-black/5'
+                                              ? 'bg-brand-primary/10 text-brand-primary font-semibold'
+                                              : 'hover:bg-black/5'
                                     }
                                     ${isLast ? 'rounded-b-textField' : ''}
                                 `}

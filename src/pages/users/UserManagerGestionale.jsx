@@ -202,7 +202,7 @@ export default function UserManagerGestionale() {
                             </th>
                             <th className="px-4 py-3 text-left">CREATO IL</th>
                             <th className="px-4 py-3 text-left">
-                                ULTIMA MODIFICA
+                                ULTIMA AZIONE
                             </th>
                             {isSuperUser && (
                                 <th className="px-4 py-3 text-left">AZIONI</th>

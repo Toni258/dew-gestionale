@@ -11,6 +11,8 @@ import {
     updateUserInfoApp,
     deleteUserApp,
     disableUserApp,
+    checkEmail,
+    createUserGestionale,
 } from '../controllers/usersController.js';
 
 const router = Router();
@@ -20,6 +22,13 @@ router.get('/mobile', requireAuth, getFilteredUsersMobileApp);
 router.get('/gestionale', requireAuth, getFilteredUsersGestionale);
 
 // Azioni: SOLO super_user
+router.get('/emailExists', requireAuth, requireRole('super_user'), checkEmail);
+router.post(
+    '/create/gestionale',
+    requireAuth,
+    requireRole('super_user'),
+    createUserGestionale,
+);
 router.post(
     '/:id/reset-password',
     requireAuth,

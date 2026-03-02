@@ -144,79 +144,156 @@ export default function DateRangePicker({
 
     // UI
     return (
-        <div
-            className={`relative flex flex-col gap-3 ${className}`}
-            ref={wrapperRef}
-        >
-            {/* INPUT ROW */}
-            <div className="grid grid-cols-2 gap-3">
-                {/* START */}
-                <div className="relative h-[38px]">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            // toggle: se sto già aprendo "start" e open è true, chiudo
-                            if (open && selecting === 'start') {
-                                setOpen(false);
-                                setHoverDate(null);
-                            } else {
-                                setOpen(true);
-                                setSelecting('start');
-                            }
-                        }}
-                        className={`input-default h-full w-full pr-10 text-left ${
-                            errorStart
-                                ? 'border-brand-error'
-                                : 'border-brand-divider'
-                        }`}
-                    >
-                        {startValue || (
-                            <span className="text-brand-textSecondary">
-                                {placeholderStart}
+        <div className={`flex flex-col gap-3 ${className}`} ref={wrapperRef}>
+            <div className="relative">
+                {/* INPUT ROW */}
+                <div className="grid grid-cols-2 gap-3">
+                    {/* START */}
+                    <div className="relative h-[38px]">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                // toggle: se sto già aprendo "start" e open è true, chiudo
+                                if (open && selecting === 'start') {
+                                    setOpen(false);
+                                    setHoverDate(null);
+                                } else {
+                                    setOpen(true);
+                                    setSelecting('start');
+                                }
+                            }}
+                            className={`input-default h-full w-full pr-10 text-left ${
+                                errorStart
+                                    ? 'border-brand-error'
+                                    : 'border-brand-divider'
+                            }`}
+                        >
+                            {startValue || (
+                                <span className="text-brand-textSecondary">
+                                    {placeholderStart}
+                                </span>
+                            )}
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                                📅
                             </span>
-                        )}
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                            📅
-                        </span>
-                    </button>
+                        </button>
+                    </div>
+
+                    {/* END */}
+                    <div className="relative h-[38px]">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                // toggle: se sto già aprendo "end" e open è true, chiudo
+                                if (open && selecting === 'end') {
+                                    setOpen(false);
+                                    setHoverDate(null);
+                                } else {
+                                    setOpen(true);
+                                    setSelecting('end');
+                                }
+                            }}
+                            className={`input-default h-full w-full pr-10 text-left ${
+                                errorEnd
+                                    ? 'border-brand-error'
+                                    : 'border-brand-divider'
+                            }`}
+                        >
+                            {endValue || (
+                                <span className="text-brand-textSecondary">
+                                    {placeholderEnd}
+                                </span>
+                            )}
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                                📅
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
-                {/* END */}
-                <div className="relative h-[38px]">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            // toggle: se sto già aprendo "end" e open è true, chiudo
-                            if (open && selecting === 'end') {
-                                setOpen(false);
-                                setHoverDate(null);
-                            } else {
-                                setOpen(true);
-                                setSelecting('end');
-                            }
-                        }}
-                        className={`input-default h-full w-full pr-10 text-left ${
-                            errorEnd
-                                ? 'border-brand-error'
-                                : 'border-brand-divider'
-                        }`}
+                {/* CALENDAR PANEL (overlay, non spinge il layout) */}
+                {open && (
+                    <div
+                        className="
+                            absolute left-0 top-full mt-2
+                            w-full
+                            bg-white border border-brand-divider shadow-ios-strong
+                            rounded-textField p-4 animate-fadeScale z-50
+                        "
                     >
-                        {endValue || (
-                            <span className="text-brand-textSecondary">
-                                {placeholderEnd}
-                            </span>
-                        )}
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                            📅
-                        </span>
-                    </button>
-                </div>
+                        {/* HEADER UNICO con frecce agli estremi e mesi centrati */}
+                        <div className="relative mb-4">
+                            {/* Freccia sinistra agli estremi */}
+                            <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={prevMonth}
+                                className="absolute left-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
+                            >
+                                ◀
+                            </button>
+
+                            {/* Grid centrale: 2 mesi sopra ai due calendari */}
+                            <div className="grid grid-cols-2 text-center font-semibold text-brand-text">
+                                <div>
+                                    {current.month + 1}/{current.year}
+                                </div>
+                                <div>
+                                    {nextMonthIndex + 1}/{nextYear}
+                                </div>
+                            </div>
+
+                            {/* Freccia destra agli estremi */}
+                            <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={nextMonth}
+                                className="absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
+                            >
+                                ▶
+                            </button>
+                        </div>
+
+                        {/* DOUBLE CALENDAR GRID */}
+                        <div className="grid grid-cols-2 gap-8 w-full">
+                            {/* LEFT MONTH */}
+                            <CalendarGrid
+                                year={current.year}
+                                month={current.month}
+                                weeks={thisMonth}
+                                disablePast={disablePast}
+                                todayStart={todayStart}
+                                startDate={startDate}
+                                endDate={endDate}
+                                hoverDate={hoverDate}
+                                selecting={selecting}
+                                setHoverDate={setHoverDate}
+                                handleSelectDay={handleSelectDay}
+                            />
+
+                            {/* RIGHT MONTH */}
+                            <CalendarGrid
+                                year={nextYear}
+                                month={nextMonthIndex}
+                                weeks={nextCalendar}
+                                disablePast={disablePast}
+                                todayStart={todayStart}
+                                startDate={startDate}
+                                endDate={endDate}
+                                hoverDate={hoverDate}
+                                selecting={selecting}
+                                setHoverDate={setHoverDate}
+                                handleSelectDay={handleSelectDay}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="min-h-[16px]">
                     {errorStart && (
-                        <p className="text-brand-error text-sm animate-fadeIn">
+                        <p className="text-brand-error text-sm animate-fadeIn mb-2">
                             {errorStart}
                         </p>
                     )}
@@ -224,90 +301,12 @@ export default function DateRangePicker({
 
                 <div className="min-h-[16px]">
                     {errorEnd && (
-                        <p className="text-brand-error text-sm animate-fadeIn">
+                        <p className="text-brand-error text-sm animate-fadeIn mb-2">
                             {errorEnd}
                         </p>
                     )}
                 </div>
             </div>
-
-            {/* CALENDAR PANEL (overlay, non spinge il layout) */}
-            {open && (
-                <div
-                    className="
-                    absolute left-0 top-full mt-2
-                    w-full
-                    bg-white border border-brand-divider shadow-ios-strong
-                    rounded-textField p-4 animate-fadeScale z-50
-                "
-                >
-                    {/* HEADER UNICO con frecce agli estremi e mesi centrati */}
-                    <div className="relative mb-4">
-                        {/* Freccia sinistra agli estremi */}
-                        <button
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={prevMonth}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
-                        >
-                            ◀
-                        </button>
-
-                        {/* Grid centrale: 2 mesi sopra ai due calendari */}
-                        <div className="grid grid-cols-2 text-center font-semibold text-brand-text">
-                            <div>
-                                {current.month + 1}/{current.year}
-                            </div>
-                            <div>
-                                {nextMonthIndex + 1}/{nextYear}
-                            </div>
-                        </div>
-
-                        {/* Freccia destra agli estremi */}
-                        <button
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={nextMonth}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
-                        >
-                            ▶
-                        </button>
-                    </div>
-
-                    {/* DOUBLE CALENDAR GRID */}
-                    <div className="grid grid-cols-2 gap-8 w-full">
-                        {/* LEFT MONTH */}
-                        <CalendarGrid
-                            year={current.year}
-                            month={current.month}
-                            weeks={thisMonth}
-                            disablePast={disablePast}
-                            todayStart={todayStart}
-                            startDate={startDate}
-                            endDate={endDate}
-                            hoverDate={hoverDate}
-                            selecting={selecting}
-                            setHoverDate={setHoverDate}
-                            handleSelectDay={handleSelectDay}
-                        />
-
-                        {/* RIGHT MONTH */}
-                        <CalendarGrid
-                            year={nextYear}
-                            month={nextMonthIndex}
-                            weeks={nextCalendar}
-                            disablePast={disablePast}
-                            todayStart={todayStart}
-                            startDate={startDate}
-                            endDate={endDate}
-                            hoverDate={hoverDate}
-                            selecting={selecting}
-                            setHoverDate={setHoverDate}
-                            handleSelectDay={handleSelectDay}
-                        />
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
@@ -428,10 +427,10 @@ function CalendarGrid({
                                     isStart || isEnd
                                         ? 'bg-brand-primary text-white font-semibold'
                                         : inRange || inHoverRange
-                                        ? 'bg-brand-primary/20 text-brand-primary font-semibold'
-                                        : !disabled
-                                        ? 'hover:bg-brand-primary/10 hover:scale-[1.08]'
-                                        : ''
+                                          ? 'bg-brand-primary/20 text-brand-primary font-semibold'
+                                          : !disabled
+                                            ? 'hover:bg-brand-primary/10 hover:scale-[1.08]'
+                                            : ''
                                 }
                             `}
                         >

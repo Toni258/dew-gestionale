@@ -530,3 +530,94 @@ export async function disableUserApp(req, res, next) {
         next(e);
     }
 }
+
+export async function checkEmail(req, res, next) {
+    try {
+        const raw = String(req.query.email ?? '')
+            .trim()
+            .toLowerCase();
+
+        if (!raw || raw.length < 3) {
+            return res.status(400).json({ message: 'Email utente non valida' });
+        }
+
+        // validazione semplice (stessa che usi nel FE)
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!re.test(raw)) {
+            return res
+                .status(400)
+                .json({ message: 'Email utente non valida / Scritta male' });
+        }
+
+        const [rows] = await pool.query(
+            `
+                SELECT 1
+                FROM backoffice_users
+                WHERE LOWER(email) = ?
+                LIMIT 1
+            `,
+            [raw],
+        );
+
+        return res.json({ exists: rows.length > 0 });
+    } catch (e) {
+        next(e);
+    }
+}
+
+export async function createUserGestionale(req, res, next) {
+    try {
+        const { name, surname, email, password, role } = req.body || {};
+
+        const cleanName = String(name ?? '').trim();
+        const cleanSurname = String(surname ?? '').trim();
+        const cleanEmail = String(email ?? '')
+            .trim()
+            .toLowerCase();
+        const cleanRole = String(role ?? '').trim();
+
+        if (!cleanName || cleanName.length < 2) {
+            return res.status(400).json({ message: 'Nome non valido' });
+        }
+        if (!cleanSurname || cleanSurname.length < 2) {
+            return res.status(400).json({ message: 'Cognome non valido' });
+        }
+
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!cleanEmail || !re.test(cleanEmail)) {
+            return res.status(400).json({ message: 'Email non valida' });
+        }
+
+        if (!password || String(password).length < 8) {
+            return res.status(400).json({ message: 'Password non valida' });
+        }
+
+        const allowedRoles = ['super_user', 'operator'];
+        if (!allowedRoles.includes(cleanRole)) {
+            return res.status(400).json({ message: 'Ruolo non valido' });
+        }
+
+        // email duplicata
+        const [dup] = await pool.query(
+            `SELECT id FROM backoffice_users WHERE email = ? LIMIT 1`,
+            [cleanEmail],
+        );
+        if (dup.length) {
+            return res.status(409).json({ message: 'Email già in uso' });
+        }
+
+        const passwordHash = await bcrypt.hash(String(password), 10);
+
+        const [result] = await pool.query(
+            `
+                INSERT INTO backoffice_users (email, password_hash, name, surname, role, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 'must_change_password', NOW(), NOW())
+            `,
+            [cleanEmail, passwordHash, cleanName, cleanSurname, cleanRole],
+        );
+
+        return res.json({ ok: true, userId: result.insertId });
+    } catch (e) {
+        next(e);
+    }
+}
