@@ -11,6 +11,8 @@ import Pagination from '../../components/ui/Pagination';
 import { formatDateTime } from '../../utils/formatDateTime';
 import { useAuth } from '../../context/AuthContext';
 import { notify } from '../../services/notify';
+import { withLoader } from '../../services/withLoader';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import ModifyUserPasswordModal from '../../components/modals/ModifyUserPasswordModal';
@@ -90,15 +92,20 @@ export default function UserManagerGestionale() {
             qs.set('page', String(requestParams.page));
             qs.set('pageSize', String(requestParams.pageSize));
 
-            const res = await fetch(`/api/users/gestionale?${qs.toString()}`, {
-                method: 'GET',
-                credentials: 'include',
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            await withLoader('Caricamento utenti…', async () => {
+                const res = await fetch(
+                    `/api/users/gestionale?${qs.toString()}`,
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                    },
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-            const json = await res.json();
-            setRows(json.data || []);
-            setTotal(json.total || 0);
+                const json = await res.json();
+                setRows(json.data || []);
+                setTotal(json.total || 0);
+            });
         } catch {
             setError('Errore nel caricamento degli utenti.');
             setRows([]);
@@ -366,43 +373,49 @@ export default function UserManagerGestionale() {
                     setShowModifyUserInfoModal(false);
                 }}
                 onConfirm={async (payload) => {
-                    try {
-                        const res = await fetch(
-                            `/api/users/${userSelected.id}/update-info/gestionale`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    name: payload.name,
-                                    surname: payload.surname,
-                                    email: payload.email,
-                                    role: payload.role,
-                                }),
-                            },
-                        );
-
-                        const json = await res.json().catch(() => null);
-                        if (!res.ok)
-                            throw new Error(
-                                json?.message || `HTTP ${res.status}`,
+                    const result = await withLoaderNotify({
+                        message: 'Salvataggio modifiche…',
+                        mode: 'blocking',
+                        success: 'Informazioni utente modificate correttamente',
+                        errorTitle: 'Errore aggiornamento utente',
+                        errorMessage:
+                            'Impossibile aggiornare le informazioni utente.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id}/update-info/gestionale`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        name: payload.name,
+                                        surname: payload.surname,
+                                        email: payload.email,
+                                        role: payload.role,
+                                    }),
+                                },
                             );
 
-                        // se ho modificato me stesso, riallineo subito i dati in AuthContext
-                        if (userSelected?.id === user?.id) {
-                            await refreshMe();
-                        }
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
 
-                        notify.success(
-                            'Informazioni utente modificate correttamente',
-                        );
+                            if (userSelected?.id === user?.id) {
+                                await refreshMe();
+                            }
 
-                        setUserSelected(null);
-                        setShowModifyUserInfoModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(e.message);
-                    }
+                            setUserSelected(null);
+                            setShowModifyUserInfoModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
+
+                    if (!result.ok) return;
                 }}
             />
 
@@ -415,33 +428,41 @@ export default function UserManagerGestionale() {
                     setShowPasswordChangeModal(false);
                 }}
                 onConfirm={async (values) => {
-                    try {
-                        console.log('Cambio password', {
-                            id: userSelected?.id,
-                            email: userSelected?.email,
-                            new_password: values.new_password,
-                        });
+                    const result = await withLoaderNotify({
+                        message: 'Aggiornamento password…',
+                        mode: 'blocking',
+                        success: 'Password modificata correttamente',
+                        errorTitle: 'Errore cambio password',
+                        errorMessage: 'Impossibile aggiornare la password.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id}/reset-password`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        newPassword: values.new_password,
+                                    }),
+                                },
+                            );
 
-                        const res = await fetch(
-                            `/api/users/${userSelected.id}/reset-password`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    newPassword: values.new_password,
-                                }),
-                            },
-                        );
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
 
-                        notify.success('Password modificata correttamente');
+                            setUserSelected(null);
+                            setShowPasswordChangeModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
 
-                        setUserSelected(null);
-                        setShowPasswordChangeModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(e.message);
-                    }
+                    if (!result.ok) return;
                 }}
             />
 
@@ -454,29 +475,35 @@ export default function UserManagerGestionale() {
                     setShowDisableUserModal(false);
                 }}
                 onConfirm={async () => {
-                    try {
-                        const res = await fetch(
-                            `/api/users/${userSelected.id}/suspend`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                            },
-                        );
-
-                        const json = await res.json().catch(() => null);
-                        if (!res.ok)
-                            throw new Error(
-                                json?.message || `HTTP ${res.status}`,
+                    const result = await withLoaderNotify({
+                        message: 'Sospensione utente…',
+                        mode: 'blocking',
+                        success: 'Utente sospeso correttamente',
+                        errorTitle: 'Errore sospensione utente',
+                        errorMessage: 'Impossibile sospendere l’utente.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id}/suspend`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                },
                             );
 
-                        notify.success('Utente sospeso correttamente');
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
 
-                        setUserSelected(null);
-                        setShowDisableUserModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(e.message);
-                    }
+                            setUserSelected(null);
+                            setShowDisableUserModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
+
+                    if (!result.ok) return;
                 }}
             />
 
@@ -489,29 +516,35 @@ export default function UserManagerGestionale() {
                     setShowEnableUserModal(false);
                 }}
                 onConfirm={async () => {
-                    try {
-                        const res = await fetch(
-                            `/api/users/${userSelected.id}/unsuspend`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                            },
-                        );
-
-                        const json = await res.json().catch(() => null);
-                        if (!res.ok)
-                            throw new Error(
-                                json?.message || `HTTP ${res.status}`,
+                    const result = await withLoaderNotify({
+                        message: 'Riabilitazione utente…',
+                        mode: 'blocking',
+                        success: 'Utente riabilitato correttamente',
+                        errorTitle: 'Errore riabilitazione utente',
+                        errorMessage: 'Impossibile riabilitare l’utente.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id}/unsuspend`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                },
                             );
 
-                        notify.success('Utente riabilitato correttamente');
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
 
-                        setUserSelected(null);
-                        setShowEnableUserModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(e.message);
-                    }
+                            setUserSelected(null);
+                            setShowEnableUserModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
+
+                    if (!result.ok) return;
                 }}
             />
 
@@ -524,29 +557,35 @@ export default function UserManagerGestionale() {
                     setShowDeleteUserModal(false);
                 }}
                 onConfirm={async () => {
-                    try {
-                        const res = await fetch(
-                            `/api/users/${userSelected.id}/delete/gestionale`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                            },
-                        );
-
-                        const json = await res.json().catch(() => null);
-                        if (!res.ok)
-                            throw new Error(
-                                json?.message || `HTTP ${res.status}`,
+                    const result = await withLoaderNotify({
+                        message: 'Eliminazione utente…',
+                        mode: 'blocking',
+                        success: 'Utente eliminato correttamente',
+                        errorTitle: 'Errore eliminazione utente',
+                        errorMessage: 'Impossibile eliminare l’utente.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id}/delete/gestionale`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                },
                             );
 
-                        notify.success('Utente eliminato correttamente');
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
 
-                        setUserSelected(null);
-                        setShowDeleteUserModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(e.message);
-                    }
+                            setUserSelected(null);
+                            setShowDeleteUserModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
+
+                    if (!result.ok) return;
                 }}
             />
         </AppLayout>

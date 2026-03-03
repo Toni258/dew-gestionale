@@ -14,6 +14,7 @@ import SuspensionBlock from '../../components/dishes/SuspensionBlock';
 import StickySaveBar from '../../components/dishes/StickySaveBar';
 
 import { notify } from '../../services/notify';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 import { useDish } from '../../hooks/useDish';
 import { hasDishChanged } from '../../utils/diffDish';
 import {
@@ -289,12 +290,19 @@ export default function EditDish() {
                         initialSuspension?.enabled &&
                         suspensionEnabled === false
                     ) {
-                        try {
-                            await unsuspendDish(dishId);
-                        } catch (e) {
-                            notify.error(e.message);
-                            return;
-                        }
+                        const unsuspendRes = await withLoaderNotify({
+                            message: 'Riattivazione piatto…',
+                            mode: 'blocking',
+                            success: 'Piatto riattivato correttamente',
+                            errorTitle: 'Errore riattivazione',
+                            errorMessage: 'Impossibile riattivare il piatto.',
+                            fn: async () => {
+                                await unsuspendDish(dishId);
+                                return true;
+                            },
+                        });
+
+                        if (!unsuspendRes.ok) return;
                     }
 
                     // === 2) gestione SUSPEND (se ON + cambiata)
@@ -310,20 +318,28 @@ export default function EditDish() {
                                         (initialSuspension.reason ?? ''))));
 
                     if (suspensionEnabled && suspensionChanged) {
-                        try {
-                            const result = await runDishSuspensionFlow({
-                                start_date: values.start_date,
-                                end_date: values.end_date,
-                                reason: values.reason,
-                            });
+                        const suspendPreviewRes = await withLoaderNotify({
+                            message: 'Verifica sospensione…',
+                            mode: 'blocking',
+                            errorTitle: 'Errore sospensione',
+                            errorMessage:
+                                'Impossibile verificare la sospensione.',
+                            fn: async () => {
+                                return await runDishSuspensionFlow({
+                                    start_date: values.start_date,
+                                    end_date: values.end_date,
+                                    reason: values.reason,
+                                });
+                            },
+                        });
 
-                            if (result.pending) return;
-                            if (result.applied === false) {
-                                notify.warning('Operazione annullata');
-                                return;
-                            }
-                        } catch (e) {
-                            notify.error(e.message);
+                        if (!suspendPreviewRes.ok) return;
+
+                        const result = suspendPreviewRes.data;
+
+                        if (result?.pending) return;
+                        if (result?.applied === false) {
+                            notify.warning('Operazione annullata');
                             return;
                         }
                     }
@@ -365,15 +381,21 @@ export default function EditDish() {
                         }
                     });
 
-                    try {
-                        await updateDish(dishId, formData);
-                        notify.success('Piatto aggiornato correttamente');
-                        navigate('/dishes');
-                    } catch (e) {
-                        notify.error(
-                            e.message || 'Errore aggiornamento piatto',
-                        );
-                    }
+                    const updRes = await withLoaderNotify({
+                        message: 'Salvataggio piatto…',
+                        mode: 'blocking',
+                        success: 'Piatto aggiornato correttamente',
+                        errorTitle: 'Errore aggiornamento piatto',
+                        errorMessage: 'Impossibile aggiornare il piatto.',
+                        fn: async () => {
+                            await updateDish(dishId, formData);
+                            return true;
+                        },
+                    });
+
+                    if (!updRes.ok) return;
+
+                    navigate('/dishes');
                 }}
             >
                 <DishFormFields existingImageUrl={existingImageUrl} />
@@ -610,31 +632,36 @@ export default function EditDish() {
                             <Button
                                 variant="secondary"
                                 onClick={async () => {
-                                    try {
-                                        await applySuspension({
-                                            start_date:
-                                                suspensionPreview.suspension
-                                                    .valid_from,
-                                            end_date:
-                                                suspensionPreview.suspension
-                                                    .valid_to,
-                                            reason: suspensionPreview.suspension
-                                                .reason,
-                                            action: 'disable-only',
-                                        });
+                                    const res = await withLoaderNotify({
+                                        message: 'Salvataggio sospensione…',
+                                        mode: 'blocking',
+                                        success: 'Sospensione salvata',
+                                        errorTitle:
+                                            'Errore salvataggio sospensione',
+                                        errorMessage:
+                                            'Impossibile salvare la sospensione.',
+                                        fn: async () => {
+                                            await applySuspension({
+                                                start_date:
+                                                    suspensionPreview.suspension
+                                                        .valid_from,
+                                                end_date:
+                                                    suspensionPreview.suspension
+                                                        .valid_to,
+                                                reason: suspensionPreview
+                                                    .suspension.reason,
+                                                action: 'disable-only',
+                                            });
+                                            return true;
+                                        },
+                                    });
 
-                                        notify.success({
-                                            title: 'Sospensione salvata',
-                                            description:
-                                                'Attenzione: dovrai completare i menù manualmente.',
-                                        });
-                                        navigate('/dishes');
-                                    } catch (e) {
-                                        notify.error(
-                                            e.message ||
-                                                'Errore salvataggio sospensione',
-                                        );
-                                    }
+                                    if (!res.ok) return;
+
+                                    notify.info(
+                                        'Attenzione: dovrai completare i menù manualmente.',
+                                    );
+                                    navigate('/dishes');
                                 }}
                             >
                                 Salva sospensione (non sostituire)
@@ -644,29 +671,34 @@ export default function EditDish() {
                                 variant="primary"
                                 disabled={!allSelected}
                                 onClick={async () => {
-                                    try {
-                                        await applySuspension({
-                                            start_date:
-                                                suspensionPreview.suspension
-                                                    .valid_from,
-                                            end_date:
-                                                suspensionPreview.suspension
-                                                    .valid_to,
-                                            reason: suspensionPreview.suspension
-                                                .reason,
-                                            action: 'replace',
-                                        });
-
-                                        notify.success(
+                                    const res = await withLoaderNotify({
+                                        message: 'Salvataggio sostituzioni…',
+                                        mode: 'blocking',
+                                        success:
                                             'Sospensione salvata e sostituzioni applicate.',
-                                        );
-                                        navigate('/dishes');
-                                    } catch (e) {
-                                        notify.error(
-                                            e.message ||
-                                                'Errore salvataggio sospensione',
-                                        );
-                                    }
+                                        errorTitle:
+                                            'Errore salvataggio sostituzioni',
+                                        errorMessage:
+                                            'Impossibile salvare le sostituzioni.',
+                                        fn: async () => {
+                                            await applySuspension({
+                                                start_date:
+                                                    suspensionPreview.suspension
+                                                        .valid_from,
+                                                end_date:
+                                                    suspensionPreview.suspension
+                                                        .valid_to,
+                                                reason: suspensionPreview
+                                                    .suspension.reason,
+                                                action: 'replace',
+                                            });
+                                            return true;
+                                        },
+                                    });
+
+                                    if (!res.ok) return;
+
+                                    navigate('/dishes');
                                 }}
                             >
                                 Salva e sostituisci

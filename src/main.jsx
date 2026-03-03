@@ -5,13 +5,17 @@ import App from './App.jsx';
 import './App.css';
 import './styles/components.css';
 import './styles/notify.css';
+import './styles/loader.css';
 
 import NotifyProvider from './components/notify/NotifyProvider.jsx';
+import LoaderProvider from './components/loader/LoaderProvider.jsx';
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
-        <NotifyProvider>
-            <App />
-        </NotifyProvider>
+        <LoaderProvider>
+            <NotifyProvider>
+                <App />
+            </NotifyProvider>
+        </LoaderProvider>
     </StrictMode>,
 );

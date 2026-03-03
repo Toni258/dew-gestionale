@@ -3,6 +3,8 @@ import InfoMacro from './InfoMacro';
 import CheeseRotationTable from './CheeseRotationTable';
 
 import { notify } from '../../../services/notify';
+import { loader } from '../../../services/loader';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 export default function FixedDishesCell({
     meal,
@@ -50,7 +52,7 @@ export default function FixedDishesCell({
                         });
 
                         if (!res?.ok && res?.reason === 'duplicate') {
-                            notify.error(
+                            notify.warning(
                                 'Questo piatto è già stato selezionato per questo pasto.',
                             );
                         }
@@ -119,7 +121,7 @@ export default function FixedDishesCell({
                                 });
 
                                 if (!res?.ok && res?.reason === 'duplicate') {
-                                    notify.error(
+                                    notify.warning(
                                         'Questo piatto è già stato selezionato per questo pasto.',
                                     );
                                 }

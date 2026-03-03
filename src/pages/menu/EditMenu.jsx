@@ -8,7 +8,7 @@ import ModifyMenuModal from '../../components/modals/ModifyMenuModal';
 import MenuHeaderCard from '../../components/menu/MenuHeaderCard';
 import MenuGrid from '../../components/menu/MenuGrid';
 
-import { notify } from '../../services/notify';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 import { useEditMenu } from '../../hooks/menus/useEditMenu';
 import { updateMenu, deleteMenu } from '../../services/menusApi';
@@ -60,14 +60,21 @@ export default function EditMenu() {
                 menu={menuToDelete}
                 onClose={() => setMenuToDelete(null)}
                 onConfirm={async (m) => {
-                    try {
-                        await deleteMenu(m.season_type);
-                        notify.success('Menù eliminato correttamente');
-                        setMenuToDelete(null);
-                        navigate('/menu');
-                    } catch (e) {
-                        notify.error(e.message || 'Errore eliminazione menù');
-                    }
+                    const res = await withLoaderNotify({
+                        message: 'Eliminazione menù…',
+                        mode: 'blocking',
+                        success: 'Menù eliminato correttamente',
+                        errorTitle: 'Errore eliminazione menù',
+                        errorMessage: 'Impossibile eliminare il menù.',
+                        fn: async () => {
+                            await deleteMenu(m.season_type);
+                            setMenuToDelete(null);
+                            navigate('/menu');
+                            return true;
+                        },
+                    });
+
+                    if (!res.ok) return;
                 }}
             />
 
@@ -76,14 +83,21 @@ export default function EditMenu() {
                 menu={menu}
                 onClose={() => setModifyMenu(false)}
                 onConfirm={async (updatedValues) => {
-                    try {
-                        await updateMenu(menu.season_type, updatedValues);
-                        setMenu((prev) => ({ ...prev, ...updatedValues }));
-                        notify.success('Menù modificato correttamente');
-                        setModifyMenu(false);
-                    } catch (e) {
-                        notify.error(e.message || 'Errore modifica menù');
-                    }
+                    const res = await withLoaderNotify({
+                        message: 'Salvataggio modifiche…',
+                        mode: 'blocking',
+                        success: 'Menù modificato correttamente',
+                        errorTitle: 'Errore modifica menù',
+                        errorMessage: 'Impossibile modificare il menù.',
+                        fn: async () => {
+                            await updateMenu(menu.season_type, updatedValues);
+                            setMenu((prev) => ({ ...prev, ...updatedValues }));
+                            setModifyMenu(false);
+                            return true;
+                        },
+                    });
+
+                    if (!res.ok) return;
                 }}
             />
         </AppLayout>

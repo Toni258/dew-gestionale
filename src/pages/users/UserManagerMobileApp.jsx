@@ -11,6 +11,8 @@ import Pagination from '../../components/ui/Pagination';
 import { formatDateTime } from '../../utils/formatDateTime';
 import { useAuth } from '../../context/AuthContext';
 import { notify } from '../../services/notify';
+import { withLoader } from '../../services/withLoader';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import DisableAppUserPassword from '../../components/modals/DisableAppUserPassword';
@@ -81,12 +83,14 @@ export default function UserManagerMobileApp() {
             qs.set('page', String(requestParams.page));
             qs.set('pageSize', String(requestParams.pageSize));
 
-            const res = await fetch(`/api/users/mobile?${qs.toString()}`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            await withLoader('Caricamento utenti…', async () => {
+                const res = await fetch(`/api/users/mobile?${qs.toString()}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-            const json = await res.json();
-            setRows(json.data || []);
-            setTotal(json.total || 0);
+                const json = await res.json();
+                setRows(json.data || []);
+                setTotal(json.total || 0);
+            });
         } catch {
             setError('Errore nel caricamento degli utenti.');
             setRows([]);
@@ -163,6 +167,7 @@ export default function UserManagerMobileApp() {
                 <table className="w-full text-sm table-auto">
                     <thead className="bg-brand-primary text-white">
                         <tr>
+                            <th className="px-4 py-3 text-left">STATO</th>
                             <th className="px-4 py-3 text-left">ID</th>
                             <th className="px-4 py-3 text-left">RUOLO</th>
                             <th className="px-4 py-3 text-left">EMAIL</th>
@@ -182,7 +187,7 @@ export default function UserManagerMobileApp() {
                         {!loading && rows.length === 0 && (
                             <tr>
                                 <td
-                                    colSpan={isSuperUser ? 7 : 6}
+                                    colSpan={isSuperUser ? 8 : 7}
                                     className="px-4 py-4 text-brand-textSecondary"
                                 >
                                     Nessun utente trovato.
@@ -192,6 +197,11 @@ export default function UserManagerMobileApp() {
 
                         {rows.map((r) => (
                             <tr key={r.id_caregiver} className="border-b">
+                                <td className="px-4 py-3">
+                                    {r.is_disabled
+                                        ? 'Disabilitato'
+                                        : 'Abilitato'}
+                                </td>
                                 <td className="px-4 py-3">{r.id_caregiver}</td>
                                 <td className="px-4 py-3">
                                     {STATUS_LABELS[r.role] || r.role}
@@ -275,43 +285,45 @@ export default function UserManagerMobileApp() {
                     setShowModifyUserInfoModal(false);
                 }}
                 onConfirm={async (payload) => {
-                    try {
-                        console.log('Cambio info utente', payload);
-
-                        const res = await fetch(
-                            `/api/users/${userSelected.id_caregiver}/update-info/app`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    name: payload.name,
-                                    surname: payload.surname,
-                                    email: payload.email,
-                                    role: payload.role,
-                                }),
-                            },
-                        );
-
-                        const json = await res.json().catch(() => null);
-                        if (!res.ok)
-                            throw new Error(
-                                json?.message || `HTTP ${res.status}`,
+                    const result = await withLoaderNotify({
+                        message: 'Salvataggio modifiche…',
+                        mode: 'blocking',
+                        success: 'Informazioni utente aggiornate correttamente',
+                        errorTitle: 'Errore aggiornamento utente',
+                        errorMessage:
+                            'Impossibile aggiornare le informazioni utente.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id_caregiver}/update-info/app`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        name: payload.name,
+                                        surname: payload.surname,
+                                        email: payload.email,
+                                        role: payload.role,
+                                    }),
+                                },
                             );
 
-                        notify.success(
-                            'Informazioni utente aggiornate correttamente',
-                        );
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
 
-                        setUserSelected(null);
-                        setShowModifyUserInfoModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(
-                            e?.message ||
-                                'Errore aggiornamento informazioni utente',
-                        );
-                    }
+                            setUserSelected(null);
+                            setShowModifyUserInfoModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
+
+                    if (!result.ok) return;
                 }}
             />
 
@@ -324,37 +336,38 @@ export default function UserManagerMobileApp() {
                     setShowDisableAppUserModal(false);
                 }}
                 onConfirm={async (values) => {
-                    try {
-                        console.log('Disabilita utente', {
-                            id_caregiver: userSelected?.id_caregiver,
-                            email: userSelected?.email,
-                        });
-
-                        const res = await fetch(
-                            `/api/users/${userSelected.id_caregiver}/disable/app`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                                headers: { 'Content-Type': 'application/json' },
-                            },
-                        );
-
-                        notify.success('Utente disabilitato correttamente');
-
-                        const json = await res.json().catch(() => null);
-                        if (!res.ok)
-                            throw new Error(
-                                json?.message || `HTTP ${res.status}`,
+                    const result = await withLoaderNotify({
+                        message: 'Disabilitazione utente…',
+                        mode: 'blocking',
+                        success: 'Utente disabilitato correttamente',
+                        errorTitle: 'Errore disabilitazione utente',
+                        errorMessage: 'Impossibile disabilitare l’utente.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id_caregiver}/disable/app`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                },
                             );
 
-                        setUserSelected(null);
-                        setShowDisableAppUserModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(
-                            e?.message || 'Errore disabilitazione utente',
-                        );
-                    }
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
+
+                            setUserSelected(null);
+                            setShowDisableAppUserModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
+
+                    if (!result.ok) return;
                 }}
             />
 
@@ -367,37 +380,35 @@ export default function UserManagerMobileApp() {
                     setShowDeleteUserModal(false);
                 }}
                 onConfirm={async () => {
-                    try {
-                        console.log(
-                            'Elimina user',
-                            userSelected.id_caregiver,
-                            userSelected.name,
-                            userSelected.surname,
-                        );
-
-                        const res = await fetch(
-                            `/api/users/${userSelected.id_caregiver}/delete/app`,
-                            {
-                                method: 'POST',
-                                credentials: 'include',
-                            },
-                        );
-
-                        const json = await res.json().catch(() => null);
-                        if (!res.ok)
-                            throw new Error(
-                                json?.message || `HTTP ${res.status}`,
+                    const result = await withLoaderNotify({
+                        message: 'Eliminazione utente…',
+                        mode: 'blocking',
+                        success: 'Utente eliminato correttamente',
+                        errorTitle: 'Errore eliminazione utente',
+                        errorMessage: 'Impossibile eliminare l’utente.',
+                        fn: async () => {
+                            const res = await fetch(
+                                `/api/users/${userSelected.id_caregiver}/delete/app`,
+                                {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                },
                             );
 
-                        notify.success('Utente eliminato correttamente');
-                        setUserSelected(null);
-                        setShowDeleteUserModal(false);
-                        await fetchUsers();
-                    } catch (e) {
-                        notify.error(
-                            e?.message || 'Errore eliminazione utente',
-                        );
-                    }
+                            const json = await res.json().catch(() => null);
+                            if (!res.ok)
+                                throw new Error(
+                                    json?.message || `HTTP ${res.status}`,
+                                );
+
+                            setUserSelected(null);
+                            setShowDeleteUserModal(false);
+                            await fetchUsers();
+                            return true;
+                        },
+                    });
+
+                    if (!result.ok) return;
                 }}
             />
         </AppLayout>

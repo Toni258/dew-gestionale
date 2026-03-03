@@ -13,6 +13,8 @@ import DeleteDishModal from '../../components/modals/DeleteDishModal';
 import AllergensModal from '../../components/modals/AllergensModal';
 
 import { notify } from '../../services/notify';
+import { withLoader } from '../../services/loader';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 import { ALLERGEN_OPTIONS } from '../../domain/allergens';
 import { TIPOLOGIA_OPTIONS } from '../../domain/tipologia';
@@ -77,23 +79,26 @@ export default function DishesList() {
         setError('');
 
         try {
-            const qs = new URLSearchParams();
-            if (requestParams.search) qs.set('search', requestParams.search);
-            if (requestParams.stato) qs.set('stato', requestParams.stato);
-            if (requestParams.tipologia)
-                qs.set('tipologia', requestParams.tipologia);
-            qs.set('page', String(requestParams.page));
-            qs.set('pageSize', String(requestParams.pageSize));
-            (requestParams.allergeni || []).forEach((a) =>
-                qs.append('allergeni', a),
-            );
+            await withLoader('Caricamento piatti…', async () => {
+                const qs = new URLSearchParams();
+                if (requestParams.search)
+                    qs.set('search', requestParams.search);
+                if (requestParams.stato) qs.set('stato', requestParams.stato);
+                if (requestParams.tipologia)
+                    qs.set('tipologia', requestParams.tipologia);
+                qs.set('page', String(requestParams.page));
+                qs.set('pageSize', String(requestParams.pageSize));
+                (requestParams.allergeni || []).forEach((a) =>
+                    qs.append('allergeni', a),
+                );
 
-            const res = await fetch(`/api/dishes?${qs.toString()}`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const res = await fetch(`/api/dishes?${qs.toString()}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-            const json = await res.json();
-            setRows(json.data || []);
-            setTotal(json.total || 0);
+                const json = await res.json();
+                setRows(json.data || []);
+                setTotal(json.total || 0);
+            });
         } catch {
             setError('Errore nel caricamento piatti.');
             setRows([]);
@@ -205,14 +210,23 @@ export default function DishesList() {
                 dish={dishToDelete}
                 onClose={() => setDishToDelete(null)}
                 onConfirm={async (dish) => {
-                    try {
-                        await deleteDish(dish.id_food);
-                        console.log('Elimina piatto', dish.id_food, dish.name);
-                        notify.success('Piatto eliminato correttamente');
-                        setDishToDelete(null);
-                        await fetchDishes();
-                    } catch (e) {
-                        notify.error(e.message || 'Errore eliminazione piatto');
+                    const res = await withLoaderNotify({
+                        message: 'Eliminazione piatto…',
+                        mode: 'blocking',
+                        success: 'Piatto eliminato correttamente',
+                        errorTitle: 'Errore eliminazione piatto',
+                        errorMessage: 'Impossibile eliminare il piatto.',
+                        fn: async () => {
+                            await deleteDish(dish.id_food);
+                            setDishToDelete(null);
+                            await fetchDishes();
+                            return true;
+                        },
+                    });
+
+                    if (!res.ok) {
+                        // noop: notifica già mostrata
+                        return;
                     }
                 }}
             />

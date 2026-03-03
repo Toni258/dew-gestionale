@@ -7,7 +7,7 @@ import Button from '../../components/ui/Button';
 
 import DishFormFields from '../../components/dishes/DishFormFields';
 
-import { notify } from '../../services/notify';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 import {
     isDecimal,
@@ -89,18 +89,36 @@ export default function CreateDish() {
                         }
                     });
 
-                    const res = await fetch('/api/dishes', {
-                        method: 'POST',
-                        body: formData,
+                    const result = await withLoaderNotify({
+                        message: 'Creazione piatto…',
+                        mode: 'blocking',
+                        success: 'Piatto creato correttamente',
+                        errorTitle: 'Errore creazione piatto',
+                        errorMessage: 'Impossibile creare il piatto, riprova.',
+                        fn: async () => {
+                            const res = await fetch('/api/dishes', {
+                                method: 'POST',
+                                body: formData,
+                            });
+
+                            // provo a leggere un messaggio server (se c'è)
+                            const json = await res.json().catch(() => null);
+
+                            if (!res.ok) {
+                                throw new Error(
+                                    json?.message ||
+                                        json?.error ||
+                                        'Errore creazione piatto',
+                                );
+                            }
+
+                            return json;
+                        },
                     });
 
-                    if (!res.ok) {
-                        notify.error('Errore creazione piatto');
-                        return;
+                    if (result.ok) {
+                        navigate('/dishes');
                     }
-
-                    notify.success('Piatto creato correttamente');
-                    navigate('/dishes');
                 }}
             >
                 <DishFormFields existingImageUrl={null} />

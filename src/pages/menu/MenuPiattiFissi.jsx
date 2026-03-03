@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import FixedDishesGrid from '../../components/menu/fixedDishes/FixedDishesGrid';
 import { useFixedDishesMenu } from '../../hooks/menus/useFixedDishesMenu';
-import { notify } from '../../services/notify';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 export default function MenuPiattiFissi() {
     const { seasonType } = useParams();
@@ -32,12 +32,21 @@ export default function MenuPiattiFissi() {
     } = useFixedDishesMenu(seasonType);
 
     async function handleSave() {
-        const res = await save();
-        if (!res.ok) {
-            notify.error(res.message || 'Errore salvataggio');
-            return;
-        }
-        notify.success('Piatti fissi salvati correttamente');
+        const res = await withLoaderNotify({
+            message: 'Salvataggio piatti fissi…',
+            mode: 'blocking',
+            success: 'Piatti fissi salvati correttamente',
+            errorTitle: 'Errore salvataggio',
+            errorMessage: 'Impossibile salvare i piatti fissi.',
+            fn: async () => {
+                const r = await save();
+                if (!r.ok) throw new Error(r.message || 'Errore salvataggio');
+                return r;
+            },
+        });
+
+        if (!res.ok) return;
+
         navigate(`/menu/edit/${decodedSeasonType}`);
     }
 

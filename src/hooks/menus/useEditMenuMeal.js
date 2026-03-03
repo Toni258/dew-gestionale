@@ -5,6 +5,7 @@ import {
     upsertMenuMealComposition,
 } from '../../services/menusApi';
 import { notify } from '../../services/notify';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 const COURSE_TYPES = [
     { key: 'primo', label: 'Primo' },
@@ -201,28 +202,26 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         };
 
         setSaving(true);
-        try {
-            await upsertMenuMealComposition(
-                seasonType,
-                dayIndex,
-                mealType,
-                payload,
-            );
 
-            notify.success(
-                hasAllFourSaved
-                    ? 'Modifiche salvate correttamente'
-                    : 'Pasto aggiunto correttamente',
-            );
+        const res = await withLoaderNotify({
+            message: 'Salvataggio…',
+            success: hasAllFourSaved
+                ? 'Modifiche salvate correttamente'
+                : 'Pasto aggiunto correttamente',
+            fn: () =>
+                upsertMenuMealComposition(
+                    seasonType,
+                    dayIndex,
+                    mealType,
+                    payload,
+                ),
+            errorTitle: 'Errore salvataggio',
+            errorMessage: 'Impossibile salvare, riprova.',
+        });
 
-            return { ok: true };
-        } catch (e) {
-            console.error(e);
-            notify.error(e.message || 'Errore salvataggio');
-            return { ok: false, error: e };
-        } finally {
-            setSaving(false);
-        }
+        setSaving(false);
+
+        return res.ok ? { ok: true } : { ok: false, error: res.error };
     }
 
     return {

@@ -1,20 +1,26 @@
 import AppLayout from '../../components/layout/AppLayout';
 import MenuCard from '../../components/menu/MenuCard';
 import { useCallback, useEffect, useState } from 'react';
+import { withLoader } from '../../services/withLoader';
 
 export default function EditMenu() {
     const [menus, setMenus] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchMenus = useCallback(async () => {
-        try {
-            const res = await fetch('/api/menus');
-            if (!res.ok) throw new Error('Errore fetch menù');
+        setLoading(true);
 
-            const data = await res.json();
-            setMenus(data.data);
+        try {
+            await withLoader('Caricamento menù…', async () => {
+                const res = await fetch('/api/menus');
+                if (!res.ok) throw new Error('Errore fetch menù');
+
+                const data = await res.json();
+                setMenus(data.data ?? []);
+            });
         } catch (err) {
             console.error(err);
+            setMenus([]);
         } finally {
             setLoading(false);
         }

@@ -11,6 +11,7 @@ import DashedDivider from '../../components/menu/DashedDivider';
 
 import { useNavigate } from 'react-router-dom';
 import { notify } from '../../services/notify';
+import { withLoader } from '../../services/withLoader';
 import {
     checkMenuNameExists,
     checkMenuDatesOverlap,
@@ -116,35 +117,44 @@ export default function CreateMenu() {
                         const { start_date, end_date, name } = values;
 
                         try {
-                            const overlapData = await checkMenuDatesOverlap(
-                                start_date,
-                                end_date,
+                            await withLoader(
+                                'Creazione menù…',
+                                async () => {
+                                    const overlapData =
+                                        await checkMenuDatesOverlap(
+                                            start_date,
+                                            end_date,
+                                        );
+
+                                    if (overlapData?.overlap) {
+                                        form?.setFieldError?.(
+                                            'start_date',
+                                            'Intervallo date già in uso',
+                                        );
+                                        form?.setFieldError?.(
+                                            'end_date',
+                                            `Intervallo già usato nel menù "${overlapData.season_type}"`,
+                                        );
+                                        return;
+                                    }
+
+                                    const res = await createMenu({
+                                        name: name.trim(),
+                                        start_date,
+                                        end_date,
+                                    });
+
+                                    if (res?.ok === false) {
+                                        throw new Error(
+                                            'Creazione menù fallita',
+                                        );
+                                    }
+
+                                    notify.success('Menù creato correttamente');
+                                    navigate('/menu');
+                                },
+                                'blocking',
                             );
-
-                            if (overlapData?.overlap) {
-                                form?.setFieldError?.(
-                                    'start_date',
-                                    'Intervallo date già in uso',
-                                );
-                                form?.setFieldError?.(
-                                    'end_date',
-                                    `Intervallo già usato nel menù "${overlapData.season_type}"`,
-                                );
-                                return;
-                            }
-
-                            const res = await createMenu({
-                                name: name.trim(),
-                                start_date,
-                                end_date,
-                            });
-
-                            if (res?.ok === false) {
-                                throw new Error('Creazione menù fallita');
-                            }
-
-                            notify.success('Menù creato correttamente');
-                            navigate('/menu');
                         } catch (e) {
                             console.error('Errore creazione menù:', e);
                             form?.setFieldError?.(

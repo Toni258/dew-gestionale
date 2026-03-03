@@ -5,6 +5,7 @@ import DateRangePicker from '../ui/DateRangePicker';
 import CustomSelect from '../ui/CustomSelect';
 import Button from '../ui/Button';
 import { weekDayToDayIndex, dayIndexToWeekDay } from '../../utils/dayIndex';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
     if (!open || !menu) return null;
@@ -66,15 +67,31 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                         }
 
                         // 1) overlap check (ESCLUDI il menu corrente)
-                        const overlapRes = await fetch(
-                            `/api/menus/dates-overlap?start_date=${encodeURIComponent(
-                                start_date,
-                            )}&end_date=${encodeURIComponent(
-                                end_date,
-                            )}&excludeName=${encodeURIComponent(
-                                menu.season_type,
-                            )}`,
-                        );
+                        const overlapRes = await withLoaderNotify({
+                            message: 'Verifica sovrapposizioni…',
+                            mode: 'blocking',
+                            errorTitle: 'Errore verifica',
+                            errorMessage:
+                                'Impossibile verificare le sovrapposizioni.',
+                            fn: async () => {
+                                const r = await fetch(
+                                    `/api/menus/dates-overlap?start_date=${encodeURIComponent(
+                                        start_date,
+                                    )}&end_date=${encodeURIComponent(
+                                        end_date,
+                                    )}&excludeName=${encodeURIComponent(
+                                        menu.season_type,
+                                    )}`,
+                                );
+
+                                if (!r.ok)
+                                    throw new Error(
+                                        'Impossibile verificare overlap',
+                                    );
+                                const data = await r.json();
+                                return data;
+                            },
+                        });
 
                         if (!overlapRes.ok) {
                             form.setFieldError(
@@ -84,9 +101,9 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                             return;
                         }
 
-                        const overlapData = await overlapRes.json();
+                        const overlapData = overlapRes.data;
 
-                        if (overlapData.overlap) {
+                        if (overlapData?.overlap) {
                             form.setFieldError(
                                 'start_date',
                                 'Intervallo date già in uso',

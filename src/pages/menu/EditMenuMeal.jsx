@@ -11,6 +11,8 @@ import MenuMealHeader from '../../components/menu/MenuMealHeader';
 import MenuMealCourseRow from '../../components/menu/MenuMealCourseRow';
 import MenuMealTotalsCard from '../../components/menu/MenuMealTotalsCard';
 
+import { withLoaderNotify } from '../../services/withLoaderNotify';
+
 export default function EditMenuMeal() {
     const navigate = useNavigate();
     const { seasonType, dayIndex, mealType } = useParams();
@@ -88,9 +90,26 @@ export default function EditMenuMeal() {
                         <Button
                             className="px-5 py-2 mb-[-10px]"
                             onClick={async () => {
-                                const res = await save();
-                                if (res.ok)
-                                    navigate(`/menu/edit/${seasonType}`);
+                                const result = await withLoaderNotify({
+                                    message: 'Salvataggio…',
+                                    mode: 'blocking',
+                                    success: 'Menù salvato correttamente',
+                                    errorTitle: 'Errore salvataggio',
+                                    errorMessage:
+                                        'Impossibile salvare le modifiche.',
+                                    fn: async () => {
+                                        const r = await save();
+                                        if (!r?.ok)
+                                            throw new Error(
+                                                r?.message ||
+                                                    'Errore salvataggio',
+                                            );
+                                        return r;
+                                    },
+                                });
+
+                                if (!result.ok) return;
+                                navigate(`/menu/edit/${seasonType}`);
                             }}
                             disabled={disableSave}
                         >

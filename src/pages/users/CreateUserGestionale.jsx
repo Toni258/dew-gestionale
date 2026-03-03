@@ -11,6 +11,7 @@ import AlertBox from '../../components/ui/AlertBox';
 import DashedDivider from '../../components/menu/DashedDivider';
 
 import { notify } from '../../services/notify';
+import { withLoader } from '../../services/withLoader';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -204,7 +205,13 @@ export default function CreateUserGestionale() {
                                 password: values.password,
                             };
 
-                            const res = await createUserGestionale(payload);
+                            const res = await withLoader(
+                                'Creazione utente…',
+                                async () => {
+                                    return await createUserGestionale(payload);
+                                },
+                                'blocking',
+                            );
 
                             if (!res?.ok) {
                                 throw new Error('Creazione utente fallita');

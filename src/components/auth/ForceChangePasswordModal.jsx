@@ -7,6 +7,7 @@ import FormGroup from '../ui/FormGroup';
 import Input from '../ui/Input';
 
 import { useAuth } from '../../context/AuthContext';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 function FormGlobalError() {
     const form = useFormContext();
@@ -121,18 +122,32 @@ export default function ForceChangePasswordModal() {
                         onSubmit={async (values, formCtx) => {
                             formCtx?.setFieldError?.('form', null);
 
-                            try {
-                                await changePassword(
-                                    values.currentPassword,
-                                    values.newPassword,
-                                );
-                                // quando status diventa active, il modale sparisce da solo
-                            } catch (e) {
+                            const res = await withLoaderNotify({
+                                message: 'Cambio password…',
+                                mode: 'blocking',
+                                success: 'Password aggiornata correttamente',
+                                errorTitle: 'Errore cambio password',
+                                errorMessage:
+                                    'Impossibile aggiornare la password.',
+                                fn: async () => {
+                                    await changePassword(
+                                        values.currentPassword,
+                                        values.newPassword,
+                                    );
+                                    return true;
+                                },
+                            });
+
+                            if (!res.ok) {
                                 formCtx?.setFieldError?.(
                                     'form',
-                                    e?.message || 'Errore cambio password',
+                                    res.error?.message ||
+                                        'Errore cambio password',
                                 );
+                                return;
                             }
+
+                            // quando status diventa active, il modale sparisce da solo
                         }}
                     >
                         <FormGlobalError />

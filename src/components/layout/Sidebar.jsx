@@ -2,6 +2,7 @@ import SidebarItem from './SidebarItem';
 import SidebarSection from './SidebarSection';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 export default function Sidebar() {
     const { logout, isSuperUser } = useAuth();
@@ -10,7 +11,16 @@ export default function Sidebar() {
 
     async function handleLogout() {
         try {
-            await logout(); // chiama /api/auth/logout + setUser(null)
+            await withLoaderNotify({
+                message: 'Logout…',
+                mode: 'blocking',
+                errorTitle: 'Errore logout',
+                errorMessage: 'Impossibile effettuare il logout.',
+                fn: async () => {
+                    await logout(); // chiama /api/auth/logout + setUser(null)
+                    return true;
+                },
+            });
         } finally {
             // replace per non tornare indietro con back su pagine protette
             navigate('/login', {

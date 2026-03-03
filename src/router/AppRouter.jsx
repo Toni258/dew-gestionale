@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 /*    IMPORT PAGES    */
 import Login from '../pages/Auth/Login';
@@ -29,6 +29,10 @@ export default function AppRouter() {
         <BrowserRouter>
             <Routes>
                 {/* PUBLIC */}
+                <Route
+                    path="/"
+                    element={<Navigate to="/dashboard" replace />}
+                />
                 <Route path="/login" element={<Login />} />
 
                 {/* PRIVATE */}
