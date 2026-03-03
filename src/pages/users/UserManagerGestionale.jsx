@@ -20,6 +20,8 @@ import DeleteUserModal from '../../components/modals/DeleteUserModal';
 import SuspendUserModal from '../../components/modals/SuspendUserModal';
 import EnableUserModal from '../../components/modals/EnableUserModal';
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 export default function UserManagerGestionale() {
     const { user, isSuperUser, refreshMe } = useAuth();
     const myId = user?.id;
@@ -381,6 +383,9 @@ export default function UserManagerGestionale() {
                         errorMessage:
                             'Impossibile aggiornare le informazioni utente.',
                         fn: async () => {
+                            // TEST loader (solo in locale): forza 3 secondi
+                            // await sleep(3000);
+
                             const res = await fetch(
                                 `/api/users/${userSelected.id}/update-info/gestionale`,
                                 {

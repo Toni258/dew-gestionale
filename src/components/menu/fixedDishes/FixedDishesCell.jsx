@@ -4,7 +4,7 @@ import CheeseRotationTable from './CheeseRotationTable';
 
 import { notify } from '../../../services/notify';
 import { loader } from '../../../services/loader';
-import { withLoaderNotify } from '../../services/withLoaderNotify';
+import { withLoaderNotify } from '../../../services/withLoaderNotify';
 
 export default function FixedDishesCell({
     meal,

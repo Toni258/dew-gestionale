@@ -13,7 +13,7 @@ import DeleteDishModal from '../../components/modals/DeleteDishModal';
 import AllergensModal from '../../components/modals/AllergensModal';
 
 import { notify } from '../../services/notify';
-import { withLoader } from '../../services/loader';
+import { withLoader } from '../../services/withLoader';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
 
 import { ALLERGEN_OPTIONS } from '../../domain/allergens';
