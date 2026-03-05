@@ -27,6 +27,7 @@ function SideLabel({ children }) {
 
 export default function FixedDishesGrid({
     loading,
+    readOnly = false,
 
     options,
     selectedFoods,
@@ -64,6 +65,7 @@ export default function FixedDishesGrid({
                             <div className="bg-brand-sidebar px-8 py-6" />
                         ) : (
                             <FixedDishesCell
+                                readOnly={readOnly}
                                 meal="pranzo"
                                 courseKey={row.key}
                                 slots={pranzoSlots}
@@ -89,6 +91,7 @@ export default function FixedDishesGrid({
                             }
                         >
                             <FixedDishesCell
+                                readOnly={readOnly}
                                 meal="cena"
                                 courseKey={row.key}
                                 slots={cenaSlots}

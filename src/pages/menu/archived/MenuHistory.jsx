@@ -1,9 +1,9 @@
-import AppLayout from '../../components/layout/AppLayout';
-import MenuCard from '../../components/menu/MenuCard';
+import AppLayout from '../../../components/layout/AppLayout';
+import ArchivedMenuCard from '../../../components/menu/ArchivedMenuCard';
 import { useCallback, useEffect, useState } from 'react';
-import { withLoader } from '../../services/withLoader';
+import { withLoader } from '../../../services/withLoader';
 
-export default function MenuList() {
+export default function MenuHistory() {
     const [menus, setMenus] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -12,7 +12,7 @@ export default function MenuList() {
 
         try {
             await withLoader('Caricamento menù…', async () => {
-                const res = await fetch('/api/menus');
+                const res = await fetch('/api/archived-menus');
                 if (!res.ok) throw new Error('Errore fetch menù');
 
                 const data = await res.json();
@@ -32,28 +32,26 @@ export default function MenuList() {
 
     return (
         <AppLayout title="GESTIONE MENÙ">
-            <div className="w-full max-w-4xl mx-auto">
-                <h1 className="text-3xl font-semibold">
-                    Elenco Menù attivi e futuri
-                </h1>
+            <div className="w-full max-w-3xl mx-auto">
+                <h1 className="text-3xl font-semibold">Menu Archiviati</h1>
 
                 <div className="mt-6" />
 
                 {loading && (
                     <p className="mx-10 text-brand-textSecondary">
-                        Caricamento menù…
+                        Caricamento menù archiviati…
                     </p>
                 )}
 
                 {!loading && menus.length === 0 && (
                     <p className="mx-10 text-brand-textSecondary">
-                        Nessun menù disponibile
+                        Nessun menù archiviato disponibile
                     </p>
                 )}
 
                 <div className="flex flex-col gap-8">
                     {menus.map((menu) => (
-                        <MenuCard key={menu.season_type} menu={menu} />
+                        <ArchivedMenuCard key={menu.season_type} menu={menu} />
                     ))}
                 </div>
             </div>

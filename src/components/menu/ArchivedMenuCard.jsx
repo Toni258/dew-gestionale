@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { capitalize } from '../../utils/capitalize';
 
-export default function MenuCard({ menu }) {
+export default function ArchivedMenuCard({ menu }) {
     const navigate = useNavigate();
 
     const {
+        id_arch_menu,
         season_type,
-        day_number,
-        period_label,
+        start_date,
+        end_date,
         start_year,
-        is_active,
         meals_completed,
         meals_total,
     } = menu;
@@ -25,31 +25,20 @@ export default function MenuCard({ menu }) {
             role="button"
             tabIndex={0}
             onClick={() =>
-                navigate(`/menu/edit/${encodeURIComponent(season_type)}`)
+                navigate(
+                    `/menu-archived/view-archived/${encodeURIComponent(id_arch_menu)}`,
+                )
             }
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                    navigate(`/menu/edit/${encodeURIComponent(season_type)}`);
+                    navigate(
+                        `/menu-archived/view-archived/${encodeURIComponent(id_arch_menu)}`,
+                    );
                 }
             }}
         >
-            {/* COLONNA STATO */}
-            <div className="flex-[1]">
-                <div className="flex flex-col items-center justify-center h-full">
-                    <span className="mb-3 font-semibold text-xl">Stato</span>
-                    <span
-                        className={`w-5 h-5 rounded-full inline-block ${
-                            is_active ? 'bg-green-500' : 'bg-red-500'
-                        }`}
-                    />
-                </div>
-            </div>
-
-            {/* Divider */}
-            <div className="w-[1px] bg-brand-divider ml-2 mr-6" />
-
             {/* CONTENUTO */}
-            <div className="flex-[4]">
+            <div className="flex-[6] ml-10">
                 <div className="flex flex-col h-full">
                     <span className="text-2xl font-semibold mb-4">
                         {capitalize(season_type)}
@@ -57,16 +46,16 @@ export default function MenuCard({ menu }) {
 
                     <div className="flex">
                         <span className="flex flex-[1] text-lg text-brand-text gap-2">
-                            Giorno del pasto:
+                            Inizio:
                             <span className="text-brand-primary font-semibold">
-                                {day_number}
+                                {start_date}
                             </span>
                         </span>
 
                         <span className="flex flex-[2] text-lg text-brand-text gap-2">
-                            Periodo:
+                            Fine:
                             <span className="text-brand-primary font-semibold">
-                                {period_label}
+                                {end_date}
                             </span>
                         </span>
                     </div>

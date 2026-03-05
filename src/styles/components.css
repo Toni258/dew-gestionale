@@ -52,7 +52,7 @@
     /* BASE BUTTON */
     .btn {
         @apply inline-flex items-center justify-center font-semibold 
-           rounded-[15px] tracking-wide select-none transform 
+           rounded-lg tracking-wide select-none transform 
            transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
            disabled:opacity-50 disabled:cursor-not-allowed;
     }
@@ -274,7 +274,8 @@
     .menu-grid-wrapper {
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2),
+        box-shadow:
+            0 10px 30px rgba(0, 0, 0, 0.2),
             0 4px 12px rgba(0, 0, 0, 0.2);
         background: theme('colors.brand.card');
         margin-bottom: 25px;

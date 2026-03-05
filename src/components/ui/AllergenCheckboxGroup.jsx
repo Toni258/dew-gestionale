@@ -8,7 +8,7 @@ export default function AllergenCheckboxGroup({ name, disabled = false }) {
 
     if (!form) {
         throw new Error(
-            'AllergenCheckboxGroup deve essere usato dentro <Form>'
+            'AllergenCheckboxGroup deve essere usato dentro <Form>',
         );
     }
 
@@ -28,7 +28,7 @@ export default function AllergenCheckboxGroup({ name, disabled = false }) {
         <div className="">
             {/* DA DECIDERE SE METTERE UN CONTORNO TIPO CARD: bg-brand-card rounded-20 shadow-card px-6 py-4 mt-2 */}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-8 gap-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-3">
                 {ALLERGEN_OPTIONS.map((a) => (
                     <label
                         key={a.value}

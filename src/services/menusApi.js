@@ -73,3 +73,33 @@ export function getFixedCheesesRotation(seasonType) {
     );
     // atteso: { data: { pranzo:[...], cena:[...] } }
 }
+
+// -------------------------------
+// ----- PER MENU ARCHIVIATI -----
+// -------------------------------
+
+export function getArchivedMenuByID(id_arch_menu) {
+    return getJson(
+        `/api/archived-menus/view/${encodeURIComponent(id_arch_menu)}`,
+    );
+}
+
+export function getArchivedMenuMealsStatus(id_arch_menu) {
+    return getJson(
+        `/api/archived-menus/${encodeURIComponent(id_arch_menu)}/meals-status`,
+    );
+}
+
+export function getArchivedMenuFixedDishes(id_arch_menu) {
+    return getJson(
+        `/api/archived-menus/${encodeURIComponent(id_arch_menu)}/fixed-dishes`,
+    );
+    // atteso: { data: [...] }
+}
+
+export function getArchivedFixedCheesesRotation(id_arch_menu) {
+    return getJson(
+        `/api/archived-menus/${encodeURIComponent(id_arch_menu)}/fixed-cheeses-rotation`,
+    );
+    // atteso: { data: { pranzo:[...], cena:[...] } }
+}

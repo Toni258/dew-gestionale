@@ -1,10 +1,30 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useFormContext } from './Form';
+
+function toDayStart(d) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+}
+
+function parseLimit(value) {
+    if (!value) return null;
+    if (value instanceof Date) return toDayStart(value);
+    // assume "YYYY-MM-DD"
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return null;
+    return toDayStart(d);
+}
 
 export default function DateRangePicker({
     startName,
     endName,
     disablePast = false,
+
+    // ✅ nuove props
+    minDate = null, // "YYYY-MM-DD" | Date | null
+    maxDate = null, // "YYYY-MM-DD" | Date | null
+
     placeholderStart = 'Inizio',
     placeholderEnd = 'Fine',
     className = '',
@@ -24,8 +44,11 @@ export default function DateRangePicker({
 
     // ==== Date reference ====
     const today = new Date();
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStart = useMemo(() => toDayStart(today), []);
+
+    // limiti esterni (menu start/end)
+    const minD = useMemo(() => parseLimit(minDate), [minDate]);
+    const maxD = useMemo(() => parseLimit(maxDate), [maxDate]);
 
     const base = startValue ? new Date(startValue) : today;
 
@@ -36,8 +59,8 @@ export default function DateRangePicker({
     });
 
     // start / end come Date (o null)
-    const startDate = startValue ? new Date(startValue) : null;
-    const endDate = endValue ? new Date(endValue) : null;
+    const startDate = startValue ? toDayStart(new Date(startValue)) : null;
+    const endDate = endValue ? toDayStart(new Date(endValue)) : null;
 
     // =========== CLOSE ON CLICK OUTSIDE =============
     useEffect(() => {
@@ -60,7 +83,16 @@ export default function DateRangePicker({
         return `${year}-${month}-${day}`;
     };
 
-    const dateObj = (year, month, day) => new Date(year, month, day);
+    const dateObj = (year, month, day) =>
+        toDayStart(new Date(year, month, day));
+
+    const inLimits = (d) => {
+        const x = toDayStart(d);
+        if (disablePast && x < todayStart) return false;
+        if (minD && x < minD) return false;
+        if (maxD && x > maxD) return false;
+        return true;
+    };
 
     // =========== CALENDAR GEN ===========
 
@@ -96,23 +128,41 @@ export default function DateRangePicker({
     const nextMonthIndex = current.month === 11 ? 0 : current.month + 1;
     const nextCalendar = generateCalendar(nextYear, nextMonthIndex);
 
+    // ======= month nav bounds helpers =======
+    const monthStart = (y, m) => toDayStart(new Date(y, m, 1));
+    const monthEnd = (y, m) => toDayStart(new Date(y, m + 1, 0));
+
+    const canGoPrev = () => {
+        if (!minD) return true;
+        // mese precedente rispetto a current
+        const py = current.month === 0 ? current.year - 1 : current.year;
+        const pm = current.month === 0 ? 11 : current.month - 1;
+        return monthEnd(py, pm) >= minD;
+    };
+
+    const canGoNext = () => {
+        if (!maxD) return true;
+        // mese successivo rispetto a current
+        const ny = current.month === 11 ? current.year + 1 : current.year;
+        const nm = current.month === 11 ? 0 : current.month + 1;
+        return monthStart(ny, nm) <= maxD;
+    };
+
     // =========== MONTH CHANGE ===========
 
     const nextMonth = () => {
+        if (!canGoNext()) return;
         setCurrent((prev) => {
-            if (prev.month === 11) {
-                return { year: prev.year + 1, month: 0 };
-            }
+            if (prev.month === 11) return { year: prev.year + 1, month: 0 };
             return { ...prev, month: prev.month + 1 };
         });
         setHoverDate(null);
     };
 
     const prevMonth = () => {
+        if (!canGoPrev()) return;
         setCurrent((prev) => {
-            if (prev.month === 0) {
-                return { year: prev.year - 1, month: 11 };
-            }
+            if (prev.month === 0) return { year: prev.year - 1, month: 11 };
             return { ...prev, month: prev.month - 1 };
         });
         setHoverDate(null);
@@ -124,7 +174,7 @@ export default function DateRangePicker({
         if (!day) return;
 
         const d = dateObj(year, month, day);
-        if (disablePast && d < todayStart) return;
+        if (!inLimits(d)) return;
 
         if (selecting === 'start') {
             form?.setFieldValue(startName, toISO(d));
@@ -133,7 +183,8 @@ export default function DateRangePicker({
             setHoverDate(null);
         } else {
             if (!startDate) return;
-            if (d <= startDate) return;
+            if (d <= startDate) return; // end deve essere > start
+            if (!inLimits(d)) return;
 
             form?.setFieldValue(endName, toISO(d));
             setSelecting('start');
@@ -153,7 +204,6 @@ export default function DateRangePicker({
                         <button
                             type="button"
                             onClick={() => {
-                                // toggle: se sto già aprendo "start" e open è true, chiudo
                                 if (open && selecting === 'start') {
                                     setOpen(false);
                                     setHoverDate(null);
@@ -184,7 +234,6 @@ export default function DateRangePicker({
                         <button
                             type="button"
                             onClick={() => {
-                                // toggle: se sto già aprendo "end" e open è true, chiudo
                                 if (open && selecting === 'end') {
                                     setOpen(false);
                                     setHoverDate(null);
@@ -211,7 +260,7 @@ export default function DateRangePicker({
                     </div>
                 </div>
 
-                {/* CALENDAR PANEL (overlay, non spinge il layout) */}
+                {/* CALENDAR PANEL */}
                 {open && (
                     <div
                         className="
@@ -221,19 +270,20 @@ export default function DateRangePicker({
                             rounded-textField p-4 animate-fadeScale z-50
                         "
                     >
-                        {/* HEADER UNICO con frecce agli estremi e mesi centrati */}
+                        {/* HEADER */}
                         <div className="relative mb-4">
-                            {/* Freccia sinistra agli estremi */}
                             <button
                                 type="button"
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={prevMonth}
-                                className="absolute left-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
+                                disabled={!canGoPrev()}
+                                className={`absolute left-0 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md
+                                    ${canGoPrev() ? 'hover:bg-black/10' : 'opacity-30 cursor-not-allowed'}
+                                `}
                             >
                                 ◀
                             </button>
 
-                            {/* Grid centrale: 2 mesi sopra ai due calendari */}
                             <div className="grid grid-cols-2 text-center font-semibold text-brand-text">
                                 <div>
                                     {current.month + 1}/{current.year}
@@ -243,25 +293,24 @@ export default function DateRangePicker({
                                 </div>
                             </div>
 
-                            {/* Freccia destra agli estremi */}
                             <button
                                 type="button"
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={nextMonth}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 hover:bg-black/10 rounded-md"
+                                disabled={!canGoNext()}
+                                className={`absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md
+                                    ${canGoNext() ? 'hover:bg-black/10' : 'opacity-30 cursor-not-allowed'}
+                                `}
                             >
                                 ▶
                             </button>
                         </div>
 
-                        {/* DOUBLE CALENDAR GRID */}
                         <div className="grid grid-cols-2 gap-8 w-full">
-                            {/* LEFT MONTH */}
                             <CalendarGrid
                                 year={current.year}
                                 month={current.month}
                                 weeks={thisMonth}
-                                disablePast={disablePast}
                                 todayStart={todayStart}
                                 startDate={startDate}
                                 endDate={endDate}
@@ -269,14 +318,16 @@ export default function DateRangePicker({
                                 selecting={selecting}
                                 setHoverDate={setHoverDate}
                                 handleSelectDay={handleSelectDay}
+                                // ✅ vincoli
+                                disablePast={disablePast}
+                                minD={minD}
+                                maxD={maxD}
                             />
 
-                            {/* RIGHT MONTH */}
                             <CalendarGrid
                                 year={nextYear}
                                 month={nextMonthIndex}
                                 weeks={nextCalendar}
-                                disablePast={disablePast}
                                 todayStart={todayStart}
                                 startDate={startDate}
                                 endDate={endDate}
@@ -284,6 +335,10 @@ export default function DateRangePicker({
                                 selecting={selecting}
                                 setHoverDate={setHoverDate}
                                 handleSelectDay={handleSelectDay}
+                                // ✅ vincoli
+                                disablePast={disablePast}
+                                minD={minD}
+                                maxD={maxD}
                             />
                         </div>
                     </div>
@@ -318,8 +373,12 @@ function CalendarGrid({
     year,
     month,
     weeks,
+
     disablePast,
     todayStart,
+    minD,
+    maxD,
+
     startDate,
     endDate,
     hoverDate,
@@ -327,12 +386,7 @@ function CalendarGrid({
     setHoverDate,
     handleSelectDay,
 }) {
-    const dateObj = (day) => new Date(year, month, day);
-
-    const isPast = (day) => {
-        const d = dateObj(day);
-        return d < todayStart;
-    };
+    const dateObj = (day) => toDayStart(new Date(year, month, day));
 
     const sameDay = (a, b) => {
         if (!a || !b) return false;
@@ -343,9 +397,15 @@ function CalendarGrid({
         );
     };
 
+    const isDisabledByLimits = (d) => {
+        if (disablePast && d < todayStart) return true;
+        if (minD && d < minD) return true;
+        if (maxD && d > maxD) return true;
+        return false;
+    };
+
     return (
         <div className="flex flex-col items-center">
-            {/* Giorni settimana */}
             <div className="grid grid-cols-7 gap-[4px] w-full text-center text-sm font-semibold text-brand-textSecondary mb-1">
                 <div>L</div>
                 <div>M</div>
@@ -356,14 +416,13 @@ function CalendarGrid({
                 <div>D</div>
             </div>
 
-            {/* Giorni */}
             <div className="grid grid-cols-7 gap-[4px] text-center w-full">
                 {weeks.flat().map((day, idx) => {
                     if (!day) return <div key={idx} />;
 
                     const cellDate = dateObj(day);
 
-                    const disabled = disablePast && isPast(day);
+                    const disabled = isDisabledByLimits(cellDate);
                     const isStart = sameDay(cellDate, startDate);
                     const isEnd = sameDay(cellDate, endDate);
 
@@ -373,8 +432,13 @@ function CalendarGrid({
                     if (startDate) {
                         const rangeEnd = endDate || hoverDate;
                         if (rangeEnd) {
+                            // range visivo: lo mostriamo solo se dentro i limiti (così non “colora” fuori menu)
+                            const lo = startDate;
+                            const hi = rangeEnd;
                             inRange =
-                                cellDate > startDate && cellDate < rangeEnd;
+                                cellDate > lo &&
+                                cellDate < hi &&
+                                !isDisabledByLimits(cellDate);
                         }
                     }
 
@@ -385,7 +449,9 @@ function CalendarGrid({
                         hoverDate
                     ) {
                         inHoverRange =
-                            cellDate > startDate && cellDate < hoverDate;
+                            cellDate > startDate &&
+                            cellDate < hoverDate &&
+                            !isDisabledByLimits(cellDate);
                     }
 
                     return (
@@ -417,7 +483,6 @@ function CalendarGrid({
                             className={`
                                 h-8 flex items-center justify-center rounded-[6px]
                                 select-none transition-all duration-150 cursor-pointer
-
                                 ${
                                     disabled
                                         ? 'text-black/30 bg-black/5 pointer-events-none'

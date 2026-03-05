@@ -64,7 +64,10 @@ export default function Sidebar() {
                     }
                 />
                 <SidebarItem to="/menu/create" label="Aggiungi nuovo menù" />
-                <SidebarItem to="/menu/history" label="Menù archiviati" />
+                <SidebarItem
+                    to="/menu-archived/history"
+                    label="Menù archiviati"
+                />
             </SidebarSection>
 
             {/* SEZIONE STATISTICHE */}

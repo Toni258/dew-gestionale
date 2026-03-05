@@ -7,9 +7,12 @@ import Dashboard from '../pages/Dashboard';
 import MenuList from '../pages/menu/MenuList';
 import CreateMenu from '../pages/menu/CreateMenu';
 import EditMenu from '../pages/menu/EditMenu';
-import MenuHistory from '../pages/menu/MenuHistory';
 import EditMenuMeal from '../pages/menu/EditMenuMeal';
 import MenuPiattiFissi from '../pages/menu/MenuPiattiFissi';
+
+import MenuHistory from '../pages/menu/archived/MenuHistory';
+import ViewArchivedMenu from '../pages/menu/archived/ViewArchivedMenu';
+import ArchivedMenuPiattiFissi from '../pages/menu/archived/ArchivedMenuPiattiFissi';
 
 import DishesList from '../pages/dishes/DishesList';
 import CreateDish from '../pages/dishes/CreateDish';
@@ -46,7 +49,6 @@ export default function AppRouter() {
                         path="/menu/edit/:seasonType"
                         element={<EditMenu />}
                     />
-                    <Route path="/menu/history" element={<MenuHistory />} />
                     <Route
                         path="/menu/edit/:seasonType/meal/:dayIndex/:mealType"
                         element={<EditMenuMeal />}
@@ -54,6 +56,20 @@ export default function AppRouter() {
                     <Route
                         path="/menu/edit/:seasonType/piatti_fissi"
                         element={<MenuPiattiFissi />}
+                    />
+
+                    {/* Menu archiviati routes */}
+                    <Route
+                        path="/menu-archived/history"
+                        element={<MenuHistory />}
+                    />
+                    <Route
+                        path="/menu-archived/view-archived/:id_arch_menu"
+                        element={<ViewArchivedMenu />}
+                    />
+                    <Route
+                        path="/menu-archived/piatti-fissi/:id_arch_menu"
+                        element={<ArchivedMenuPiattiFissi />}
                     />
 
                     {/* Dishes routes */}

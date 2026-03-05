@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 
 import dishesRouter from './routes/dishes.js';
 import menusRouter from './routes/menus.js';
+import archivedMenusRouter from './routes/archivedMenus.js';
 import foodsRouter from './routes/foodsRoutes.js';
 import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
@@ -38,6 +39,7 @@ app.use(
 // ROUTES API
 app.use('/api/dishes', requireAuth, dishesRouter);
 app.use('/api/menus', requireAuth, menusRouter);
+app.use('/api/archived-menus', requireAuth, archivedMenusRouter);
 app.use('/api/foods', requireAuth, foodsRouter);
 app.use('/api/users', requireAuth, usersRouter);
 app.use('/api/auth', authRouter);

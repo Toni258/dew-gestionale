@@ -91,7 +91,7 @@ export default function StatisticheConsumi() {
     const [applied, setApplied] = useState(initial);
 
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5);
+    const [pageSize, setPageSize] = useState(10);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -308,7 +308,7 @@ export default function StatisticheConsumi() {
 
             {/* FILTRI */}
             <div className="mt-4">
-                <Card className="p-5">
+                <Card>
                     <Form
                         initialValues={{
                             start: applied.start,
@@ -331,7 +331,7 @@ export default function StatisticheConsumi() {
                         }}
                         onSubmit={handleApplyFilters}
                     >
-                        <div className="grid grid-cols-[260px_170px_320px_190px_auto] gap-4 items-end">
+                        <div className="flex justify-between">
                             <FormGroup name="start" className="min-w-[240px]">
                                 <DateRangePicker
                                     startName="start"
@@ -341,7 +341,7 @@ export default function StatisticheConsumi() {
                                 />
                             </FormGroup>
 
-                            <FormGroup name="meal" className="w-[170px]">
+                            <FormGroup name="meal">
                                 <CustomSelect
                                     name="meal"
                                     options={MEAL_OPTIONS}
@@ -365,7 +365,7 @@ export default function StatisticheConsumi() {
                                 />
                             </FormGroup>
 
-                            <FormGroup name="floor" className="w-[190px]">
+                            <FormGroup name="floor">
                                 <CustomSelect
                                     name="floor"
                                     options={floorOptionsFinal}
@@ -374,30 +374,24 @@ export default function StatisticheConsumi() {
                                 />
                             </FormGroup>
 
-                            <div className="flex justify-end">
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    size="md"
-                                    className="px-6 py-2 rounded-md"
-                                    disabled={loading}
-                                >
-                                    Applica filtri
-                                </Button>
-                            </div>
-                        </div>
+                            <FormGroup name="course">
+                                <CustomSelect
+                                    name="course"
+                                    options={COURSE_OPTIONS}
+                                    placeholder="Tutte le portate"
+                                    className="w-full"
+                                />
+                            </FormGroup>
 
-                        <div className="mt-4 flex justify-center">
-                            <div className="w-[260px]">
-                                <FormGroup name="course">
-                                    <CustomSelect
-                                        name="course"
-                                        options={COURSE_OPTIONS}
-                                        placeholder="Tutte le portate"
-                                        className="w-full"
-                                    />
-                                </FormGroup>
-                            </div>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                size="md"
+                                className="px-6 py-2 rounded-md"
+                                disabled={loading}
+                            >
+                                Applica filtri
+                            </Button>
                         </div>
                     </Form>
                 </Card>
