@@ -13,6 +13,7 @@ import MenuPiattiFissi from '../pages/menu/MenuPiattiFissi';
 import MenuHistory from '../pages/menu/archived/MenuHistory';
 import ViewArchivedMenu from '../pages/menu/archived/ViewArchivedMenu';
 import ArchivedMenuPiattiFissi from '../pages/menu/archived/ArchivedMenuPiattiFissi';
+import ViewArchivedMenuMeal from '../pages/menu/archived/ViewArchivedMenuMeal';
 
 import DishesList from '../pages/dishes/DishesList';
 import CreateDish from '../pages/dishes/CreateDish';
@@ -70,6 +71,10 @@ export default function AppRouter() {
                     <Route
                         path="/menu-archived/piatti-fissi/:id_arch_menu"
                         element={<ArchivedMenuPiattiFissi />}
+                    />
+                    <Route
+                        path="/menu-archived/view-archived/:id_arch_menu/meal/:dayIndex/:mealType"
+                        element={<ViewArchivedMenuMeal />}
                     />
 
                     {/* Dishes routes */}

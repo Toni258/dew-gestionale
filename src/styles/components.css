@@ -443,6 +443,52 @@
         animation: activeDotRing 2.4s ease-out infinite;
     }
 
+    /* Pallino attivo: pulse lento + ring morbido */
+    .sidebar-item__activeDot {
+        box-shadow: 0 0 0 6px rgba(57, 142, 59, 0.12);
+        animation: sidebarDotPulse 3.4s ease-in-out infinite;
+    }
+
+    /* Ring esterno animato */
+    .sidebar-item__activeDot::after {
+        content: '';
+        position: absolute;
+        inset: -6px;
+        border-radius: 9999px;
+        border: 1px solid rgba(57, 142, 59, 0.32);
+        animation: sidebarDotRing 4s ease-in-out infinite;
+    }
+
+    @keyframes sidebarDotPulse {
+        0% {
+            transform: scale(1);
+            opacity: 0.85;
+        }
+        50% {
+            transform: scale(1.25);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 0.85;
+        }
+    }
+
+    @keyframes sidebarDotRing {
+        0% {
+            transform: scale(0.9);
+            opacity: 0.55;
+        }
+        60% {
+            transform: scale(1.55);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1.55);
+            opacity: 0;
+        }
+    }
+
     /* Animazione molto fine */
     @keyframes activeDotPulse {
         0% {

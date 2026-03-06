@@ -1,12 +1,7 @@
 import Card from '../ui/Card';
 import { capitalize } from '../../utils/capitalize';
 
-export default function ArchivedMenuHeaderCard({
-    menu,
-    onClickFixedDishes,
-    onClickEditMenu,
-    onClickDeleteMenu,
-}) {
+export default function ArchivedMenuHeaderCard({ menu, onClickFixedDishes }) {
     return (
         <Card className="flex mt-6 !pl-10">
             <div className="flex flex-[5] flex-col gap-2 justify-center">
@@ -46,7 +41,7 @@ export default function ArchivedMenuHeaderCard({
                     <img
                         src="/eye white.png"
                         alt="Modifica piatti fissi"
-                        className="w-6 h-6 select-none opacity-60"
+                        className="w-6 h-6 select-none"
                         draggable={false}
                     />
                 </button>

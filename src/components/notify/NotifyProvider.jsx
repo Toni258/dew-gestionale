@@ -39,7 +39,7 @@ export default function NotifyProvider({ children }) {
     const toastClosingRef = useRef(false);
 
     useEffect(() => {
-        toastIdRef.current = toast?.id ?? null;
+        toastIdRef.current = toast?.id ?? null; //
     }, [toast]);
 
     useEffect(() => {

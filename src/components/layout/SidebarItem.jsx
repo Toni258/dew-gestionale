@@ -10,26 +10,34 @@ export default function SidebarItem({ to, label, end, isActiveOverride }) {
         <NavLink
             to={to}
             end={end}
-            className={({ isActive }) =>
-                'pl-4 pr-2 py-1 flex items-center gap-2 rounded-md transition-colors duration-150 ' +
-                (resolvedIsActive(isActive)
-                    ? 'text-brand-primary font-semibold bg-brand-card/40'
-                    : 'text-brand-textSecondary hover:text-brand-primary hover:bg-brand-card/30')
-            }
+            className={({ isActive }) => {
+                const active = resolvedIsActive(isActive);
+
+                return (
+                    'group flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200 ' +
+                    (active
+                        ? 'bg-white/70 border border-black/10 shadow-[0_10px_25px_rgba(0,0,0,0.10)] text-brand-text font-semibold'
+                        : 'text-brand-textSecondary hover:text-brand-text hover:bg-white/45')
+                );
+            }}
         >
-            {({ isActive }) => (
-                <>
-                    <span
-                        className={
-                            'inline-block w-2 h-2 rounded-full bg-brand-primary transition-all duration-300 ease-out ' +
-                            (resolvedIsActive(isActive)
-                                ? 'opacity-100 scale-100'
-                                : 'opacity-0 scale-50')
-                        }
-                    />
-                    <span>{label}</span>
-                </>
-            )}
+            {({ isActive }) => {
+                const active = resolvedIsActive(isActive);
+
+                return (
+                    <>
+                        <span
+                            className={
+                                'relative h-2 w-2 rounded-full transition-all duration-200 ' +
+                                (active
+                                    ? 'bg-brand-primary sidebar-item__activeDot'
+                                    : 'group-hover:bg-brand-primary/60')
+                            }
+                        />
+                        <span className="leading-tight">{label}</span>
+                    </>
+                );
+            }}
         </NavLink>
     );
 }

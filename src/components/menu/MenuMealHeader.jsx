@@ -8,9 +8,9 @@ export default function MenuMealHeader({
 }) {
     return (
         <div className="flex items-center">
-            <h1 className="flex-[1] text-3xl font-semibold">{pageLabel}</h1>
+            <h1 className="flex-[5] text-3xl font-semibold">{pageLabel}</h1>
 
-            <div className="flex gap-20 text-xl mt-2">
+            <div className="flex flex-[4] justify-between text-xl mt-2">
                 <div className="flex gap-2">
                     <span>Giorno:</span>
                     <span className="text-brand-primary font-bold">

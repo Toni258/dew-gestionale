@@ -42,12 +42,10 @@ export default function ViewArchivedMenu() {
             <MenuGrid
                 menu={menu}
                 mealsByDay={mealsByDay}
+                readOnly
                 onOpenMeal={({ dayIndex, mealType }) =>
                     navigate(
-                        `/menu-archived/edit/${encodeURIComponent(
-                            // DA CAMBIARE QUANDO SI DECIDE URL DEFINITIVO
-                            menu.season_type,
-                        )}/meal/${dayIndex}/${mealType}`,
+                        `/menu-archived/view-archived/${id_arch_menu}/meal/${dayIndex}/${mealType}`,
                     )
                 }
             />

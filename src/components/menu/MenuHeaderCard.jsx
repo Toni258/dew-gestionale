@@ -18,7 +18,7 @@ export default function MenuHeaderCard({
 
             <div className="w-[1px] bg-brand-divider ml-2 mr-6" />
 
-            <div className="flex flex-[5] flex-col gap-2 justify-center">
+            <div className="flex flex-[3] flex-col gap-2 justify-center">
                 <div className="flex text-lg text-brand-text gap-2">
                     <span>Nome:</span>
                     <span className="text-brand-primary font-semibold">

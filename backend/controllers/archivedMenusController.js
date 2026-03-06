@@ -34,6 +34,15 @@ export const getArchivedMenuFixedCheesesRotation = asyncHandler(
     },
 );
 
+export const getArchivedMenuMealComposition = asyncHandler(async (req, res) => {
+    const out = await service.getArchivedMenuMealComposition({
+        id_arch_menu_param: req.params.id_arch_menu,
+        day_index_param: req.params.day_index,
+        meal_type_param: req.params.meal_type,
+    });
+    res.json(out);
+});
+
 // DA CAPIRE SE SERVONO ANCHE QUESTE CHIAMATE
 // ------------------------------------------
 // ------------------------------------------
@@ -93,15 +102,6 @@ export const updateMenu = asyncHandler(async (req, res) => {
 
 export const deleteMenu = asyncHandler(async (req, res) => {
     const out = await service.deleteMenu(req.params.season_type);
-    res.json(out);
-});
-
-export const getMenuMealComposition = asyncHandler(async (req, res) => {
-    const out = await service.getMenuMealComposition({
-        season_type_param: req.params.season_type,
-        day_index_param: req.params.day_index,
-        meal_type_param: req.params.meal_type,
-    });
     res.json(out);
 });
 

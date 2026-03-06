@@ -103,3 +103,15 @@ export function getArchivedFixedCheesesRotation(id_arch_menu) {
     );
     // atteso: { data: { pranzo:[...], cena:[...] } }
 }
+
+export function getArchivedMenuMealComposition(
+    id_arch_menu,
+    dayIndex,
+    mealType,
+) {
+    return getJson(
+        `/api/archived-menus/${encodeURIComponent(
+            id_arch_menu,
+        )}/meals/${dayIndex}/${mealType}`,
+    );
+}

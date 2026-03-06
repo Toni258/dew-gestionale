@@ -33,16 +33,18 @@ export default function EditMenu() {
 
     return (
         <AppLayout title="GESTIONE MENÙ">
-            <h1 className="text-3xl font-semibold">Composizione menù</h1>
+            <div className="w-full max-w-7xl mx-auto">
+                <h1 className="text-3xl font-semibold">Composizione menù</h1>
 
-            <MenuHeaderCard
-                menu={menu}
-                onClickFixedDishes={() =>
-                    navigate(`/menu/edit/${menu.season_type}/piatti_fissi`)
-                }
-                onClickEditMenu={() => setModifyMenu(true)}
-                onClickDeleteMenu={() => setMenuToDelete(menu)}
-            />
+                <MenuHeaderCard
+                    menu={menu}
+                    onClickFixedDishes={() =>
+                        navigate(`/menu/edit/${menu.season_type}/piatti_fissi`)
+                    }
+                    onClickEditMenu={() => setModifyMenu(true)}
+                    onClickDeleteMenu={() => setMenuToDelete(menu)}
+                />
+            </div>
 
             <MenuGrid
                 menu={menu}

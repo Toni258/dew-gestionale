@@ -61,6 +61,41 @@ export async function getArchivedMenuFixedCheesesRotation(idArchMenuRaw) {
     return { data: out };
 }
 
+export async function getArchivedMenuMealComposition({
+    id_arch_menu_param,
+    day_index_param,
+    meal_type_param,
+}) {
+    const idArchMenu = parseIntStrict(id_arch_menu_param, {
+        message: 'id_arch_menu non valido',
+    });
+
+    const dayIndex = parseIntStrict(day_index_param, {
+        min: 0,
+        max: 27,
+        message: 'day_index non valido',
+    });
+
+    const mealType = oneOf(
+        meal_type_param,
+        ['pranzo', 'cena'],
+        'Tipo pasto non valido',
+    );
+
+    const dishes = await repo.getArchivedMealComposition(pool, {
+        idArchMenu,
+        dayIndex,
+        mealType,
+    });
+
+    return {
+        id_arch_menu: idArchMenu,
+        day_index: dayIndex,
+        meal_type: mealType,
+        dishes,
+    };
+}
+
 // DA CAPIRE SE SERVONO ANCHE QUESTE CHIAMATE
 // ------------------------------------------
 // ------------------------------------------
@@ -191,35 +226,6 @@ export async function deleteMenu(season_type_param) {
         if (affected === 0) throw new HttpError(404, 'Menù non trovato');
         return { success: true };
     });
-}
-
-export async function getMenuMealComposition({
-    season_type_param,
-    day_index_param,
-    meal_type_param,
-}) {
-    const seasonType = decodeTrim(season_type_param);
-    const dayIndex = parseIntStrict(day_index_param, {
-        message: 'Parametri non validi',
-    });
-    const mealType = oneOf(
-        meal_type_param,
-        ['pranzo', 'cena'],
-        'Tipo pasto non valido',
-    );
-
-    const dishes = await repo.getMealComposition(pool, {
-        seasonType,
-        dayIndex,
-        mealType,
-    });
-
-    return {
-        season_type: seasonType,
-        day_index: dayIndex,
-        meal_type: mealType,
-        dishes,
-    };
 }
 
 export async function upsertMenuMealComposition({

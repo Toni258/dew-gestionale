@@ -3,7 +3,12 @@ import Button from '../ui/Button';
 const DAYS_HEADER = [1, 2, 3, 4, 5, 6, 7];
 const WEEKS_HEADER = [1, 2, 3, 4];
 
-export default function MenuGrid({ menu, mealsByDay, onOpenMeal }) {
+export default function MenuGrid({
+    menu,
+    mealsByDay,
+    onOpenMeal,
+    readOnly = false,
+}) {
     return (
         <div className="mt-4 overflow-x-auto">
             <div className="flex justify-center min-w-fit">
@@ -72,16 +77,32 @@ export default function MenuGrid({ menu, mealsByDay, onOpenMeal }) {
                                     const isActiveDay =
                                         dayIndex === menu.day_index;
 
+                                    const labelPranzo = readOnly
+                                        ? 'Apri'
+                                        : pranzoCompleted
+                                          ? 'Modifica'
+                                          : pranzoHasIssues
+                                            ? 'Da correggere'
+                                            : 'Componi';
+
+                                    const labelCena = readOnly
+                                        ? 'Apri'
+                                        : cenaCompleted
+                                          ? 'Modifica'
+                                          : cenaHasIssues
+                                            ? 'Da correggere'
+                                            : 'Componi';
+
                                     return (
                                         <div
                                             key={`cell-${dayIndex}`}
                                             className={`menu-grid__cell
                                                 ${isLastColumn ? 'no-v-divider' : ''}
                                                 ${isLastRow ? 'no-h-divider' : ''}
-                                                ${isActiveDay ? 'menu-grid__cell--active' : ''}
+                                                ${isActiveDay && !readOnly ? 'menu-grid__cell--active' : ''}
                                             `}
                                         >
-                                            {isActiveDay && (
+                                            {isActiveDay && !readOnly && (
                                                 <span className="menu-grid__activeDot" />
                                             )}
 
@@ -98,7 +119,11 @@ export default function MenuGrid({ menu, mealsByDay, onOpenMeal }) {
                                                               : 'secondary'
                                                     }
                                                     size="md"
-                                                    className="px-3 py-1 rounded-[6px]"
+                                                    className={`rounded-md ${
+                                                        readOnly
+                                                            ? 'px-8 py-1'
+                                                            : ''
+                                                    }`}
                                                     onClick={() =>
                                                         onOpenMeal({
                                                             dayIndex,
@@ -106,11 +131,7 @@ export default function MenuGrid({ menu, mealsByDay, onOpenMeal }) {
                                                         })
                                                     }
                                                 >
-                                                    {pranzoCompleted
-                                                        ? 'Modifica'
-                                                        : pranzoHasIssues
-                                                          ? 'Da correggere'
-                                                          : 'Componi'}
+                                                    {labelPranzo}
                                                 </Button>
                                             </div>
 
@@ -127,7 +148,11 @@ export default function MenuGrid({ menu, mealsByDay, onOpenMeal }) {
                                                               : 'secondary'
                                                     }
                                                     size="md"
-                                                    className="px-3 py-1 rounded-[6px]"
+                                                    className={`rounded-md ${
+                                                        readOnly
+                                                            ? 'px-8 py-1'
+                                                            : ''
+                                                    }`}
                                                     onClick={() =>
                                                         onOpenMeal({
                                                             dayIndex,
@@ -135,11 +160,7 @@ export default function MenuGrid({ menu, mealsByDay, onOpenMeal }) {
                                                         })
                                                     }
                                                 >
-                                                    {cenaCompleted
-                                                        ? 'Modifica'
-                                                        : cenaHasIssues
-                                                          ? 'Da correggere'
-                                                          : 'Componi'}
+                                                    {labelCena}
                                                 </Button>
                                             </div>
                                         </div>

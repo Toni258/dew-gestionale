@@ -52,72 +52,76 @@ export default function EditMenuMeal() {
 
     return (
         <AppLayout title="GESTIONE MENÙ">
-            <MenuMealHeader
-                pageLabel={pageLabel}
-                giorno={giorno}
-                settimana={settimana}
-                mealType={mealType}
-            />
+            <div className="w-full max-w-5xl mx-auto">
+                <MenuMealHeader
+                    pageLabel={pageLabel}
+                    giorno={giorno}
+                    settimana={settimana}
+                    mealType={mealType}
+                />
 
-            <Card className="mt-6 p-6">
-                <div className="flex flex-col gap-5">
-                    {COURSE_TYPES.map((course, idx) => (
-                        <MenuMealCourseRow
-                            key={course.key}
-                            course={course}
-                            valueId={selectedFoods[course.key]?.id_food}
-                            options={foodOptions[course.key]}
-                            selectedFood={selectedFoods[course.key]}
-                            onChange={(idStr) =>
-                                setSelectedFood(course.key, idStr)
-                            }
-                            showDivider={idx < COURSE_TYPES.length - 1}
-                        />
-                    ))}
+                <Card className="mt-6 p-6">
+                    <div className="flex flex-col gap-5">
+                        {COURSE_TYPES.map((course, idx) => (
+                            <MenuMealCourseRow
+                                key={course.key}
+                                course={course}
+                                valueId={selectedFoods[course.key]?.id_food}
+                                options={foodOptions[course.key]}
+                                selectedFood={selectedFoods[course.key]}
+                                onChange={(idStr) =>
+                                    setSelectedFood(course.key, idStr)
+                                }
+                                showDivider={idx < COURSE_TYPES.length - 1}
+                            />
+                        ))}
 
-                    <MenuMealTotalsCard totals={totals} />
+                        <MenuMealTotalsCard totals={totals} />
 
-                    <div className="flex justify-center gap-8">
-                        <Button
-                            variant="secondary"
-                            className="px-5 py-2 mb-[-10px]"
-                            onClick={() => navigate(`/menu/edit/${seasonType}`)}
-                            disabled={saving}
-                        >
-                            Indietro
-                        </Button>
+                        <div className="flex justify-center gap-8">
+                            <Button
+                                variant="secondary"
+                                className="px-5 py-2 mb-[-10px]"
+                                onClick={() =>
+                                    navigate(`/menu/edit/${seasonType}`)
+                                }
+                                disabled={saving}
+                            >
+                                Indietro
+                            </Button>
 
-                        <Button
-                            className="px-5 py-2 mb-[-10px]"
-                            onClick={async () => {
-                                const result = await withLoaderNotify({
-                                    message: 'Salvataggio…',
-                                    mode: 'blocking',
-                                    success: 'Menù salvato correttamente',
-                                    errorTitle: 'Errore salvataggio',
-                                    errorMessage:
-                                        'Impossibile salvare le modifiche.',
-                                    fn: async () => {
-                                        const r = await save();
-                                        if (!r?.ok)
-                                            throw new Error(
-                                                r?.message ||
-                                                    'Errore salvataggio',
-                                            );
-                                        return r;
-                                    },
-                                });
+                            <Button
+                                className="px-5 py-2 mb-[-10px]"
+                                onClick={async () => {
+                                    const result = await withLoaderNotify({
+                                        message: 'Salvataggio…',
+                                        mode: 'blocking',
+                                        success: 'Menù salvato correttamente',
+                                        errorTitle: 'Errore salvataggio',
+                                        errorMessage:
+                                            'Impossibile salvare le modifiche.',
+                                        fn: async () => {
+                                            const r = await save();
+                                            if (!r?.ok)
+                                                throw new Error(
+                                                    r?.message ||
+                                                        'Errore salvataggio',
+                                                );
+                                            return r;
+                                        },
+                                    });
 
-                                if (!result.ok) return;
-                                navigate(`/menu/edit/${seasonType}`);
-                            }}
-                            disabled={disableSave}
-                        >
-                            {saving ? 'Salvataggio...' : buttonLabel}
-                        </Button>
+                                    if (!result.ok) return;
+                                    navigate(`/menu/edit/${seasonType}`);
+                                }}
+                                disabled={disableSave}
+                            >
+                                {saving ? 'Salvataggio...' : buttonLabel}
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </Card>
+                </Card>
+            </div>
         </AppLayout>
     );
 }

@@ -27,7 +27,7 @@ export default function ArchivedMenuPiattiFissi() {
     return (
         <AppLayout title="MENÙ ARCHIVIATI">
             <div className="w-full max-w-7xl mx-auto">
-                <div className="flex items-start justify-between gap-4 pl-16 pr-6">
+                <div className="flex items-end justify-between gap-4 pl-16 pr-6">
                     <h1 className="text-3xl font-semibold">
                         Piatti fissi (archiviato)
                     </h1>

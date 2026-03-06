@@ -178,6 +178,68 @@ export async function getArchivedFixedCheesesRotation(
     return rows;
 }
 
+export async function getArchivedMealComposition(
+    poolOrConn,
+    { idArchMenu, dayIndex, mealType },
+) {
+    const [rows] = await poolOrConn.query(
+        `
+        SELECT
+            dp.id_meal,
+            dp.used,
+            f.id_food,
+            f.name,
+            f.type,
+            f.grammage_tot,
+            f.kcal_tot,
+            f.proteins,
+            f.carbs,
+            f.fats,
+            f.allergy_notes,
+            stats.is_completed
+        FROM arch_dish_pairing dp
+        JOIN arch_meal_snapshot m
+            ON m.id_arch_menu = dp.id_arch_menu
+           AND m.id_meal      = dp.id_meal
+        JOIN arch_food_snapshot f
+            ON f.id_arch_food = dp.id_arch_food
+        JOIN (
+            SELECT
+                m2.id_meal,
+                CASE
+                    WHEN MAX(f2.type = 'primo')    = 1
+                     AND MAX(f2.type = 'secondo') = 1
+                     AND MAX(f2.type = 'contorno')= 1
+                     AND MAX(f2.type = 'ultimo')  = 1
+                    THEN 1 ELSE 0
+                END AS is_completed
+            FROM arch_dish_pairing dp2
+            JOIN arch_meal_snapshot m2
+                ON m2.id_arch_menu = dp2.id_arch_menu
+               AND m2.id_meal      = dp2.id_meal
+            JOIN arch_food_snapshot f2
+                ON f2.id_arch_food = dp2.id_arch_food
+            WHERE dp2.id_arch_menu = ?
+              AND m2.day_index = ?
+              AND m2.type = ?
+              AND m2.first_choice = 0
+              AND dp2.used = 1
+            GROUP BY m2.id_meal
+        ) stats
+            ON stats.id_meal = m.id_meal
+        WHERE dp.id_arch_menu = ?
+          AND m.day_index = ?
+          AND m.type = ?
+          AND m.first_choice = 0
+          AND dp.used = 1
+        ORDER BY f.type ASC, f.name ASC
+        `,
+        [idArchMenu, dayIndex, mealType, idArchMenu, dayIndex, mealType],
+    );
+
+    return rows;
+}
+
 // DA CAPIRE SE SERVONO ANCHE QUESTE CHIAMATE
 // ------------------------------------------
 // ------------------------------------------
@@ -291,60 +353,6 @@ export async function deleteSeason(poolOrConn, seasonType) {
         [seasonType],
     );
     return result.affectedRows ?? 0;
-}
-
-export async function getMealComposition(
-    poolOrConn,
-    { seasonType, dayIndex, mealType },
-) {
-    const [rows] = await poolOrConn.query(
-        `
-        SELECT
-            dp.id_dish_pairing,
-            dp.used,
-            f.id_food,
-            f.name,
-            f.type,
-            f.grammage_tot,
-            f.kcal_tot,
-            f.proteins,
-            f.carbs,
-            f.fats,
-            f.allergy_notes,
-            stats.is_completed
-        FROM dish_pairing dp
-        JOIN meal m ON m.id_meal = dp.id_meal
-        JOIN food f ON f.id_food = dp.id_food
-        JOIN (
-            SELECT
-                m2.id_meal,
-                CASE
-                    WHEN MAX(f2.type = 'primo')    = 1
-                     AND MAX(f2.type = 'secondo') = 1
-                     AND MAX(f2.type = 'contorno')= 1
-                     AND MAX(f2.type = 'ultimo')  = 1
-                    THEN 1 ELSE 0
-                END AS is_completed
-            FROM dish_pairing dp2
-            JOIN meal m2 ON m2.id_meal = dp2.id_meal
-            JOIN food f2 ON f2.id_food = dp2.id_food
-            WHERE dp2.season_type = ?
-              AND m2.day_index = ?
-              AND m2.type = ?
-              AND m2.first_choice = 0
-              AND dp2.used = 1
-            GROUP BY m2.id_meal
-        ) stats ON stats.id_meal = m.id_meal
-        WHERE dp.season_type = ?
-          AND m.day_index = ?
-          AND m.type = ?
-          AND m.first_choice = 0
-          AND dp.used = 1
-        ORDER BY dp.id_dish_pairing ASC
-        `,
-        [seasonType, dayIndex, mealType, seasonType, dayIndex, mealType],
-    );
-    return rows;
 }
 
 export async function findMealId(poolOrConn, { dayIndex, mealType }) {
