@@ -259,7 +259,10 @@ export default function CreateUserGestionale() {
                                     name="role"
                                     placeholder="Seleziona ruolo"
                                     options={[
-                                        { value: '', label: '— Seleziona —' },
+                                        {
+                                            value: '',
+                                            label: '— Seleziona —',
+                                        },
                                         {
                                             value: 'operator',
                                             label: 'Operatore',

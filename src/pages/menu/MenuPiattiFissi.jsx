@@ -61,40 +61,46 @@ export default function MenuPiattiFissi() {
 
     return (
         <AppLayout title="GESTIONE MENÙ">
-            <h1 className="text-3xl font-semibold">Scelta piatti fissi</h1>
+            <div className="w-full max-w-7xl mx-auto">
+                <h1 className="text-3xl font-semibold pl-16">
+                    Scelta piatti fissi
+                </h1>
 
-            <div className="mx-4 my-6">
-                <FixedDishesGrid
-                    loading={loading}
-                    options={options}
-                    selectedFoods={selectedFoods}
-                    cheeseOptions={cheeseOptions}
-                    cheeseRotation={cheeseRotation}
-                    cheeseFilled={cheeseFilled}
-                    onSelectFood={setSelectedFood}
-                    onChangeCheeseAt={setCheeseRotationAt}
-                />
-            </div>
+                <div className="mx-4 my-6">
+                    <FixedDishesGrid
+                        loading={loading}
+                        options={options}
+                        selectedFoods={selectedFoods}
+                        cheeseOptions={cheeseOptions}
+                        cheeseRotation={cheeseRotation}
+                        cheeseFilled={cheeseFilled}
+                        onSelectFood={setSelectedFood}
+                        onChangeCheeseAt={setCheeseRotationAt}
+                    />
+                </div>
 
-            <div className="flex justify-center mx-4 mt-2 mb-10 gap-8">
-                <Button
-                    variant="secondary"
-                    size="lg"
-                    className="w-[240px]"
-                    onClick={() => navigate(`/menu/edit/${decodedSeasonType}`)}
-                >
-                    Indietro
-                </Button>
+                <div className="flex justify-center mx-4 mt-2 mb-10 gap-8">
+                    <Button
+                        variant="secondary"
+                        size="lg"
+                        className="w-[240px]"
+                        onClick={() =>
+                            navigate(`/menu/edit/${decodedSeasonType}`)
+                        }
+                    >
+                        Indietro
+                    </Button>
 
-                <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-[240px]"
-                    disabled={saving || !allFilled}
-                    onClick={handleSave}
-                >
-                    {saving ? 'Salvataggio...' : 'Salva piatti fissi'}
-                </Button>
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        className="w-[240px]"
+                        disabled={saving || !allFilled}
+                        onClick={handleSave}
+                    >
+                        {saving ? 'Salvataggio...' : 'Salva piatti fissi'}
+                    </Button>
+                </div>
             </div>
         </AppLayout>
     );

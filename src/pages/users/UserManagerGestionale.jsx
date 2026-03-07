@@ -159,7 +159,10 @@ export default function UserManagerGestionale() {
                                         value: 'super_user',
                                         label: 'Super User',
                                     },
-                                    { value: 'operator', label: 'Operatore' },
+                                    {
+                                        value: 'operator',
+                                        label: 'Operatore',
+                                    },
                                 ]}
                                 height="h-[45px]"
                                 className="w-full [&>div>button]:rounded-full"
@@ -180,7 +183,10 @@ export default function UserManagerGestionale() {
                                         value: 'must_change_password',
                                         label: 'Password da cambiare',
                                     },
-                                    { value: 'suspended', label: 'Sospeso' },
+                                    {
+                                        value: 'suspended',
+                                        label: 'Sospeso',
+                                    },
                                 ]}
                                 height="h-[45px]"
                                 className="w-full [&>div>button]:rounded-full"

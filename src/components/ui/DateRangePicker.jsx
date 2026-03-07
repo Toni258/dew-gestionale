@@ -21,7 +21,7 @@ export default function DateRangePicker({
     endName,
     disablePast = false,
 
-    // ✅ nuove props
+    // nuove props
     minDate = null, // "YYYY-MM-DD" | Date | null
     maxDate = null, // "YYYY-MM-DD" | Date | null
 
@@ -81,6 +81,12 @@ export default function DateRangePicker({
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    };
+
+    const formatDisplay = (iso) => {
+        if (!iso) return '';
+        const [year, month, day] = iso.split('-');
+        return `${day}/${month}/${year}`;
     };
 
     const dateObj = (year, month, day) =>
@@ -218,7 +224,9 @@ export default function DateRangePicker({
                                     : 'border-brand-divider'
                             }`}
                         >
-                            {startValue || (
+                            {startValue ? (
+                                formatDisplay(startValue)
+                            ) : (
                                 <span className="text-brand-textSecondary">
                                     {placeholderStart}
                                 </span>
@@ -248,7 +256,9 @@ export default function DateRangePicker({
                                     : 'border-brand-divider'
                             }`}
                         >
-                            {endValue || (
+                            {endValue ? (
+                                formatDisplay(endValue)
+                            ) : (
                                 <span className="text-brand-textSecondary">
                                     {placeholderEnd}
                                 </span>
@@ -318,7 +328,6 @@ export default function DateRangePicker({
                                 selecting={selecting}
                                 setHoverDate={setHoverDate}
                                 handleSelectDay={handleSelectDay}
-                                // ✅ vincoli
                                 disablePast={disablePast}
                                 minD={minD}
                                 maxD={maxD}
@@ -335,7 +344,6 @@ export default function DateRangePicker({
                                 selecting={selecting}
                                 setHoverDate={setHoverDate}
                                 handleSelectDay={handleSelectDay}
-                                // ✅ vincoli
                                 disablePast={disablePast}
                                 minD={minD}
                                 maxD={maxD}
@@ -345,23 +353,25 @@ export default function DateRangePicker({
                 )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-                <div className="min-h-[16px]">
-                    {errorStart && (
-                        <p className="text-brand-error text-sm animate-fadeIn mb-2">
-                            {errorStart}
-                        </p>
-                    )}
-                </div>
+            {(errorStart?.trim() || errorEnd?.trim()) && (
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="min-h-[16px]">
+                        {errorStart && (
+                            <p className="text-brand-error text-sm animate-fadeIn mb-2">
+                                {errorStart}
+                            </p>
+                        )}
+                    </div>
 
-                <div className="min-h-[16px]">
-                    {errorEnd && (
-                        <p className="text-brand-error text-sm animate-fadeIn mb-2">
-                            {errorEnd}
-                        </p>
-                    )}
+                    <div className="min-h-[16px]">
+                        {errorEnd && (
+                            <p className="text-brand-error text-sm animate-fadeIn mb-2">
+                                {errorEnd}
+                            </p>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

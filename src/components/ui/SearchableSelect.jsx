@@ -16,7 +16,9 @@ export default function SearchableSelect({
     const form = useFormContext();
 
     const isUsingForm = Boolean(form && name);
-    const selectedValue = isUsingForm ? form.values?.[name] ?? '' : value ?? '';
+    const selectedValue = isUsingForm
+        ? (form.values?.[name] ?? '')
+        : (value ?? '');
     const error = isUsingForm ? form.errors?.[name] : null;
 
     const [open, setOpen] = useState(false);
@@ -68,14 +70,14 @@ export default function SearchableSelect({
 
         // imposta highlight su selected (se presente) oppure primo della lista filtrata
         const idxSelected = filteredOptions.findIndex(
-            (o) => o.value === selectedValue
+            (o) => o.value === selectedValue,
         );
         const next =
             idxSelected >= 0
                 ? idxSelected
                 : filteredOptions.length > 0
-                ? 0
-                : -1;
+                  ? 0
+                  : -1;
         setHighlightedIndex(next);
 
         // focus sul campo ricerca
@@ -113,7 +115,7 @@ export default function SearchableSelect({
         if (highlightedIndex < 0) return;
 
         const el = listRef.current.querySelector(
-            `[data-ss-opt-index="${highlightedIndex}"]`
+            `[data-ss-opt-index="${highlightedIndex}"]`,
         );
         if (el?.scrollIntoView) {
             el.scrollIntoView({ block: 'nearest' });
@@ -220,7 +222,7 @@ export default function SearchableSelect({
                     onKeyDown={handleKeyDown}
                     className={`
                         input-default w-full h-full text-left flex items-center justify-between
-                        pr-10 transition-all duration-300
+                        pr-10 transition-all duration-300 capitalize
                         ${
                             disabledFinal
                                 ? 'opacity-60 cursor-not-allowed'
@@ -268,7 +270,7 @@ export default function SearchableSelect({
                             bg-white border border-brand-divider border-t-0
                             rounded-b-textField rounded-t-none
                             shadow-ios-strong
-                            animate-fadeScale overflow-hidden
+                            animate-fadeScale overflow-hidden capitalize
                         "
                         onKeyDown={handleKeyDown}
                     >
@@ -292,7 +294,7 @@ export default function SearchableSelect({
                                         onClick={() => {
                                             setQuery('');
                                             requestAnimationFrame(() =>
-                                                searchRef.current?.focus()
+                                                searchRef.current?.focus(),
                                             );
                                         }}
                                         className="
@@ -349,8 +351,8 @@ export default function SearchableSelect({
                                                     highlighted
                                                         ? 'bg-brand-primary/20 text-brand-primary font-semibold'
                                                         : active
-                                                        ? 'bg-brand-primary/10 text-brand-primary font-semibold'
-                                                        : 'hover:bg-black/5'
+                                                          ? 'bg-brand-primary/10 text-brand-primary font-semibold'
+                                                          : 'hover:bg-black/5'
                                                 }
                                                 ${
                                                     isLast

@@ -1,16 +1,13 @@
 import AppLayout from '../../components/layout/AppLayout';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import Form from '../../components/ui/Form';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Form, { useFormContext } from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-
 import DateRangePicker from '../../components/ui/DateRangePicker';
 import CustomSelect from '../../components/ui/CustomSelect';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import Pagination from '../../components/ui/Pagination';
-
 import { withLoader } from '../../services/withLoader';
 
 function fmtInt(n) {
@@ -44,21 +41,6 @@ function fmtPct(n) {
     return `${fmtInt(x)}%`;
 }
 
-function toIso(d) {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-function defaultRange() {
-    // ultimo mese
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 30);
-    return { start: toIso(start), end: toIso(end) };
-}
-
 const MEAL_OPTIONS = [
     { value: '', label: 'Tutti i pasti' },
     { value: 'pranzo', label: 'Pranzo' },
@@ -75,23 +57,67 @@ const COURSE_OPTIONS = [
     { value: 'speciale', label: 'Speciale' },
 ];
 
-export default function StatisticheConsumi() {
-    const initial = useMemo(() => {
-        const r = defaultRange();
-        return {
-            start: r.start,
-            end: r.end,
-            meal: '',
-            patientId: '',
-            floor: '',
-            course: '',
-        };
-    }, []);
+function buildMenuValue(menu) {
+    return `${menu.kind}:${menu.ref}`;
+}
 
-    const [applied, setApplied] = useState(initial);
+function parseMenuValue(value) {
+    const [menuKind = '', ...rest] = String(value || '').split(':');
+    return {
+        menuKind,
+        menuRef: rest.join(':'),
+    };
+}
+
+function MenuSelectionSync({
+    menuRows,
+    selectedMenu,
+    setSelectedMenu,
+    setFormVersion,
+}) {
+    const form = useFormContext();
+    const prevMenuValueRef = useRef('');
+
+    const menuValue = form?.values?.menuValue ?? '';
+
+    useEffect(() => {
+        if (!menuValue) return;
+
+        const found = (menuRows || []).find(
+            (m) => buildMenuValue(m) === menuValue,
+        );
+        if (!found) return;
+
+        const prev = prevMenuValueRef.current;
+        prevMenuValueRef.current = menuValue;
+
+        const firstMount = prev === '';
+        const changed = prev !== '' && prev !== menuValue;
+
+        setSelectedMenu(found);
+
+        if (firstMount) return;
+        if (!changed) return;
+
+        setFormVersion((v) => v + 1);
+    }, [menuValue, menuRows, form, setSelectedMenu, setFormVersion]);
+
+    return null;
+}
+
+export default function StatisticheConsumi() {
+    const [menus, setMenus] = useState([]);
+    const [menusLoading, setMenusLoading] = useState(true);
+
+    const [selectedMenu, setSelectedMenu] = useState(null);
+    const [formVersion, setFormVersion] = useState(0);
+
+    const [applied, setApplied] = useState(null);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [commentsPage, setCommentsPage] = useState(1);
+    const [commentsPageSize, setCommentsPageSize] = useState(10);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -106,11 +132,18 @@ export default function StatisticheConsumi() {
 
     const [topLiked, setTopLiked] = useState([]);
     const [topDisliked, setTopDisliked] = useState([]);
-
     const [details, setDetails] = useState({
         data: [],
         total: 0,
         totalPages: 1,
+    });
+    const [comments, setComments] = useState({
+        data: [],
+        total: 0,
+        totalPages: 1,
+        page: 1,
+        pageSize: 10,
+        hasOnlyEmptyComments: false,
     });
 
     const [options, setOptions] = useState({
@@ -118,15 +151,134 @@ export default function StatisticheConsumi() {
         floors: [],
     });
 
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadMenus() {
+            setMenusLoading(true);
+            setError('');
+
+            try {
+                const res = await fetch('/api/reports/consumi/menus');
+                if (!res.ok) {
+                    let msg = `HTTP ${res.status}`;
+                    try {
+                        const j = await res.json();
+                        if (j?.error) msg = j.error;
+                    } catch {}
+                    throw new Error(msg);
+                }
+
+                const json = await res.json();
+                const rows = json?.data || [];
+
+                if (cancelled) return;
+
+                setMenus(rows);
+
+                const firstMenu = rows[0] || null;
+                setSelectedMenu(firstMenu);
+
+                if (firstMenu) {
+                    setApplied({
+                        menuKind: firstMenu.kind,
+                        menuRef: firstMenu.ref,
+                        start: firstMenu.start_date,
+                        end: firstMenu.end_date,
+                        meal: '',
+                        patientId: '',
+                        floor: '',
+                        course: '',
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+                if (!cancelled) {
+                    setError('Errore nel caricamento dei menù disponibili.');
+                }
+            } finally {
+                if (!cancelled) {
+                    setMenusLoading(false);
+                }
+            }
+        }
+
+        loadMenus();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const formInitialValues = useMemo(() => {
+        if (!selectedMenu) {
+            return {
+                menuValue: '',
+                start: '',
+                end: '',
+                meal: '',
+                patientId: '',
+                floor: '',
+                course: '',
+            };
+        }
+
+        const menuValue = buildMenuValue(selectedMenu);
+
+        const appliedMatchesSelectedMenu =
+            applied &&
+            applied.menuKind === selectedMenu.kind &&
+            applied.menuRef === selectedMenu.ref;
+
+        return {
+            menuValue,
+            start: appliedMatchesSelectedMenu
+                ? (applied?.start ?? selectedMenu.start_date)
+                : selectedMenu.start_date,
+            end: appliedMatchesSelectedMenu
+                ? (applied?.end ?? selectedMenu.end_date)
+                : selectedMenu.end_date,
+            meal: appliedMatchesSelectedMenu ? (applied?.meal ?? '') : '',
+            patientId: appliedMatchesSelectedMenu
+                ? (applied?.patientId ?? '')
+                : '',
+            floor: appliedMatchesSelectedMenu ? (applied?.floor ?? '') : '',
+            course: appliedMatchesSelectedMenu ? (applied?.course ?? '') : '',
+        };
+    }, [selectedMenu, applied]);
+
+    const formKey = useMemo(() => {
+        return `${selectedMenu ? buildMenuValue(selectedMenu) : 'none'}-${formVersion}`;
+    }, [selectedMenu, formVersion]);
+
+    const menuOptions = useMemo(() => {
+        return (menus || []).map((m) => ({
+            value: buildMenuValue(m),
+            label: m.label,
+        }));
+    }, [menus]);
+
+    const floorOptionsFinal = useMemo(() => {
+        return [
+            { value: '', label: 'Tutti i piani' },
+            ...(options.floors || []),
+        ];
+    }, [options.floors]);
+
     const requestParams = useMemo(() => {
+        if (!applied) return null;
         return {
             ...applied,
             page,
             pageSize,
+            commentsPage,
+            commentsPageSize,
         };
     }, [applied, page, pageSize]);
 
     const fetchReport = useCallback(async () => {
+        if (!requestParams) return;
+
         setLoading(true);
         setError('');
 
@@ -134,22 +286,31 @@ export default function StatisticheConsumi() {
             await withLoader('Caricamento report consumi…', async () => {
                 const qs = new URLSearchParams();
 
+                qs.set('menuKind', requestParams.menuKind);
+                qs.set('menuRef', requestParams.menuRef);
                 qs.set('start', requestParams.start);
                 qs.set('end', requestParams.end);
 
                 if (requestParams.meal) qs.set('meal', requestParams.meal);
-                if (requestParams.patientId)
+                if (requestParams.patientId) {
                     qs.set('patientId', requestParams.patientId);
+                }
                 if (requestParams.floor) qs.set('floor', requestParams.floor);
                 if (requestParams.course)
                     qs.set('course', requestParams.course);
 
                 qs.set('page', String(requestParams.page));
                 qs.set('pageSize', String(requestParams.pageSize));
+                qs.set('commentsPage', String(requestParams.commentsPage));
+                qs.set(
+                    'commentsPageSize',
+                    String(requestParams.commentsPageSize),
+                );
 
                 const res = await fetch(
                     `/api/reports/consumi?${qs.toString()}`,
                 );
+
                 if (!res.ok) {
                     let msg = `HTTP ${res.status}`;
                     try {
@@ -164,10 +325,10 @@ export default function StatisticheConsumi() {
                 setKpi(json.kpi || {});
                 setTopLiked(json.topLiked || []);
                 setTopDisliked(json.topDisliked || []);
-
                 setDetails(
                     json.details || { data: [], total: 0, totalPages: 1 },
                 );
+                setComments(json.comments || []);
                 setOptions(json.options || { patients: [], floors: [] });
             });
         } catch (e) {
@@ -183,6 +344,14 @@ export default function StatisticheConsumi() {
             setTopLiked([]);
             setTopDisliked([]);
             setDetails({ data: [], total: 0, totalPages: 1 });
+            setComments({
+                data: [],
+                total: 0,
+                totalPages: 1,
+                page: 1,
+                pageSize: commentsPageSize,
+                hasOnlyEmptyComments: false,
+            });
         } finally {
             setLoading(false);
         }
@@ -197,8 +366,24 @@ export default function StatisticheConsumi() {
         setPage(1);
     };
 
+    const handleCommentsPageSizeChange = (e) => {
+        setCommentsPageSize(Number(e.target.value));
+        setCommentsPage(1);
+    };
+
     const handleApplyFilters = (values) => {
+        const parsed = parseMenuValue(values.menuValue);
+        const menu = (menus || []).find(
+            (m) => buildMenuValue(m) === values.menuValue,
+        );
+
+        if (!menu) return;
+
+        setSelectedMenu(menu);
+
         setApplied({
+            menuKind: parsed.menuKind,
+            menuRef: parsed.menuRef,
             start: values.start,
             end: values.end,
             meal: values.meal || '',
@@ -206,17 +391,11 @@ export default function StatisticheConsumi() {
             floor: values.floor || '',
             course: values.course || '',
         });
+
         setPage(1);
+        setCommentsPage(1);
     };
 
-    const floorOptionsFinal = useMemo(() => {
-        return [
-            { value: '', label: 'Tutti i piani' },
-            ...(options.floors || []),
-        ];
-    }, [options.floors]);
-
-    // KPI CARDS (icona semplice: emoji + stile simile al mock)
     const KpiCard = ({ icon, iconBg, value, label, sub }) => (
         <Card className="p-5">
             <div className="flex items-start gap-3">
@@ -225,7 +404,6 @@ export default function StatisticheConsumi() {
                 >
                     <span className="text-lg">{icon}</span>
                 </div>
-
                 <div>
                     <div className="text-2xl font-bold text-brand-text">
                         {value}
@@ -244,7 +422,6 @@ export default function StatisticheConsumi() {
     );
 
     const renderRankList = (rows, mode) => {
-        // mode: 'good' | 'bad'
         const badgeBg = mode === 'good' ? 'bg-brand-primary' : 'bg-red-600';
         const pctText = mode === 'good' ? 'text-brand-primary' : 'text-red-600';
 
@@ -260,7 +437,6 @@ export default function StatisticheConsumi() {
             <div className="flex flex-col gap-3">
                 {rows.map((r, idx) => {
                     const avg = Number(r.avg_portion || 0);
-                    // “Consumo %” come proxy: clamp 0..1 (sopra 1 lo trattiamo come 1)
                     const proxyPct = Math.max(0, Math.min(1, avg)) * 100;
 
                     return (
@@ -274,7 +450,6 @@ export default function StatisticheConsumi() {
                                 >
                                     {idx + 1}
                                 </div>
-
                                 <div>
                                     <div className="font-semibold text-brand-text">
                                         {r.name}
@@ -286,9 +461,9 @@ export default function StatisticheConsumi() {
                             </div>
 
                             <div className="text-right">
-                                <div
-                                    className={`font-bold ${pctText}`}
-                                >{`${fmtInt(proxyPct)}%`}</div>
+                                <div className={`font-bold ${pctText}`}>
+                                    {`${fmtInt(proxyPct)}%`}
+                                </div>
                                 <div className="text-xs text-brand-textSecondary">
                                     Consumo
                                 </div>
@@ -306,105 +481,178 @@ export default function StatisticheConsumi() {
                 Statistiche e analisi consumi
             </h1>
 
-            {/* FILTRI */}
             <div className="mt-4">
-                <Card>
-                    <Form
-                        initialValues={{
-                            start: applied.start,
-                            end: applied.end,
-                            meal: applied.meal,
-                            patientId: applied.patientId,
-                            floor: applied.floor,
-                            course: applied.course,
-                        }}
-                        validateForm={(v) => {
-                            const errs = {};
-                            if (!v.start)
-                                errs.start = 'Seleziona una data di inizio';
-                            if (!v.end) errs.end = 'Seleziona una data di fine';
-                            if (v.start && v.end && v.end <= v.start) {
-                                errs.end =
-                                    'La data di fine deve essere > data inizio';
-                            }
-                            return errs;
-                        }}
-                        onSubmit={handleApplyFilters}
-                    >
-                        <div className="flex justify-between">
-                            <FormGroup name="start" className="min-w-[240px]">
-                                <DateRangePicker
-                                    startName="start"
-                                    endName="end"
-                                    placeholderStart="Inizio"
-                                    placeholderEnd="Fine"
-                                />
-                            </FormGroup>
+                <Card className="">
+                    {selectedMenu && !menusLoading && (
+                        <Form
+                            key={formKey}
+                            initialValues={formInitialValues}
+                            validateForm={(v) => {
+                                const errs = {};
 
-                            <FormGroup name="meal">
-                                <CustomSelect
-                                    name="meal"
-                                    options={MEAL_OPTIONS}
-                                    placeholder="Tutti i pasti"
-                                    className="w-full"
-                                />
-                            </FormGroup>
+                                if (!v.menuValue) {
+                                    errs.menuValue = 'Seleziona un menù';
+                                }
 
-                            <FormGroup name="patientId" className="w-[320px]">
-                                <SearchableSelect
-                                    name="patientId"
-                                    options={[
-                                        {
-                                            value: '',
-                                            label: 'Tutti i pazienti',
-                                        },
-                                        ...(options.patients || []),
-                                    ]}
-                                    placeholder="Tutti i pazienti"
-                                    loading={false}
-                                />
-                            </FormGroup>
+                                if (!v.start) {
+                                    errs.start = 'Seleziona una data di inizio';
+                                }
 
-                            <FormGroup name="floor">
-                                <CustomSelect
-                                    name="floor"
-                                    options={floorOptionsFinal}
-                                    placeholder="Tutti i piani"
-                                    className="w-full"
-                                />
-                            </FormGroup>
+                                if (!v.end) {
+                                    errs.end = 'Seleziona una data di fine';
+                                }
 
-                            <FormGroup name="course">
-                                <CustomSelect
-                                    name="course"
-                                    options={COURSE_OPTIONS}
-                                    placeholder="Tutte le portate"
-                                    className="w-full"
-                                />
-                            </FormGroup>
+                                if (v.start && v.end && v.end < v.start) {
+                                    errs.end =
+                                        'La data di fine deve essere >= data inizio';
+                                }
 
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                size="md"
-                                className="px-6 py-2 rounded-md"
-                                disabled={loading}
-                            >
-                                Applica filtri
-                            </Button>
-                        </div>
-                    </Form>
+                                const currentSelected = (menus || []).find(
+                                    (m) => buildMenuValue(m) === v.menuValue,
+                                );
+
+                                if (currentSelected) {
+                                    if (
+                                        v.start &&
+                                        v.start < currentSelected.start_date
+                                    ) {
+                                        errs.start =
+                                            'La data di inizio deve rientrare nel menù selezionato';
+                                    }
+
+                                    if (
+                                        v.end &&
+                                        v.end > currentSelected.end_date
+                                    ) {
+                                        errs.end =
+                                            'La data di fine deve rientrare nel menù selezionato';
+                                    }
+                                }
+
+                                return errs;
+                            }}
+                            onSubmit={handleApplyFilters}
+                        >
+                            <MenuSelectionSync
+                                menuRows={menus}
+                                selectedMenu={selectedMenu}
+                                setSelectedMenu={setSelectedMenu}
+                                setFormVersion={setFormVersion}
+                            />
+
+                            <div className="flex justify-between gap-4 flex-wrap">
+                                <div className="flex flex-col gap-4 flex-[1]">
+                                    <FormGroup name="menuValue">
+                                        <SearchableSelect
+                                            name="menuValue"
+                                            options={menuOptions}
+                                            placeholder="Seleziona un menù"
+                                            loading={false}
+                                        />
+                                    </FormGroup>
+
+                                    <FormGroup
+                                        name="start"
+                                        className="min-w-[240px]"
+                                    >
+                                        <DateRangePicker
+                                            startName="start"
+                                            endName="end"
+                                            placeholderStart="Inizio"
+                                            placeholderEnd="Fine"
+                                            minDate={
+                                                selectedMenu?.start_date ?? null
+                                            }
+                                            maxDate={
+                                                selectedMenu?.end_date ?? null
+                                            }
+                                        />
+                                    </FormGroup>
+                                </div>
+
+                                <div className="w-px w-full bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
+
+                                <div className="flex flex-col flex-[2] gap-4">
+                                    <div className="flex gap-4">
+                                        <FormGroup
+                                            name="meal"
+                                            className="flex-[0.8]"
+                                        >
+                                            <CustomSelect
+                                                name="meal"
+                                                options={MEAL_OPTIONS}
+                                                placeholder="Tutti i pasti"
+                                                className="w-full"
+                                            />
+                                        </FormGroup>
+
+                                        <FormGroup
+                                            name="course"
+                                            className="flex-[1.1]"
+                                        >
+                                            <CustomSelect
+                                                name="course"
+                                                options={COURSE_OPTIONS}
+                                                placeholder="Tutte le portate"
+                                                className="w-full"
+                                            />
+                                        </FormGroup>
+
+                                        <FormGroup
+                                            name="patientId"
+                                            className="flex-[1.8]"
+                                        >
+                                            <SearchableSelect
+                                                name="patientId"
+                                                options={[
+                                                    {
+                                                        value: '',
+                                                        label: 'Tutti i pazienti',
+                                                    },
+                                                    ...(options.patients || []),
+                                                ]}
+                                                placeholder="Tutti i pazienti"
+                                                loading={false}
+                                                className="w-full"
+                                            />
+                                        </FormGroup>
+
+                                        <FormGroup
+                                            name="floor"
+                                            className="flex-[0.7]"
+                                        >
+                                            <CustomSelect
+                                                name="floor"
+                                                options={floorOptionsFinal}
+                                                placeholder="Tutti i piani"
+                                                className="w-full"
+                                            />
+                                        </FormGroup>
+                                    </div>
+
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        size="md"
+                                        className="mx-auto mx-12 px-6 py-2 rounded-md"
+                                        disabled={loading || menusLoading}
+                                    >
+                                        Applica filtri
+                                    </Button>
+                                </div>
+                            </div>
+                        </Form>
+                    )}
                 </Card>
             </div>
 
-            {/* KPI */}
             <div className="mt-6 grid grid-cols-5 gap-5">
                 <KpiCard
                     icon="⚠️"
                     iconBg="bg-yellow-100"
-                    value={`${fmtInt(kpi.waste_kg)} kg`}
+                    value={`${fmtDec(kpi.waste_kg, 2)} kg`}
                     label="Spreco totale stimato"
-                    sub="Periodo stimato"
+                    sub="Periodo selezionato"
                 />
                 <KpiCard
                     icon="🔥"
@@ -432,11 +680,10 @@ export default function StatisticheConsumi() {
                     iconBg="bg-green-100"
                     value={fmtPct(kpi.coverage_pct)}
                     label="Copertura questionario"
-                    sub="Pasti con questionari completati"
+                    sub="Portate con questionari completati"
                 />
             </div>
 
-            {/* TOP / BOTTOM */}
             <div className="mt-6 grid grid-cols-2 gap-6">
                 <Card>
                     <div className="flex items-center gap-2 mb-4">
@@ -459,7 +706,6 @@ export default function StatisticheConsumi() {
                 </Card>
             </div>
 
-            {/* DETTAGLI */}
             <div className="mt-8">
                 <Card className="p-0 overflow-hidden">
                     <div className="px-6 py-4">
@@ -562,6 +808,99 @@ export default function StatisticheConsumi() {
                         loading={loading}
                         onPageChange={setPage}
                         onPageSizeChange={handlePageSizeChange}
+                    />
+                </Card>
+            </div>
+
+            <div className="mt-8">
+                <Card className="p-0 overflow-hidden">
+                    <div className="px-6 py-4">
+                        <div className="font-semibold text-brand-text">
+                            Questionari commenti
+                        </div>
+                    </div>
+
+                    <div className="px-6 pb-4 overflow-x-auto">
+                        {(comments.data || []).length === 0 ? (
+                            <div className="py-6 text-brand-textSecondary italic">
+                                {comments.total > 0
+                                    ? 'Esistono record dei questionari commenti, ma in questa pagina nessuno contiene un commento testuale valorizzato.'
+                                    : 'Non ci sono questionari commenti.'}
+                            </div>
+                        ) : (
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-brand-textSecondary border-b border-brand-divider">
+                                        <th className="text-left py-2 pr-4">
+                                            Data
+                                        </th>
+                                        <th className="text-left py-2 pr-4">
+                                            Paziente
+                                        </th>
+                                        <th className="text-left py-2 pr-4">
+                                            Locazione
+                                        </th>
+                                        <th className="text-left py-2 pr-4">
+                                            Giorno
+                                        </th>
+                                        <th className="text-left py-2 pr-4">
+                                            Pasto
+                                        </th>
+                                        <th className="text-left py-2 pr-4">
+                                            Commento
+                                        </th>
+                                        <th className="text-left py-2 pr-4">
+                                            Caregiver
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {comments.data.map((r, idx) => (
+                                        <tr
+                                            key={`${r.date}-${r.patient_name}-${r.patient_surname}-${r.day_number}-${r.meal_type}-${idx}`}
+                                            className="border-b border-brand-divider/70"
+                                        >
+                                            <td className="py-2 pr-4">
+                                                {formatDateTime(r.date)}
+                                            </td>
+                                            <td className="py-2 pr-4 capitalize">
+                                                {r.patient_surname}{' '}
+                                                {r.patient_name}
+                                            </td>
+                                            <td className="py-2 pr-4">
+                                                Piano {r.floor} Stanza {r.room}
+                                            </td>
+                                            <td className="py-2 pr-4">
+                                                {r.day_number}
+                                            </td>
+                                            <td className="py-2 pr-4 capitalize">
+                                                {r.meal_type}
+                                            </td>
+                                            <td className="py-2 pr-4 whitespace-pre-wrap">
+                                                {String(
+                                                    r.comments ?? '',
+                                                ).trim() || '—'}
+                                            </td>
+                                            <td className="py-2 pr-4 capitalize">
+                                                {r.caregiver_name}{' '}
+                                                {r.caregiver_surname}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+
+                    <Pagination
+                        total={comments.total || 0}
+                        page={commentsPage}
+                        totalPages={comments.totalPages || 1}
+                        pageSize={commentsPageSize}
+                        loading={loading}
+                        onPageChange={setCommentsPage}
+                        onPageSizeChange={handleCommentsPageSizeChange}
                     />
                 </Card>
             </div>

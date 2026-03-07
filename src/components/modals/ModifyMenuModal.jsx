@@ -74,14 +74,14 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                             errorMessage:
                                 'Impossibile verificare le sovrapposizioni.',
                             fn: async () => {
+                                const qs = new URLSearchParams({
+                                    start_date,
+                                    end_date,
+                                    excludeName: menu.season_type,
+                                });
+
                                 const r = await fetch(
-                                    `/api/menus/dates-overlap?start_date=${encodeURIComponent(
-                                        start_date,
-                                    )}&end_date=${encodeURIComponent(
-                                        end_date,
-                                    )}&excludeName=${encodeURIComponent(
-                                        menu.season_type,
-                                    )}`,
+                                    `/api/menus/dates-overlap?${qs.toString()}`,
                                 );
 
                                 if (!r.ok)
@@ -104,13 +104,25 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                         const overlapData = overlapRes.data;
 
                         if (overlapData?.overlap) {
+                            const isArchivedConflict =
+                                overlapData.source === 'arch_menu';
+
                             form.setFieldError(
                                 'start_date',
-                                'Intervallo date già in uso',
+                                isArchivedConflict
+                                    ? 'Intervallo in conflitto con un menù archiviato'
+                                    : 'Intervallo date già in uso',
                             );
+
+                            function fmt(d) {
+                                return d.split('-').reverse().join('/');
+                            }
+
                             form.setFieldError(
                                 'end_date',
-                                `Intervallo già usato nel menù "${overlapData.season_type}"`,
+                                isArchivedConflict
+                                    ? `Conflitto con il menù archiviato "${overlapData.season_type}" (${fmt(overlapData.start_date)} - ${fmt(overlapData.end_date)})`
+                                    : `Intervallo già usato nel menù "${overlapData.season_type}" (${fmt(overlapData.start_date)} - ${fmt(overlapData.end_date)})`,
                             );
                             return;
                         }
@@ -136,9 +148,8 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                                 <DateRangePicker
                                     startName="start_date"
                                     endName="end_date"
-                                    disablePast
                                 />
-                                <div className="flex items-center gap-4 px-6">
+                                <div className="flex items-center gap-4 px-6 mt-2">
                                     <img
                                         src="/warning giallo.png"
                                         className="w-5 h-5"

@@ -31,6 +31,7 @@ export async function checkMenuDatesOverlap({
     start_date,
     end_date,
     excludeName,
+    excludeArchMenuId,
 }) {
     if (!start_date || !end_date) return { overlap: false };
     if (end_date < start_date) return { overlap: false };
@@ -39,9 +40,24 @@ export async function checkMenuDatesOverlap({
         start_date,
         end_date,
         excludeName,
+        excludeArchMenuId,
     });
+
     if (!found) return { overlap: false };
-    return { overlap: true, season_type: found.season_type };
+
+    function formatDate(d) {
+        if (!d) return null;
+        return d.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+
+    return {
+        overlap: true,
+        source: found.source,
+        season_type: found.season_type,
+        start_date: formatDate(found.start_date),
+        end_date: formatDate(found.end_date),
+        id_arch_menu: found.id_arch_menu,
+    };
 }
 
 export async function getMenuBySeasonType(season_type_param) {

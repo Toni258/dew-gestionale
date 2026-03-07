@@ -19,6 +19,7 @@ export const checkMenuDatesOverlap = asyncHandler(async (req, res) => {
         start_date: req.query.start_date,
         end_date: req.query.end_date,
         excludeName: req.query.excludeName,
+        excludeArchMenuId: req.query.excludeArchMenuId,
     });
     res.json(out);
 });

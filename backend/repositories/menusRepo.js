@@ -100,19 +100,54 @@ export async function checkNameExistsNormalized(
 
 export async function findOverlap(
     poolOrConn,
-    { start_date, end_date, excludeName } = {},
+    { start_date, end_date, excludeName, excludeArchMenuId } = {},
 ) {
     const params = [end_date, start_date];
-    let sql = `
-        SELECT season_type
-        FROM season
+    let seasonWhere = `
         WHERE NOT (? < start_date OR ? > end_date)
     `;
+
     if (excludeName) {
-        sql += ` AND season_type <> ?`;
+        seasonWhere += ` AND season_type <> ?`;
         params.push(excludeName);
     }
-    sql += ` ORDER BY start_date ASC LIMIT 1`;
+
+    let sql = `
+        SELECT *
+        FROM (
+            SELECT
+                'season' AS source,
+                NULL AS id_arch_menu,
+                season_type,
+                start_date,
+                end_date
+            FROM season
+            ${seasonWhere}
+
+            UNION ALL
+
+            SELECT
+                'arch_menu' AS source,
+                id_arch_menu,
+                season_type,
+                start_date,
+                end_date
+            FROM arch_menu
+            WHERE NOT (? < start_date OR ? > end_date)
+    `;
+
+    params.push(end_date, start_date);
+
+    if (excludeArchMenuId) {
+        sql += ` AND id_arch_menu <> ?`;
+        params.push(excludeArchMenuId);
+    }
+
+    sql += `
+        ) AS overlaps
+        ORDER BY start_date ASC
+        LIMIT 1
+    `;
 
     const [rows] = await poolOrConn.query(sql, params);
     return rows[0] ?? null;

@@ -143,7 +143,10 @@ export default function UserManagerMobileApp() {
                                         value: 'super_user',
                                         label: 'Super User',
                                     },
-                                    { value: 'caregiver', label: 'Caregiver' },
+                                    {
+                                        value: 'caregiver',
+                                        label: 'Caregiver',
+                                    },
                                     { value: 'altro', label: 'Altro' },
                                 ]}
                                 height="h-[45px]"
