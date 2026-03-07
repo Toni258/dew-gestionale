@@ -214,8 +214,6 @@ function buildLiveCommentsWhere({
     where += ` AND dp.season_type = ? `;
     params.push(seasonType);
 
-    where += ` AND m.first_choice = 0 `;
-
     if (meal) {
         where += ` AND m.type = ? `;
         params.push(meal);
@@ -250,8 +248,6 @@ function buildArchiveCommentsWhere({
 
     where += ` AND sx.date >= ? AND sx.date <= ? `;
     params.push(start, end);
-
-    where += ` AND m.first_choice = 0 `;
 
     if (meal) {
         where += ` AND m.type = ? `;
