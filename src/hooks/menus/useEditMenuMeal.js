@@ -119,21 +119,29 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         };
     }, [seasonType, dayIndex, mealType]);
 
-    const hasAllFourSaved = useMemo(() => {
+    const hasSomethingSaved = useMemo(() => {
         const dishes = data?.dishes ?? [];
         const types = new Set(dishes.map((d) => d.type));
         return (
-            types.has('primo') &&
-            types.has('secondo') &&
-            types.has('contorno') &&
+            types.has('primo') ||
+            types.has('secondo') ||
+            types.has('contorno') ||
             types.has('ultimo')
         );
     }, [data]);
 
-    const allSelectedNow = useMemo(() => {
-        return COURSE_TYPES.every((c) =>
-            Boolean(selectedFoods[c.key]?.id_food),
-        );
+    // Selezione completa (tutti i corsi hanno un piatto selezionato)
+    /*
+        const allSelectedNow = useMemo(() => {
+            return COURSE_TYPES.every((c) =>
+                Boolean(selectedFoods[c.key]?.id_food),
+            );
+        }, [selectedFoods]);
+    */
+
+    // Selezione parziale (almeno un piatto selezionato)
+    const hasAtLeastOneSelectedNow = useMemo(() => {
+        return COURSE_TYPES.some((c) => Boolean(selectedFoods[c.key]?.id_food));
     }, [selectedFoods]);
 
     const hasChanges = useMemo(() => {
@@ -144,11 +152,15 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         });
     }, [selectedFoods, initialFoodIds]);
 
-    const pageLabel = hasAllFourSaved ? 'Modifica pasto' : 'Composizione pasto';
-    const buttonLabel = hasAllFourSaved ? 'Salva modifica' : 'Aggiungi pasto';
+    const pageLabel = hasSomethingSaved
+        ? 'Modifica pasto'
+        : 'Composizione pasto';
+    const buttonLabel = hasSomethingSaved ? 'Salva modifica' : 'Aggiungi pasto';
 
-    const disableSave =
-        saving || !allSelectedNow || (hasAllFourSaved && !hasChanges);
+    const disableSave = saving || !hasAtLeastOneSelectedNow || !hasChanges;
+
+    // Con controllo se tutti i piatti sono stati selezionati
+    // const disableSave = saving || !allSelectedNow || (hasSomethingSaved && !hasChanges);
 
     const totals = useMemo(() => {
         return Object.values(selectedFoods).reduce(
@@ -166,11 +178,18 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
     }, [selectedFoods]);
 
     function setSelectedFood(courseKey, idFoodStr) {
+        if (!idFoodStr) {
+            setSelectedFoods((prev) => ({
+                ...prev,
+                [courseKey]: null,
+            }));
+            return;
+        }
+
         const idFood = Number(idFoodStr);
         const list = foodOptions?.[courseKey] ?? [];
 
-        const fullFood =
-            list.find((f) => Number(f.id_food) === Number(idFood)) ?? null;
+        const fullFood = list.find((f) => Number(f.id_food) === idFood) ?? null;
 
         setSelectedFoods((prev) => ({
             ...prev,
@@ -180,24 +199,22 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
 
     async function save() {
         // validazione
-        for (const c of COURSE_TYPES) {
-            if (!selectedFoods[c.key]?.id_food) {
-                notify.warning(`Seleziona un piatto per: ${c.label}`);
-                return { ok: false };
-            }
+        if (!hasAtLeastOneSelectedNow) {
+            notify.warning('Seleziona almeno un piatto');
+            return { ok: false };
         }
 
-        if (hasAllFourSaved && !hasChanges) {
+        if (hasSomethingSaved && !hasChanges) {
             notify.info('Nessuna modifica da salvare');
             return { ok: false };
         }
 
         const payload = {
             foods: {
-                primo: selectedFoods.primo.id_food,
-                secondo: selectedFoods.secondo.id_food,
-                contorno: selectedFoods.contorno.id_food,
-                ultimo: selectedFoods.ultimo.id_food,
+                primo: selectedFoods.primo?.id_food ?? null,
+                secondo: selectedFoods.secondo?.id_food ?? null,
+                contorno: selectedFoods.contorno?.id_food ?? null,
+                ultimo: selectedFoods.ultimo?.id_food ?? null,
             },
         };
 
@@ -205,7 +222,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
 
         const res = await withLoaderNotify({
             message: 'Salvataggio…',
-            success: hasAllFourSaved
+            success: hasSomethingSaved
                 ? 'Modifiche salvate correttamente'
                 : 'Pasto aggiunto correttamente',
             fn: () =>

@@ -1,4 +1,5 @@
 import AppLayout from '../../components/layout/AppLayout';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dayIndexToWeekDay } from '../../utils/dayIndex';
 
@@ -10,6 +11,7 @@ import { useEditMenuMeal } from '../../hooks/menus/useEditMenuMeal';
 import MenuMealHeader from '../../components/menu/MenuMealHeader';
 import MenuMealCourseRow from '../../components/menu/MenuMealCourseRow';
 import MenuMealTotalsCard from '../../components/menu/MenuMealTotalsCard';
+import WarnIncompleteMealModal from '../../components/modals/WarnIncompleteMealModal';
 
 import { withLoaderNotify } from '../../services/withLoaderNotify';
 
@@ -18,6 +20,8 @@ export default function EditMenuMeal() {
     const { seasonType, dayIndex, mealType } = useParams();
 
     const { settimana, giorno } = dayIndexToWeekDay(dayIndex);
+    const [showIncompleteMealModal, setShowIncompleteMealModal] =
+        useState(false);
 
     const {
         COURSE_TYPES,
@@ -33,6 +37,34 @@ export default function EditMenuMeal() {
         setSelectedFood,
         save,
     } = useEditMenuMeal({ seasonType, dayIndex, mealType });
+
+    const missingCourses = useMemo(() => {
+        return COURSE_TYPES.filter(
+            (course) => !selectedFoods[course.key]?.id_food,
+        ).map((course) => course.label.toLowerCase());
+    }, [COURSE_TYPES, selectedFoods]);
+
+    async function handleConfirmSave() {
+        const result = await withLoaderNotify({
+            message: 'Salvataggio…',
+            mode: 'blocking',
+            success: 'Menù salvato correttamente',
+            errorTitle: 'Errore salvataggio',
+            errorMessage: 'Impossibile salvare le modifiche.',
+            fn: async () => {
+                const r = await save();
+                if (!r?.ok) {
+                    throw new Error(r?.message || 'Errore salvataggio');
+                }
+                return r;
+            },
+        });
+
+        if (!result.ok) return;
+
+        setShowIncompleteMealModal(false);
+        navigate(`/menu/edit/${seasonType}`);
+    }
 
     if (loading) {
         return (
@@ -93,26 +125,12 @@ export default function EditMenuMeal() {
                             <Button
                                 className="px-5 py-2 mb-[-10px]"
                                 onClick={async () => {
-                                    const result = await withLoaderNotify({
-                                        message: 'Salvataggio…',
-                                        mode: 'blocking',
-                                        success: 'Menù salvato correttamente',
-                                        errorTitle: 'Errore salvataggio',
-                                        errorMessage:
-                                            'Impossibile salvare le modifiche.',
-                                        fn: async () => {
-                                            const r = await save();
-                                            if (!r?.ok)
-                                                throw new Error(
-                                                    r?.message ||
-                                                        'Errore salvataggio',
-                                                );
-                                            return r;
-                                        },
-                                    });
+                                    if (missingCourses.length > 0) {
+                                        setShowIncompleteMealModal(true);
+                                        return;
+                                    }
 
-                                    if (!result.ok) return;
-                                    navigate(`/menu/edit/${seasonType}`);
+                                    await handleConfirmSave();
                                 }}
                                 disabled={disableSave}
                             >
@@ -122,6 +140,14 @@ export default function EditMenuMeal() {
                     </div>
                 </Card>
             </div>
+
+            <WarnIncompleteMealModal
+                show={showIncompleteMealModal}
+                missingCourses={missingCourses}
+                saving={saving}
+                onClose={() => setShowIncompleteMealModal(false)}
+                onConfirm={handleConfirmSave}
+            />
         </AppLayout>
     );
 }

@@ -209,6 +209,7 @@ export default function CreateMenu() {
                         <AlertBox
                             variant="warning"
                             title="Controllo sovrapposizioni"
+                            className="mt-4"
                         >
                             Le date scelte non devono sovrapporsi ad altri menù
                             attivi o futuri.

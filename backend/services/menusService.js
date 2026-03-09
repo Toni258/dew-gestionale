@@ -199,19 +199,27 @@ export async function upsertMenuMealComposition({
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
 
     const foods = body?.foods ?? body;
-    const requiredKeys = ['primo', 'secondo', 'contorno', 'ultimo'];
+    const allowedKeys = ['primo', 'secondo', 'contorno', 'ultimo'];
 
-    for (const k of requiredKeys) {
-        if (!foods?.[k]) throw new HttpError(400, `Campo mancante: ${k}`);
+    // prendo solo i campi valorizzati
+    const selectedEntries = allowedKeys
+        .map((k) => [k, foods?.[k] ?? null])
+        .filter(([, v]) => v !== null && v !== undefined && v !== '');
+
+    if (selectedEntries.length === 0) {
+        throw new HttpError(400, 'Seleziona almeno un piatto');
     }
 
-    const ids = requiredKeys.map((k) => Number(foods[k]));
-    if (ids.some((x) => !Number.isInteger(x) || x <= 0))
+    const ids = selectedEntries.map(([, v]) => Number(v));
+
+    if (ids.some((x) => !Number.isInteger(x) || x <= 0)) {
         throw new HttpError(400, 'id_food non validi');
+    }
 
     const unique = new Set(ids);
-    if (unique.size !== ids.length)
+    if (unique.size !== ids.length) {
         throw new HttpError(400, 'Hai selezionato lo stesso piatto più volte');
+    }
 
     return withTransaction(async (conn) => {
         const exists = await repo.menuExistsBySeasonType(conn, seasonType);
@@ -430,4 +438,16 @@ export async function upsertMenuFixedDishes(season_type_param, body) {
         await repo.insertDishPairings(conn, values);
         return { ok: true, inserted: values.length };
     });
+}
+
+export async function archiveMenu(season_type_param) {
+    const seasonType = decodeTrim(season_type_param);
+    if (!seasonType) throw new HttpError(400, 'season_type non valido');
+
+    const exists = await repo.menuExistsBySeasonType(pool, seasonType);
+    if (!exists) throw new HttpError(404, 'Menù non trovato');
+
+    await repo.archiveMenuBySeasonType(pool, seasonType);
+
+    return { success: true };
 }

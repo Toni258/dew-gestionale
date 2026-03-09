@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { capitalize } from '../../utils/capitalize';
 
-export default function MenuCard({ menu }) {
+export default function MenuCard({ menu, onArchive }) {
     const navigate = useNavigate();
 
     const {
@@ -10,6 +10,7 @@ export default function MenuCard({ menu }) {
         period_label,
         start_year,
         is_active,
+        is_ended,
         meals_completed,
         meals_total,
     } = menu;
@@ -39,7 +40,11 @@ export default function MenuCard({ menu }) {
                     <span className="mb-3 font-semibold text-xl">Stato</span>
                     <span
                         className={`w-5 h-5 rounded-full inline-block ${
-                            is_active ? 'bg-green-500' : 'bg-red-500'
+                            is_active
+                                ? 'bg-green-500'
+                                : is_ended
+                                  ? 'bg-gray-500'
+                                  : 'bg-red-500'
                         }`}
                     />
                 </div>
@@ -91,16 +96,37 @@ export default function MenuCard({ menu }) {
                 </div>
             </div>
 
-            {/* CHEVRON */}
+            {/* AZIONI / CHEVRON */}
             <div className="flex flex-[1] items-center justify-center">
-                <div className="pointer-events-none">
-                    <img
-                        src="/Chevron destra secondario.png"
-                        alt="Apri menù"
-                        className="w-10 h-10 select-none opacity-60"
-                        draggable={false}
-                    />
-                </div>
+                {is_ended ? (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            onArchive?.(menu);
+                        }}
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                        }}
+                        className="
+                            px-6 py-4 rounded-lg font-semibold
+                            bg-brand-primary text-white
+                            hover:opacity-90 transition
+                        "
+                    >
+                        Archivia
+                    </button>
+                ) : (
+                    <div className="pointer-events-none">
+                        <img
+                            src="/Chevron destra secondario.png"
+                            alt="Apri menù"
+                            className="w-10 h-10 select-none opacity-60"
+                            draggable={false}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

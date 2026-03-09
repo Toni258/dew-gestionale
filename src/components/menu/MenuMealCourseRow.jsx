@@ -74,10 +74,16 @@ export default function MenuMealCourseRow({
                         <SearchableSelect
                             placeholder={`Seleziona ${course.label.toLowerCase()}`}
                             value={String(valueId ?? '')}
-                            options={(options ?? []).map((f) => ({
-                                value: String(f.id_food),
-                                label: f.name,
-                            }))}
+                            options={[
+                                {
+                                    value: '',
+                                    label: '— Nessun piatto —',
+                                },
+                                ...(options ?? []).map((f) => ({
+                                    value: String(f.id_food),
+                                    label: f.name,
+                                })),
+                            ]}
                             onChange={onChange}
                         />
                     )}

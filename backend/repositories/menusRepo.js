@@ -15,37 +15,28 @@ export async function listMenus(poolOrConn) {
                 WHEN CURDATE() BETWEEN s.start_date AND s.end_date THEN 1
                 ELSE 0
             END AS is_active,
+            CASE
+                WHEN s.end_date < CURDATE() THEN 1
+                ELSE 0
+            END AS is_ended,
             56 AS meals_total,
             COALESCE(cm.meals_completed, 0) AS meals_completed
         FROM season s
         LEFT JOIN (
             SELECT
-                y.season_type,
-                SUM(
-                    CASE
-                        WHEN y.has_primo = 1
-                         AND y.has_secondo = 1
-                         AND y.has_contorno = 1
-                         AND y.has_ultimo = 1
-                        THEN 1 ELSE 0
-                    END
-                ) AS meals_completed
+                x.season_type,
+                COUNT(*) AS meals_completed
             FROM (
                 SELECT
                     dp.season_type,
-                    dp.id_meal,
-                    MAX(f.type = 'primo')    AS has_primo,
-                    MAX(f.type = 'secondo')  AS has_secondo,
-                    MAX(f.type = 'contorno') AS has_contorno,
-                    MAX(f.type = 'ultimo')   AS has_ultimo
+                    dp.id_meal
                 FROM dish_pairing dp
                 JOIN meal m ON m.id_meal = dp.id_meal
-                JOIN food f ON f.id_food = dp.id_food
                 WHERE m.first_choice = 0
-                  AND dp.used = 1
+                AND dp.used = 1
                 GROUP BY dp.season_type, dp.id_meal
-            ) y
-            GROUP BY y.season_type
+            ) x
+            GROUP BY x.season_type
         ) cm ON cm.season_type = s.season_type
         ORDER BY s.start_date ASC;
     `);
@@ -201,9 +192,9 @@ export async function getMealsStatus(poolOrConn, seasonType) {
             COALESCE(x.has_ultimo, 0)   AS has_ultimo,
             CASE
                 WHEN COALESCE(x.has_primo, 0) = 1
-                 AND COALESCE(x.has_secondo, 0) = 1
-                 AND COALESCE(x.has_contorno, 0) = 1
-                 AND COALESCE(x.has_ultimo, 0) = 1
+                 OR COALESCE(x.has_secondo, 0) = 1
+                 OR COALESCE(x.has_contorno, 0) = 1
+                 OR COALESCE(x.has_ultimo, 0) = 1
                 THEN 1 ELSE 0
             END AS is_completed
         FROM meal m
@@ -439,4 +430,8 @@ export async function getFixedCheesesRotation(
         [seasonType, cheeseIds],
     );
     return rows;
+}
+
+export async function archiveMenuBySeasonType(poolOrConn, seasonType) {
+    await poolOrConn.query(`CALL archive_season_dedup(?)`, [seasonType]);
 }

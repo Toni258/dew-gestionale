@@ -7,6 +7,7 @@ import {
     createMenu,
     updateMenu,
     deleteMenu,
+    archiveMenu,
     getMenuMealsStatus,
     getMenuMealComposition,
     upsertMenuMealComposition,
@@ -33,6 +34,7 @@ router.put(
     '/:season_type/meals/:day_index/:meal_type',
     upsertMenuMealComposition,
 );
+router.post('/:season_type/archive', archiveMenu);
 router.delete('/:season_type', deleteMenu);
 
 export default router;

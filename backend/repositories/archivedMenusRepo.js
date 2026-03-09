@@ -17,36 +17,22 @@ export async function listMenus(poolOrConn) {
         LEFT JOIN (
             SELECT
                 y.id_arch_menu,
-                SUM(
-                    CASE
-                        WHEN y.has_primo = 1
-                        AND y.has_secondo = 1
-                        AND y.has_contorno = 1
-                        AND y.has_ultimo = 1
-                        THEN 1 ELSE 0
-                    END
-                ) AS meals_completed
+                COUNT(*) AS meals_completed
             FROM (
                 SELECT
                     dp.id_arch_menu,
-                    dp.id_meal,
-                    MAX(f.type = 'primo')    AS has_primo,
-                    MAX(f.type = 'secondo')  AS has_secondo,
-                    MAX(f.type = 'contorno') AS has_contorno,
-                    MAX(f.type = 'ultimo')   AS has_ultimo
+                    dp.id_meal
                 FROM arch_dish_pairing dp
                 JOIN arch_meal_snapshot m
-                ON m.id_arch_menu = dp.id_arch_menu
-                AND m.id_meal      = dp.id_meal
-                JOIN arch_food_snapshot f
-                ON f.id_arch_food = dp.id_arch_food
+                    ON m.id_arch_menu = dp.id_arch_menu
+                    AND m.id_meal = dp.id_meal
                 WHERE m.first_choice = 0
-                AND dp.used = 1
+                    AND dp.used = 1
                 GROUP BY dp.id_arch_menu, dp.id_meal
             ) y
             GROUP BY y.id_arch_menu
         ) cm
-        ON cm.id_arch_menu = s.id_arch_menu
+            ON cm.id_arch_menu = s.id_arch_menu
         ORDER BY s.start_date DESC;
     `);
     return rows;
@@ -82,9 +68,9 @@ export async function getArchivedMealsStatus(poolOrConn, id_arch_menu) {
                 COALESCE(x.has_ultimo, 0)    AS has_ultimo,
                 CASE
                     WHEN COALESCE(x.has_primo, 0) = 1
-                    AND COALESCE(x.has_secondo, 0) = 1
-                    AND COALESCE(x.has_contorno, 0) = 1
-                    AND COALESCE(x.has_ultimo, 0) = 1
+                    OR COALESCE(x.has_secondo, 0) = 1
+                    OR COALESCE(x.has_contorno, 0) = 1
+                    OR COALESCE(x.has_ultimo, 0) = 1
                     THEN 1 ELSE 0
                 END AS is_completed
             FROM arch_meal_snapshot m

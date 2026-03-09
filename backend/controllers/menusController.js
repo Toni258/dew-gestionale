@@ -88,4 +88,7 @@ export const getMenuFixedCheesesRotation = asyncHandler(async (req, res) => {
     res.json(out);
 });
 
-// Erano 1007 righe
+export const archiveMenu = asyncHandler(async (req, res) => {
+    const out = await service.archiveMenu(req.params.season_type);
+    res.json(out);
+});

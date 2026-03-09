@@ -30,7 +30,8 @@ export default function SearchableSelect({
     const searchRef = useRef(null);
     const listRef = useRef(null);
 
-    const isLoading = loading || options.length === 0;
+    const isLoading = loading;
+    const hasOptions = options.length > 0;
 
     const selectedLabel = useMemo(() => {
         if (!selectedValue) return null;
@@ -129,7 +130,7 @@ export default function SearchableSelect({
     };
 
     const openDropdown = () => {
-        if (disabled || isLoading || options.length === 0) return;
+        if (disabled || isLoading) return;
         setOpen(true);
     };
 
@@ -153,7 +154,7 @@ export default function SearchableSelect({
     // -----------------------------
     const handleKeyDown = (e) => {
         if (disabled) return;
-        if (isLoading || options.length === 0) return;
+        if (isLoading) return;
 
         // se chiuso, Enter/Space/Arrow apre
         if (!open) {
@@ -318,7 +319,9 @@ export default function SearchableSelect({
                         >
                             {filteredOptions.length === 0 ? (
                                 <div className="px-4 py-3 text-brand-textSecondary select-none">
-                                    Nessun risultato
+                                    {options.length === 0
+                                        ? 'Nessuna opzione disponibile'
+                                        : 'Nessun risultato'}
                                 </div>
                             ) : (
                                 filteredOptions.map((opt, index) => {

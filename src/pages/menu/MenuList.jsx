@@ -2,10 +2,15 @@ import AppLayout from '../../components/layout/AppLayout';
 import MenuCard from '../../components/menu/MenuCard';
 import { useCallback, useEffect, useState } from 'react';
 import { withLoader } from '../../services/withLoader';
+import { withLoaderNotify } from '../../services/withLoaderNotify';
+import ArchiveMenuModal from '../../components/modals/ArchiveMenuModal';
 
 export default function MenuList() {
     const [menus, setMenus] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showArchiveModal, setShowArchiveModal] = useState(false);
+    const [menuToArchive, setMenuToArchive] = useState(null);
+    const [archiving, setArchiving] = useState(false);
 
     const fetchMenus = useCallback(async () => {
         setLoading(true);
@@ -30,12 +35,56 @@ export default function MenuList() {
         fetchMenus();
     }, [fetchMenus]);
 
+    function handleOpenArchiveModal(menu) {
+        setMenuToArchive(menu);
+        setShowArchiveModal(true);
+    }
+
+    function handleCloseArchiveModal() {
+        setMenuToArchive(null);
+        setShowArchiveModal(false);
+    }
+
+    async function handleConfirmArchive(menu) {
+        setArchiving(true);
+
+        const result = await withLoaderNotify({
+            message: 'Archiviazione menù…',
+            mode: 'blocking',
+            success: 'Menù archiviato correttamente',
+            errorTitle: 'Errore archiviazione menù',
+            errorMessage: 'Impossibile archiviare il menù.',
+            fn: async () => {
+                const res = await fetch(
+                    `/api/menus/${encodeURIComponent(menu.season_type)}/archive`,
+                    {
+                        method: 'POST',
+                        credentials: 'include',
+                    },
+                );
+
+                const json = await res.json().catch(() => null);
+
+                if (!res.ok) {
+                    throw new Error(json?.message || `HTTP ${res.status}`);
+                }
+
+                return json;
+            },
+        });
+
+        setArchiving(false);
+
+        if (!result.ok) return;
+
+        handleCloseArchiveModal();
+        await fetchMenus();
+    }
+
     return (
         <AppLayout title="GESTIONE MENÙ">
             <div className="w-full max-w-4xl mx-auto">
-                <h1 className="text-3xl font-semibold">
-                    Elenco Menù attivi e futuri
-                </h1>
+                <h1 className="text-3xl font-semibold">Elenco Menù</h1>
 
                 <div className="mt-6" />
 
@@ -53,10 +102,22 @@ export default function MenuList() {
 
                 <div className="flex flex-col gap-8">
                     {menus.map((menu) => (
-                        <MenuCard key={menu.season_type} menu={menu} />
+                        <MenuCard
+                            key={menu.season_type}
+                            menu={menu}
+                            onArchive={handleOpenArchiveModal}
+                        />
                     ))}
                 </div>
             </div>
+
+            <ArchiveMenuModal
+                show={showArchiveModal}
+                menu={menuToArchive}
+                loading={archiving}
+                onClose={handleCloseArchiveModal}
+                onConfirm={handleConfirmArchive}
+            />
         </AppLayout>
     );
 }

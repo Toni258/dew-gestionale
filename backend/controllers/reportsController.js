@@ -268,9 +268,14 @@ function buildArchiveCommentsWhere({
 }
 
 async function resolveSelectedMenu(menuKind, menuRef) {
-    if (menuKind === 'active') {
+    if (menuKind === 'active' || menuKind === 'ended') {
         const seasonType = String(menuRef || '').trim();
         if (!seasonType) return null;
+
+        const dateCondition =
+            menuKind === 'active'
+                ? `CURDATE() BETWEEN start_date AND end_date`
+                : `end_date < CURDATE()`;
 
         const [rows] = await pool.query(
             `
@@ -280,7 +285,7 @@ async function resolveSelectedMenu(menuKind, menuRef) {
                 DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date
             FROM season
             WHERE season_type = ?
-              AND CURDATE() BETWEEN start_date AND end_date
+              AND ${dateCondition}
             LIMIT 1
             `,
             [seasonType],
@@ -289,7 +294,7 @@ async function resolveSelectedMenu(menuKind, menuRef) {
         if (!rows?.length) return null;
 
         return {
-            kind: 'active',
+            kind: menuKind,
             ref: rows[0].season_type,
             season_type: rows[0].season_type,
             start_date: rows[0].start_date,
@@ -354,6 +359,27 @@ export async function getConsumiMenus(req, res) {
             LIMIT 1
         `);
 
+        const [endedRows] = await pool.query(`
+            SELECT
+                'ended' AS kind,
+                s.season_type AS ref,
+                s.season_type,
+                DATE_FORMAT(s.start_date, '%Y-%m-%d') AS start_date,
+                DATE_FORMAT(s.end_date, '%Y-%m-%d') AS end_date,
+                CONCAT(
+                    s.season_type,
+                    ' — ',
+                    DATE_FORMAT(s.start_date, '%d.%m.%Y'),
+                    ' - ',
+                    DATE_FORMAT(s.end_date, '%d.%m.%Y'),
+                    ' (concluso non archiviato)'
+                ) AS label,
+                0 AS is_active
+            FROM season s
+            WHERE s.end_date < CURDATE()
+            ORDER BY s.end_date DESC, s.start_date DESC
+        `);
+
         const [archivedRows] = await pool.query(`
             SELECT
                 'archive' AS kind,
@@ -374,7 +400,11 @@ export async function getConsumiMenus(req, res) {
         `);
 
         return res.json({
-            data: [...(activeRows ?? []), ...(archivedRows ?? [])],
+            data: [
+                ...(activeRows ?? []),
+                ...(endedRows ?? []),
+                ...(archivedRows ?? []),
+            ],
         });
     } catch (err) {
         console.error('Errore getConsumiMenus:', err);
@@ -463,7 +493,7 @@ export async function getConsumiReport(req, res) {
         let paramsChoice = [];
         let commentsParams = [];
 
-        if (selectedMenu.kind === 'active') {
+        if (selectedMenu.kind !== 'archive') {
             baseFrom = `
                 FROM survey s
                 JOIN dish_pairing dp ON dp.id_dish_pairing = s.id_dish_pairing
@@ -858,6 +888,1057 @@ export async function getConsumiReport(req, res) {
         });
     } catch (err) {
         console.error('Errore getConsumiReport:', err);
+        return res.status(500).json({ error: 'Errore interno al server' });
+    }
+}
+
+const SCELTE_COURSE_ORDER = [
+    'primo',
+    'secondo',
+    'contorno',
+    'ultimo',
+    'coperto',
+    'speciale',
+];
+
+const SCELTE_CHOOSER_ORDER = ['guest', 'family', 'caregiver'];
+
+function parseWeekFilter(value) {
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 1 && n <= 4 ? n : null;
+}
+
+function parseBabyFoodFilter(value) {
+    if (value === '' || value === null || value === undefined) return null;
+    if (String(value) === '1') return 1;
+    if (String(value) === '0') return 0;
+    return null;
+}
+
+function parseChooserFilter(value) {
+    const x = String(value || '').trim();
+    return ['guest', 'family', 'caregiver'].includes(x) ? x : '';
+}
+
+function buildPatientScopeWhere({ patientId, floor }) {
+    let where = ` WHERE 1=1 `;
+    const params = [];
+
+    if (patientId) {
+        where += ` AND p.id_patient = ? `;
+        params.push(Number(patientId));
+    }
+
+    if (floor) {
+        where += ` AND p.floor = ? `;
+        params.push(Number(floor));
+    }
+
+    return { where, params };
+}
+
+function buildLiveScelteChoiceWhere({
+    start,
+    end,
+    meal,
+    patientId,
+    floor,
+    course,
+    week,
+    chooser,
+    babyFood,
+    seasonType,
+}) {
+    let where = ` WHERE 1=1 `;
+    const params = [];
+
+    where += ` AND c.date >= ? AND c.date <= ? `;
+    params.push(start, end);
+
+    where += ` AND dp.season_type = ? `;
+    params.push(seasonType);
+
+    where += ` AND dp.used = 1 `;
+
+    if (meal) {
+        where += ` AND m.type = ? `;
+        params.push(meal);
+    }
+
+    if (patientId) {
+        where += ` AND p.id_patient = ? `;
+        params.push(Number(patientId));
+    }
+
+    if (floor) {
+        where += ` AND p.floor = ? `;
+        params.push(Number(floor));
+    }
+
+    if (course) {
+        where += ` AND f.type = ? `;
+        params.push(course);
+    }
+
+    if (week) {
+        where += ` AND FLOOR(m.day_index / 7) + 1 = ? `;
+        params.push(Number(week));
+    }
+
+    if (chooser) {
+        where += ` AND c.chooser = ? `;
+        params.push(chooser);
+    }
+
+    if (babyFood !== null && babyFood !== undefined) {
+        where += ` AND c.baby_food = ? `;
+        params.push(Number(babyFood));
+    }
+
+    return { where, params };
+}
+
+function buildArchiveScelteChoiceWhere({
+    start,
+    end,
+    meal,
+    patientId,
+    floor,
+    course,
+    week,
+    chooser,
+    babyFood,
+    idArchMenu,
+}) {
+    let where = ` WHERE 1=1 `;
+    const params = [];
+
+    where += ` AND c.id_arch_menu = ? `;
+    params.push(idArchMenu);
+
+    where += ` AND c.date >= ? AND c.date <= ? `;
+    params.push(start, end);
+
+    where += ` AND dp.used = 1 `;
+
+    if (meal) {
+        where += ` AND m.type = ? `;
+        params.push(meal);
+    }
+
+    if (patientId) {
+        where += ` AND p.id_patient = ? `;
+        params.push(Number(patientId));
+    }
+
+    if (floor) {
+        where += ` AND p.floor = ? `;
+        params.push(Number(floor));
+    }
+
+    if (course) {
+        where += ` AND f.type = ? `;
+        params.push(course);
+    }
+
+    if (week) {
+        where += ` AND FLOOR(m.day_index / 7) + 1 = ? `;
+        params.push(Number(week));
+    }
+
+    if (chooser) {
+        where += ` AND c.chooser = ? `;
+        params.push(chooser);
+    }
+
+    if (babyFood !== null && babyFood !== undefined) {
+        where += ` AND c.baby_food = ? `;
+        params.push(Number(babyFood));
+    }
+
+    return { where, params };
+}
+
+function buildLiveScelteAvailabilityWhere({
+    start,
+    end,
+    meal,
+    course,
+    week,
+    seasonType,
+    menuStartDate,
+}) {
+    let where = ` WHERE 1=1 `;
+    const params = [];
+
+    where += ` AND dp.season_type = ? `;
+    params.push(seasonType);
+
+    where += ` AND dp.used = 1 `;
+
+    where += ` AND DATE_ADD(?, INTERVAL m.day_index DAY) BETWEEN ? AND ? `;
+    params.push(menuStartDate, start, end);
+
+    if (meal) {
+        where += ` AND m.type = ? `;
+        params.push(meal);
+    }
+
+    if (course) {
+        where += ` AND f.type = ? `;
+        params.push(course);
+    }
+
+    if (week) {
+        where += ` AND FLOOR(m.day_index / 7) + 1 = ? `;
+        params.push(Number(week));
+    }
+
+    return { where, params };
+}
+
+function buildArchiveScelteAvailabilityWhere({
+    start,
+    end,
+    meal,
+    course,
+    week,
+    idArchMenu,
+    menuStartDate,
+}) {
+    let where = ` WHERE 1=1 `;
+    const params = [];
+
+    where += ` AND dp.id_arch_menu = ? `;
+    params.push(idArchMenu);
+
+    where += ` AND dp.used = 1 `;
+
+    where += ` AND DATE_ADD(?, INTERVAL m.day_index DAY) BETWEEN ? AND ? `;
+    params.push(menuStartDate, start, end);
+
+    if (meal) {
+        where += ` AND m.type = ? `;
+        params.push(meal);
+    }
+
+    if (course) {
+        where += ` AND f.type = ? `;
+        params.push(course);
+    }
+
+    if (week) {
+        where += ` AND FLOOR(m.day_index / 7) + 1 = ? `;
+        params.push(Number(week));
+    }
+
+    return { where, params };
+}
+
+function capitalizeLabel(value) {
+    const x = String(value || '').trim();
+    if (!x) return '';
+    return x.charAt(0).toUpperCase() + x.slice(1);
+}
+
+function formatCourseLabel(value) {
+    if (value === 'ultimo') return 'Dessert';
+    return capitalizeLabel(value);
+}
+
+function formatChooserLabel(value) {
+    if (value === 'guest') return 'Ospite';
+    if (value === 'family') return 'Famiglia';
+    if (value === 'caregiver') return 'Caregiver';
+    return capitalizeLabel(value);
+}
+
+function buildWeeklyTrendRows(
+    availabilityRows,
+    choiceRows,
+    patientScopeCount,
+    week,
+) {
+    const availabilityMap = new Map(
+        (availabilityRows ?? []).map((r) => [
+            Number(r.week_number),
+            Number(r.availability_count ?? 0),
+        ]),
+    );
+
+    const choiceMap = new Map(
+        (choiceRows ?? []).map((r) => [
+            Number(r.week_number),
+            Number(r.chosen_count ?? 0),
+        ]),
+    );
+
+    const weeks = week ? [Number(week)] : [1, 2, 3, 4];
+
+    return weeks.map((w) => {
+        const availabilityCount = availabilityMap.get(w) ?? 0;
+        const chosenCount = choiceMap.get(w) ?? 0;
+        const opportunityCount = availabilityCount * patientScopeCount;
+        const selectionRatePct =
+            opportunityCount > 0 ? (chosenCount / opportunityCount) * 100 : 0;
+
+        return {
+            week_number: w,
+            label: `Settimana ${w}`,
+            availability_count: availabilityCount,
+            chosen_count: chosenCount,
+            opportunity_count: opportunityCount,
+            selection_rate_pct: selectionRatePct,
+        };
+    });
+}
+
+function buildCourseRows(
+    availabilityRows,
+    choiceRows,
+    patientScopeCount,
+    course,
+) {
+    const availabilityMap = new Map(
+        (availabilityRows ?? []).map((r) => [
+            String(r.course_type),
+            Number(r.availability_count ?? 0),
+        ]),
+    );
+
+    const choiceMap = new Map(
+        (choiceRows ?? []).map((r) => [
+            String(r.course_type),
+            Number(r.chosen_count ?? 0),
+        ]),
+    );
+
+    const keys = course ? [course] : SCELTE_COURSE_ORDER;
+
+    return keys.map((key) => {
+        const availabilityCount = availabilityMap.get(key) ?? 0;
+        const chosenCount = choiceMap.get(key) ?? 0;
+        const opportunityCount = availabilityCount * patientScopeCount;
+        const selectionRatePct =
+            opportunityCount > 0 ? (chosenCount / opportunityCount) * 100 : 0;
+
+        return {
+            course_type: key,
+            label: formatCourseLabel(key),
+            availability_count: availabilityCount,
+            chosen_count: chosenCount,
+            opportunity_count: opportunityCount,
+            selection_rate_pct: selectionRatePct,
+        };
+    });
+}
+
+function buildChooserRows(rows, totalChoices, chooser) {
+    const counts = new Map(
+        (rows ?? []).map((r) => [
+            String(r.chooser),
+            Number(r.chosen_count ?? 0),
+        ]),
+    );
+
+    const keys = chooser ? [chooser] : SCELTE_CHOOSER_ORDER;
+
+    return keys.map((key) => {
+        const chosenCount = counts.get(key) ?? 0;
+        const sharePct =
+            totalChoices > 0 ? (chosenCount / totalChoices) * 100 : 0;
+
+        return {
+            chooser: key,
+            label: formatChooserLabel(key),
+            chosen_count: chosenCount,
+            share_pct: sharePct,
+        };
+    });
+}
+
+export async function getScelteMenus(req, res) {
+    return getConsumiMenus(req, res);
+}
+
+export async function getScelteReport(req, res) {
+    try {
+        const {
+            menuKind = '',
+            menuRef = '',
+            start = '',
+            end = '',
+            meal = '',
+            patientId = '',
+            floor = '',
+            course = '',
+            week = '',
+            chooser = '',
+            babyFood = '',
+            page = '1',
+            pageSize = '10',
+            detailsPage = '1',
+            detailsPageSize = '10',
+        } = req.query;
+
+        if (!menuKind || !menuRef) {
+            return res.status(400).json({
+                error: 'Parametri obbligatori: menuKind, menuRef',
+            });
+        }
+
+        if (!start || !end) {
+            return res.status(400).json({
+                error: 'Parametri obbligatori: start, end (YYYY-MM-DD)',
+            });
+        }
+
+        if (end < start) {
+            return res.status(400).json({
+                error: 'La data di fine deve essere >= data inizio',
+            });
+        }
+
+        const selectedMenu = await resolveSelectedMenu(menuKind, menuRef);
+        if (!selectedMenu) {
+            return res.status(400).json({
+                error: 'Menù selezionato non valido',
+            });
+        }
+
+        if (start < selectedMenu.start_date || end > selectedMenu.end_date) {
+            return res.status(400).json({
+                error: 'L’intervallo selezionato deve rientrare nel range del menù scelto',
+            });
+        }
+
+        const weekNum = parseWeekFilter(week);
+        const chooserFilter = parseChooserFilter(chooser);
+        const babyFoodFilter = parseBabyFoodFilter(babyFood);
+
+        const pageNum = Math.max(1, parseInt(page, 10) || 1);
+        const sizeNum = Math.min(
+            100,
+            Math.max(1, parseInt(pageSize, 10) || 10),
+        );
+        const offset = (pageNum - 1) * sizeNum;
+
+        const detailsPageNum = Math.max(1, parseInt(detailsPage, 10) || 1);
+        const detailsSizeNum = Math.min(
+            100,
+            Math.max(1, parseInt(detailsPageSize, 10) || 10),
+        );
+        const detailsOffset = (detailsPageNum - 1) * detailsSizeNum;
+
+        let availabilityFrom = '';
+        let choiceFrom = '';
+        let detailsFrom = '';
+        let availabilityWhere = '';
+        let choiceWhere = '';
+        let availabilityParams = [];
+        let choiceParams = [];
+
+        if (selectedMenu.kind !== 'archive') {
+            availabilityFrom = `
+                FROM dish_pairing dp
+                JOIN meal m ON m.id_meal = dp.id_meal
+                JOIN food f ON f.id_food = dp.id_food
+            `;
+
+            choiceFrom = `
+                FROM choice c
+                JOIN dish_pairing dp ON dp.id_dish_pairing = c.id_dish_pairing
+                JOIN meal m ON m.id_meal = dp.id_meal
+                JOIN food f ON f.id_food = dp.id_food
+                ${latestPatientJoin('c')}
+            `;
+
+            detailsFrom = `
+                ${choiceFrom}
+                JOIN caregiver cg ON cg.id_caregiver = c.id_caregiver
+            `;
+
+            const availabilityFilter = buildLiveScelteAvailabilityWhere({
+                start,
+                end,
+                meal,
+                course,
+                week: weekNum,
+                seasonType: selectedMenu.season_type,
+                menuStartDate: selectedMenu.start_date,
+            });
+
+            const choiceFilter = buildLiveScelteChoiceWhere({
+                start,
+                end,
+                meal,
+                patientId,
+                floor,
+                course,
+                week: weekNum,
+                chooser: chooserFilter,
+                babyFood: babyFoodFilter,
+                seasonType: selectedMenu.season_type,
+            });
+
+            availabilityWhere = availabilityFilter.where;
+            availabilityParams = availabilityFilter.params;
+            choiceWhere = choiceFilter.where;
+            choiceParams = choiceFilter.params;
+        } else {
+            availabilityFrom = `
+                FROM arch_dish_pairing dp
+                JOIN arch_meal_snapshot m
+                    ON m.id_arch_menu = dp.id_arch_menu
+                   AND m.id_meal = dp.id_meal
+                JOIN arch_food_snapshot f
+                    ON f.id_arch_food = dp.id_arch_food
+            `;
+
+            choiceFrom = `
+                FROM arch_choice c
+                JOIN arch_dish_pairing dp
+                    ON dp.id_arch_menu = c.id_arch_menu
+                   AND dp.id_dish_pairing = c.id_dish_pairing
+                JOIN arch_meal_snapshot m
+                    ON m.id_arch_menu = dp.id_arch_menu
+                   AND m.id_meal = dp.id_meal
+                JOIN arch_food_snapshot f
+                    ON f.id_arch_food = dp.id_arch_food
+                ${latestPatientJoin('c')}
+            `;
+
+            detailsFrom = `
+                ${choiceFrom}
+                JOIN caregiver cg ON cg.id_caregiver = c.id_caregiver
+            `;
+
+            const availabilityFilter = buildArchiveScelteAvailabilityWhere({
+                start,
+                end,
+                meal,
+                course,
+                week: weekNum,
+                idArchMenu: selectedMenu.id_arch_menu,
+                menuStartDate: selectedMenu.start_date,
+            });
+
+            const choiceFilter = buildArchiveScelteChoiceWhere({
+                start,
+                end,
+                meal,
+                patientId,
+                floor,
+                course,
+                week: weekNum,
+                chooser: chooserFilter,
+                babyFood: babyFoodFilter,
+                idArchMenu: selectedMenu.id_arch_menu,
+            });
+
+            availabilityWhere = availabilityFilter.where;
+            availabilityParams = availabilityFilter.params;
+            choiceWhere = choiceFilter.where;
+            choiceParams = choiceFilter.params;
+        }
+
+        const patientScopeFilter = buildPatientScopeWhere({ patientId, floor });
+
+        const patientScopeSql = `
+            SELECT COUNT(*) AS patient_count
+            FROM patient p
+            JOIN (
+                SELECT id_patient, MAX(last_changed) AS last_changed
+                FROM patient
+                GROUP BY id_patient
+            ) lp
+                ON lp.id_patient = p.id_patient
+               AND lp.last_changed = p.last_changed
+            ${patientScopeFilter.where}
+        `;
+
+        const [patientScopeRows] = await pool.query(
+            patientScopeSql,
+            patientScopeFilter.params,
+        );
+
+        const patientScopeCount = Math.max(
+            0,
+            Number(patientScopeRows?.[0]?.patient_count ?? 0),
+        );
+
+        const availabilityAggSql = `
+            SELECT
+                f.id_food AS food_id,
+                f.name,
+                f.type,
+                COUNT(*) AS availability_count
+            ${availabilityFrom}
+            ${availabilityWhere}
+            GROUP BY
+                f.id_food,
+                f.name,
+                f.type,
+                COALESCE(NULLIF(f.category, ''), f.type)
+        `;
+
+        const choiceAggSql = `
+            SELECT
+                f.id_food AS food_id,
+                COUNT(*) AS chosen_count,
+                SUM(CASE WHEN c.chooser = 'guest' THEN 1 ELSE 0 END) AS guest_count,
+                SUM(CASE WHEN c.chooser = 'family' THEN 1 ELSE 0 END) AS family_count,
+                SUM(CASE WHEN c.chooser = 'caregiver' THEN 1 ELSE 0 END) AS caregiver_count,
+                SUM(CASE WHEN c.baby_food = 1 THEN 1 ELSE 0 END) AS baby_food_count
+            ${choiceFrom}
+            ${choiceWhere}
+            GROUP BY f.id_food
+        `;
+
+        const joinedAggSql = `
+            FROM (${availabilityAggSql}) av
+            LEFT JOIN (${choiceAggSql}) ch
+                ON ch.food_id = av.food_id
+        `;
+
+        const choiceKpiSql = `
+            SELECT
+                COUNT(*) AS total_choices,
+                COUNT(DISTINCT f.id_food) AS distinct_dishes_chosen,
+                SUM(CASE WHEN c.chooser = 'caregiver' THEN 1 ELSE 0 END) AS caregiver_choices,
+                SUM(CASE WHEN c.baby_food = 1 THEN 1 ELSE 0 END) AS baby_food_choices
+            ${choiceFrom}
+            ${choiceWhere}
+        `;
+
+        const availabilityKpiSql = `
+            SELECT
+                COALESCE(SUM(x.availability_count), 0) AS total_availability_occurrences,
+                COUNT(*) AS distinct_available_dishes
+            FROM (${availabilityAggSql}) x
+        `;
+
+        const neverChosenCountSql = `
+            SELECT COUNT(*) AS total
+            ${joinedAggSql}
+            WHERE COALESCE(ch.chosen_count, 0) = 0
+        `;
+
+        const topChosenSql = `
+            SELECT
+                av.food_id,
+                av.name,
+                av.type,
+                av.availability_count,
+                ${patientScopeCount} AS patient_scope_count,
+                (${patientScopeCount} * av.availability_count) AS opportunity_count,
+                COALESCE(ch.chosen_count, 0) AS chosen_count,
+                COALESCE(ch.guest_count, 0) AS guest_count,
+                COALESCE(ch.family_count, 0) AS family_count,
+                COALESCE(ch.caregiver_count, 0) AS caregiver_count,
+                COALESCE(ch.baby_food_count, 0) AS baby_food_count,
+                CASE
+                    WHEN (${patientScopeCount} * av.availability_count) > 0
+                        THEN (COALESCE(ch.chosen_count, 0) / (${patientScopeCount} * av.availability_count)) * 100
+                    ELSE 0
+                END AS selection_rate_pct
+            ${joinedAggSql}
+            WHERE av.availability_count >= 3
+            ORDER BY
+                selection_rate_pct DESC,
+                chosen_count DESC,
+                av.availability_count DESC,
+                av.name ASC
+            LIMIT 5
+        `;
+
+        const bottomChosenSql = `
+            SELECT
+                av.food_id,
+                av.name,
+                av.type,
+                av.availability_count,
+                ${patientScopeCount} AS patient_scope_count,
+                (${patientScopeCount} * av.availability_count) AS opportunity_count,
+                COALESCE(ch.chosen_count, 0) AS chosen_count,
+                COALESCE(ch.guest_count, 0) AS guest_count,
+                COALESCE(ch.family_count, 0) AS family_count,
+                COALESCE(ch.caregiver_count, 0) AS caregiver_count,
+                COALESCE(ch.baby_food_count, 0) AS baby_food_count,
+                CASE
+                    WHEN (${patientScopeCount} * av.availability_count) > 0
+                        THEN (COALESCE(ch.chosen_count, 0) / (${patientScopeCount} * av.availability_count)) * 100
+                    ELSE 0
+                END AS selection_rate_pct
+            ${joinedAggSql}
+            WHERE av.availability_count >= 3
+            ORDER BY
+                selection_rate_pct ASC,
+                chosen_count ASC,
+                av.availability_count DESC,
+                av.name ASC
+            LIMIT 5
+        `;
+
+        const neverChosenSql = `
+            SELECT
+                av.food_id,
+                av.name,
+                av.type,
+                av.availability_count,
+                ${patientScopeCount} AS patient_scope_count,
+                (${patientScopeCount} * av.availability_count) AS opportunity_count,
+                0 AS chosen_count,
+                0 AS guest_count,
+                0 AS family_count,
+                0 AS caregiver_count,
+                0 AS baby_food_count,
+                0 AS selection_rate_pct
+            ${joinedAggSql}
+            WHERE COALESCE(ch.chosen_count, 0) = 0
+            ORDER BY
+                av.availability_count DESC,
+                av.name ASC
+            LIMIT 5
+        `;
+
+        const weeklyAvailabilitySql = `
+            SELECT
+                FLOOR(m.day_index / 7) + 1 AS week_number,
+                COUNT(*) AS availability_count
+            ${availabilityFrom}
+            ${availabilityWhere}
+            GROUP BY FLOOR(m.day_index / 7) + 1
+            ORDER BY week_number ASC
+        `;
+
+        const weeklyChoiceSql = `
+            SELECT
+                FLOOR(m.day_index / 7) + 1 AS week_number,
+                COUNT(*) AS chosen_count
+            ${choiceFrom}
+            ${choiceWhere}
+            GROUP BY FLOOR(m.day_index / 7) + 1
+            ORDER BY week_number ASC
+        `;
+
+        const byCourseAvailabilitySql = `
+            SELECT
+                f.type AS course_type,
+                COUNT(*) AS availability_count
+            ${availabilityFrom}
+            ${availabilityWhere}
+            GROUP BY f.type
+        `;
+
+        const byCourseChoiceSql = `
+            SELECT
+                f.type AS course_type,
+                COUNT(*) AS chosen_count
+            ${choiceFrom}
+            ${choiceWhere}
+            GROUP BY f.type
+        `;
+
+        const byChooserSql = `
+            SELECT
+                c.chooser,
+                COUNT(*) AS chosen_count
+            ${choiceFrom}
+            ${choiceWhere}
+            GROUP BY c.chooser
+        `;
+
+        const topCategorySql = `
+            SELECT
+                COALESCE(NULLIF(f.category, ''), f.type) AS category_label,
+                COUNT(*) AS chosen_count
+            ${choiceFrom}
+            ${choiceWhere}
+            GROUP BY COALESCE(NULLIF(f.category, ''), f.type)
+            ORDER BY chosen_count DESC, category_label ASC
+            LIMIT 1
+        `;
+
+        const countDishesSql = `
+            SELECT COUNT(*) AS total
+            FROM (${availabilityAggSql}) av
+        `;
+
+        const dishesSql = `
+            SELECT
+                av.food_id,
+                av.name,
+                av.type,
+                av.availability_count,
+                ${patientScopeCount} AS patient_scope_count,
+                (${patientScopeCount} * av.availability_count) AS opportunity_count,
+                COALESCE(ch.chosen_count, 0) AS chosen_count,
+                COALESCE(ch.guest_count, 0) AS guest_count,
+                COALESCE(ch.family_count, 0) AS family_count,
+                COALESCE(ch.caregiver_count, 0) AS caregiver_count,
+                COALESCE(ch.baby_food_count, 0) AS baby_food_count,
+                CASE
+                    WHEN (${patientScopeCount} * av.availability_count) > 0
+                        THEN (COALESCE(ch.chosen_count, 0) / (${patientScopeCount} * av.availability_count)) * 100
+                    ELSE 0
+                END AS selection_rate_pct
+            ${joinedAggSql}
+            ORDER BY
+                selection_rate_pct DESC,
+                chosen_count DESC,
+                av.availability_count DESC,
+                av.name ASC
+            LIMIT ? OFFSET ?
+        `;
+
+        const countDetailsSql = `
+            SELECT COUNT(*) AS total
+            ${choiceFrom}
+            ${choiceWhere}
+        `;
+
+        const detailsSql = `
+            SELECT
+                c.date,
+                p.name AS patient_name,
+                p.surname AS patient_surname,
+                p.floor,
+                p.room,
+                (m.day_index + 1) AS day_number,
+                FLOOR(m.day_index / 7) + 1 AS week_number,
+                m.type AS meal_type,
+                f.type AS course_type,
+                f.name AS dish_name,
+                c.chooser,
+                c.baby_food,
+                cg.name AS caregiver_name,
+                cg.surname AS caregiver_surname
+            ${detailsFrom}
+            ${choiceWhere}
+            ORDER BY
+                c.date DESC,
+                p.surname ASC,
+                p.name ASC,
+                m.day_index ASC,
+                f.type ASC,
+                f.name ASC
+            LIMIT ? OFFSET ?
+        `;
+
+        const patientsOptionsSql = `
+            SELECT
+                p.id_patient,
+                p.name,
+                p.surname,
+                p.floor,
+                p.room
+            FROM patient p
+            JOIN (
+                SELECT id_patient, MAX(last_changed) AS last_changed
+                FROM patient
+                GROUP BY id_patient
+            ) lp
+                ON lp.id_patient = p.id_patient
+               AND lp.last_changed = p.last_changed
+            ORDER BY p.surname ASC, p.name ASC
+        `;
+
+        const floorsOptionsSql = `
+            SELECT DISTINCT p.floor
+            FROM patient p
+            JOIN (
+                SELECT id_patient, MAX(last_changed) AS last_changed
+                FROM patient
+                GROUP BY id_patient
+            ) lp
+                ON lp.id_patient = p.id_patient
+               AND lp.last_changed = p.last_changed
+            ORDER BY p.floor ASC
+        `;
+
+        const [
+            [choiceKpiRows],
+            [availabilityKpiRows],
+            [neverChosenCountRows],
+            [topChosenRows],
+            [bottomChosenRows],
+            [neverChosenRows],
+            [weeklyAvailabilityRows],
+            [weeklyChoiceRows],
+            [byCourseAvailabilityRows],
+            [byCourseChoiceRows],
+            [byChooserRows],
+            [topCategoryRows],
+            [countDishesRows],
+            [dishesRows],
+            [countDetailsRows],
+            [detailsRows],
+            [patientsRows],
+            [floorsRows],
+        ] = await Promise.all([
+            pool.query(choiceKpiSql, choiceParams),
+            pool.query(availabilityKpiSql, availabilityParams),
+            pool.query(neverChosenCountSql, [
+                ...availabilityParams,
+                ...choiceParams,
+            ]),
+            pool.query(topChosenSql, [...availabilityParams, ...choiceParams]),
+            pool.query(bottomChosenSql, [
+                ...availabilityParams,
+                ...choiceParams,
+            ]),
+            pool.query(neverChosenSql, [
+                ...availabilityParams,
+                ...choiceParams,
+            ]),
+            pool.query(weeklyAvailabilitySql, availabilityParams),
+            pool.query(weeklyChoiceSql, choiceParams),
+            pool.query(byCourseAvailabilitySql, availabilityParams),
+            pool.query(byCourseChoiceSql, choiceParams),
+            pool.query(byChooserSql, choiceParams),
+            pool.query(topCategorySql, choiceParams),
+            pool.query(countDishesSql, availabilityParams),
+            pool.query(dishesSql, [
+                ...availabilityParams,
+                ...choiceParams,
+                sizeNum,
+                offset,
+            ]),
+            pool.query(countDetailsSql, choiceParams),
+            pool.query(detailsSql, [
+                ...choiceParams,
+                detailsSizeNum,
+                detailsOffset,
+            ]),
+            pool.query(patientsOptionsSql),
+            pool.query(floorsOptionsSql),
+        ]);
+
+        const totalChoices = Number(choiceKpiRows?.[0]?.total_choices ?? 0);
+        const distinctDishesChosen = Number(
+            choiceKpiRows?.[0]?.distinct_dishes_chosen ?? 0,
+        );
+        const caregiverChoices = Number(
+            choiceKpiRows?.[0]?.caregiver_choices ?? 0,
+        );
+        const babyFoodChoices = Number(
+            choiceKpiRows?.[0]?.baby_food_choices ?? 0,
+        );
+        const totalAvailabilityOccurrences = Number(
+            availabilityKpiRows?.[0]?.total_availability_occurrences ?? 0,
+        );
+        const neverChosenCount = Number(neverChosenCountRows?.[0]?.total ?? 0);
+
+        const overallChoiceRatePct =
+            patientScopeCount > 0 && totalAvailabilityOccurrences > 0
+                ? (totalChoices /
+                      (patientScopeCount * totalAvailabilityOccurrences)) *
+                  100
+                : 0;
+
+        const caregiverSharePct =
+            totalChoices > 0 ? (caregiverChoices / totalChoices) * 100 : 0;
+
+        const babyFoodSharePct =
+            totalChoices > 0 ? (babyFoodChoices / totalChoices) * 100 : 0;
+
+        const weeklyTrend = buildWeeklyTrendRows(
+            weeklyAvailabilityRows,
+            weeklyChoiceRows,
+            patientScopeCount,
+            weekNum,
+        );
+
+        const byCourse = buildCourseRows(
+            byCourseAvailabilityRows,
+            byCourseChoiceRows,
+            patientScopeCount,
+            course,
+        );
+
+        const byChooser = buildChooserRows(
+            byChooserRows,
+            totalChoices,
+            chooserFilter,
+        );
+
+        return res.json({
+            selectedMenu,
+            filters: {
+                menuKind,
+                menuRef,
+                start,
+                end,
+                meal: meal || '',
+                patientId: patientId || '',
+                floor: floor || '',
+                course: course || '',
+                week: weekNum ? String(weekNum) : '',
+                chooser: chooserFilter || '',
+                babyFood:
+                    babyFoodFilter === null || babyFoodFilter === undefined
+                        ? ''
+                        : String(babyFoodFilter),
+                page: pageNum,
+                pageSize: sizeNum,
+                detailsPage: detailsPageNum,
+                detailsPageSize: detailsSizeNum,
+            },
+            kpi: {
+                total_choices: totalChoices,
+                distinct_dishes_chosen: distinctDishesChosen,
+                overall_choice_rate_pct: overallChoiceRatePct,
+                never_chosen_count: neverChosenCount,
+                top_category_label: topCategoryRows?.[0]?.category_label ?? '—',
+                caregiver_share_pct: caregiverSharePct,
+                baby_food_share_pct: babyFoodSharePct,
+                patient_scope_count: patientScopeCount,
+                total_availability_occurrences: totalAvailabilityOccurrences,
+            },
+            rankings: {
+                topChosen: topChosenRows ?? [],
+                bottomChosen: bottomChosenRows ?? [],
+                neverChosen: neverChosenRows ?? [],
+            },
+            charts: {
+                weeklyTrend,
+                byCourse,
+                byChooser,
+            },
+            dishes: {
+                data: dishesRows ?? [],
+                total: Number(countDishesRows?.[0]?.total ?? 0),
+                page: pageNum,
+                pageSize: sizeNum,
+                totalPages: Math.max(
+                    1,
+                    Math.ceil(
+                        (Number(countDishesRows?.[0]?.total ?? 0) || 0) /
+                            sizeNum,
+                    ),
+                ),
+            },
+            details: {
+                data: detailsRows ?? [],
+                total: Number(countDetailsRows?.[0]?.total ?? 0),
+                page: detailsPageNum,
+                pageSize: detailsSizeNum,
+                totalPages: Math.max(
+                    1,
+                    Math.ceil(
+                        (Number(countDetailsRows?.[0]?.total ?? 0) || 0) /
+                            detailsSizeNum,
+                    ),
+                ),
+            },
+            options: {
+                patients: mapPatients(patientsRows),
+                floors: mapFloors(floorsRows),
+            },
+        });
+    } catch (err) {
+        console.error('Errore getScelteReport:', err);
         return res.status(500).json({ error: 'Errore interno al server' });
     }
 }
