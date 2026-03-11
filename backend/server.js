@@ -11,6 +11,7 @@ import foodsRouter from './routes/foodsRoutes.js';
 import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
 import reportsRouter from './routes/reports.js';
+import dashboardRouter from './routes/dashboard.js';
 
 import { requireAuth, requireRole } from './middlewares/auth.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -44,6 +45,7 @@ app.use('/api/foods', requireAuth, foodsRouter);
 app.use('/api/users', requireAuth, usersRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/reports', requireAuth, reportsRouter);
+app.use('/api/dashboard', requireAuth, dashboardRouter);
 
 // ERROR HANDLER MIDDLEWARE
 app.use(errorHandler);

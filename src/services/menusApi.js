@@ -115,3 +115,7 @@ export function getArchivedMenuMealComposition(
         )}/meals/${dayIndex}/${mealType}`,
     );
 }
+
+export function archiveMenu(seasonType) {
+    return postJson(`/api/menus/${encodeURIComponent(seasonType)}/archive`);
+}

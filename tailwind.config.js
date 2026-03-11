@@ -10,6 +10,7 @@ export default {
         'btn-tertiary',
         'btn-ghost',
         'btn-danger',
+        'btn-warning',
         'btn-underline',
 
         // Button sizes

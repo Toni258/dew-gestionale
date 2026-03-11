@@ -284,6 +284,7 @@ export default function EditDish() {
                 onSubmit={async (values) => {
                     const changed = hasDishChanged(originalDish, values);
                     const suspensionEnabled = !!values.suspension_enabled;
+                    let suspensionActionHandled = false;
 
                     // === 1) gestione UNSUSPEND (se esisteva ed ora è OFF)
                     if (
@@ -293,9 +294,10 @@ export default function EditDish() {
                         const unsuspendRes = await withLoaderNotify({
                             message: 'Riattivazione piatto…',
                             mode: 'blocking',
-                            success: 'Piatto riattivato correttamente',
+                            success: 'Sospensione disattivata correttamente',
                             errorTitle: 'Errore riattivazione',
-                            errorMessage: 'Impossibile riattivare il piatto.',
+                            errorMessage:
+                                'Impossibile disattivare la sospensione.',
                             fn: async () => {
                                 await unsuspendDish(dishId);
                                 return true;
@@ -303,6 +305,8 @@ export default function EditDish() {
                         });
 
                         if (!unsuspendRes.ok) return;
+
+                        suspensionActionHandled = true;
                     }
 
                     // === 2) gestione SUSPEND (se ON + cambiata)
@@ -342,12 +346,19 @@ export default function EditDish() {
                             notify.warning('Operazione annullata');
                             return;
                         }
+                        if (result?.applied === true) {
+                            suspensionActionHandled = true;
+                        }
                     }
 
                     // se NON è cambiato nulla (piatto) e immagine non è File
-                    const imageChanged = values.img instanceof File;
-                    if (!changed && !imageChanged) {
+                    if (!changed && !imageChanged && !suspensionActionHandled) {
                         notify.info('Nessuna modifica da salvare');
+                        navigate('/dishes');
+                        return;
+                    }
+
+                    if (suspensionActionHandled && !changed && !imageChanged) {
                         navigate('/dishes');
                         return;
                     }

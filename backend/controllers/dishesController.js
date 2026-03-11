@@ -614,7 +614,8 @@ export async function suspendDish(req, res) {
                         SET
                             valid_from = ?,
                             valid_to   = ?,
-                            reason     = ?
+                            reason     = ?,
+                            restored_at = NULL
                         WHERE id_avail = ?
                     `,
                     [
@@ -628,8 +629,14 @@ export async function suspendDish(req, res) {
                 // INSERT (prima sospensione)
                 await conn.query(
                     `
-                        INSERT INTO food_availability (id_food, valid_from, valid_to, reason)
-                        VALUES (?, ?, ?, ?)
+                        INSERT INTO food_availability (
+                            id_food,
+                            valid_from,
+                            valid_to,
+                            reason,
+                            restored_at
+                        )
+                        VALUES (?, ?, ?, ?, NULL)
                     `,
                     [
                         idFood,
@@ -921,27 +928,170 @@ export async function disableDishSuspension(req, res) {
         return res.status(400).json({ error: 'id non valido' });
     }
 
+    const conn = await pool.getConnection();
+
     try {
-        // chiude eventuali sospensioni attive o future
-        const [result] = await pool.query(
+        await conn.beginTransaction();
+
+        // 1) recupero la sospensione attiva o futura
+        const [[susp]] = await conn.query(
             `
-            UPDATE food_availability
-            SET valid_to = DATE_SUB(NOW(), INTERVAL 1 SECOND)
+            SELECT
+                id_avail,
+                valid_from,
+                valid_to
+            FROM food_availability
             WHERE id_food = ?
               AND valid_to >= NOW()
+            ORDER BY valid_from ASC
+            LIMIT 1
             `,
             [idFood],
         );
 
+        if (!susp) {
+            await conn.rollback();
+            return res.status(404).json({
+                error: 'Nessuna sospensione attiva o futura trovata per questo piatto',
+            });
+        }
+
+        // 2) recupero il tipo del piatto originale
+        const [[originalDish]] = await conn.query(
+            `
+            SELECT id_food, type
+            FROM food
+            WHERE id_food = ?
+            LIMIT 1
+            `,
+            [idFood],
+        );
+
+        if (!originalDish) {
+            await conn.rollback();
+            return res.status(404).json({ error: 'Piatto non trovato' });
+        }
+
+        // 3) trovo i pairing originali sospesi nel periodo
+        const [originalPairings] = await conn.query(
+            `
+            SELECT
+                dp.id_dish_pairing,
+                dp.id_meal,
+                dp.season_type
+            FROM dish_pairing dp
+            JOIN season s
+                ON s.season_type = dp.season_type
+            WHERE dp.id_food = ?
+              AND dp.used = 0
+              AND s.start_date <= ?
+              AND s.end_date >= ?
+            `,
+            [idFood, susp.valid_to, susp.valid_from],
+        );
+
+        const originalIds = originalPairings
+            .map((r) => Number(r.id_dish_pairing))
+            .filter(Number.isFinite);
+
+        // 4) riattivo i pairing originali
+        let restoredOriginals = 0;
+
+        if (originalIds.length > 0) {
+            const [restoreRes] = await conn.query(
+                `
+                UPDATE dish_pairing
+                SET used = 1
+                WHERE id_dish_pairing IN (?)
+                `,
+                [originalIds],
+            );
+
+            restoredOriginals = restoreRes.affectedRows ?? 0;
+        }
+
+        // 5) trovo i possibili sostituti da spegnere:
+        // stesso season_type + stesso id_meal + used=1 + id_food diverso + stessa portata
+        let replacementIds = [];
+
+        if (originalPairings.length > 0) {
+            const mealKeys = originalPairings.map((r) => [
+                r.season_type,
+                r.id_meal,
+            ]);
+
+            for (const row of originalPairings) {
+                const [rows] = await conn.query(
+                    `
+                    SELECT repl.id_dish_pairing
+                    FROM dish_pairing repl
+                    JOIN food f_repl
+                        ON f_repl.id_food = repl.id_food
+                    WHERE repl.season_type = ?
+                      AND repl.id_meal = ?
+                      AND repl.used = 1
+                      AND repl.id_food <> ?
+                      AND f_repl.type = ?
+                    `,
+                    [row.season_type, row.id_meal, idFood, originalDish.type],
+                );
+
+                replacementIds.push(
+                    ...rows
+                        .map((r) => Number(r.id_dish_pairing))
+                        .filter(Number.isFinite),
+                );
+            }
+        }
+
+        replacementIds = [...new Set(replacementIds)];
+
+        let disabledReplacements = 0;
+
+        if (replacementIds.length > 0) {
+            const [disableRes] = await conn.query(
+                `
+                UPDATE dish_pairing
+                SET used = 0
+                WHERE id_dish_pairing IN (?)
+                `,
+                [replacementIds],
+            );
+
+            disabledReplacements = disableRes.affectedRows ?? 0;
+        }
+
+        // 6) chiudo la sospensione
+        const [closeRes] = await conn.query(
+            `
+                UPDATE food_availability
+                SET
+                    valid_to = DATE_SUB(NOW(), INTERVAL 1 SECOND),
+                    restored_at = NOW()
+                WHERE id_avail = ?
+            `,
+            [susp.id_avail],
+        );
+
+        await conn.commit();
+
         return res.json({
             ok: true,
-            closed_records: result.affectedRows,
-            message: 'Sospensione disattivata',
+            closed_records: closeRes.affectedRows ?? 0,
+            restored_original_pairings: restoredOriginals,
+            disabled_replacement_pairings: disabledReplacements,
+            message: 'Sospensione disattivata e stato precedente ripristinato',
         });
     } catch (err) {
+        try {
+            await conn.rollback();
+        } catch {}
+
         console.error('Errore disableDishSuspension:', err);
         return res.status(500).json({
             error: 'Errore disattivazione sospensione',
         });
+    } finally {
+        conn.release();
     }
 }

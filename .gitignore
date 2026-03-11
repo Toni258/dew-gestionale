@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .env
+_chatgpt_exports
+scripts
 
 # Editor directories and files
 .vscode/*

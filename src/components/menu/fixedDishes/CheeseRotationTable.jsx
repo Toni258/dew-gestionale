@@ -25,7 +25,7 @@ export default function CheeseRotationTable({
     readOnly = false,
 }) {
     return (
-        <div className="mt-4 border border-brand-divider rounded-xl overflow-hidden">
+        <div className="mt-4 border border-brand-divider rounded-xl">
             {WEEKDAYS.map((label, idx) => {
                 const sel = cheeseRotation?.[meal]?.[idx] ?? null;
 
