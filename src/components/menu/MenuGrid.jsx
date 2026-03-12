@@ -1,6 +1,14 @@
 import Button from '../ui/Button';
 
-const DAYS_HEADER = [1, 2, 3, 4, 5, 6, 7];
+const DAYS_HEADER = [
+    { number: 1, label: 'Lunedì' },
+    { number: 2, label: 'Martedì' },
+    { number: 3, label: 'Mercoledì' },
+    { number: 4, label: 'Giovedì' },
+    { number: 5, label: 'Venerdì' },
+    { number: 6, label: 'Sabato' },
+    { number: 7, label: 'Domenica' },
+];
 const WEEKS_HEADER = [1, 2, 3, 4];
 
 export default function MenuGrid({
@@ -16,9 +24,9 @@ export default function MenuGrid({
                     <div className="menu-grid">
                         <div className="menu-grid__corner" />
 
-                        {DAYS_HEADER.map((d, idx) => (
+                        {DAYS_HEADER.map((day, idx) => (
                             <div
-                                key={`day-h-${d}`}
+                                key={`day-h-${day.number}`}
                                 className={`menu-grid__dayHeader ${
                                     idx === 0
                                         ? 'menu-grid__dayHeader--first'
@@ -29,7 +37,7 @@ export default function MenuGrid({
                                         : ''
                                 }`}
                             >
-                                {d}
+                                {day.label}
                             </div>
                         ))}
 

@@ -1,6 +1,6 @@
 import AppLayout from '../../components/layout/AppLayout';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 
 import DeleteMenuModal from '../../components/modals/DeleteMenuModal';
 import ModifyMenuModal from '../../components/modals/ModifyMenuModal';
@@ -16,6 +16,7 @@ import { updateMenu, deleteMenu } from '../../services/menusApi';
 export default function EditMenu() {
     const { seasonType } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const decodedSeasonType = useMemo(
         () => decodeURIComponent(seasonType ?? ''),
@@ -27,6 +28,28 @@ export default function EditMenu() {
 
     const [menuToDelete, setMenuToDelete] = useState(null);
     const [modifyMenu, setModifyMenu] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const shouldOpenModifyMenu = params.get('openModifyMenu') === '1';
+
+        if (!shouldOpenModifyMenu) return;
+        if (!menu) return;
+
+        setModifyMenu(true);
+
+        const cleanParams = new URLSearchParams(location.search);
+        cleanParams.delete('openModifyMenu');
+
+        const cleanSearch = cleanParams.toString();
+        navigate(
+            {
+                pathname: location.pathname,
+                search: cleanSearch ? `?${cleanSearch}` : '',
+            },
+            { replace: true },
+        );
+    }, [location.pathname, location.search, menu, navigate]);
 
     if (loading) return <p>Caricamento…</p>;
     if (!menu) return <p>Menù non trovato</p>;

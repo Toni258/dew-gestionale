@@ -309,7 +309,7 @@
         height: var(--header-size);
         background: theme('colors.brand.primary');
         color: white;
-        font-weight: 700;
+        font-weight: 600;
         display: flex;
         align-items: center;
         justify-content: center;

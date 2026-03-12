@@ -25,6 +25,25 @@ function formatDaysFromNow(days) {
     return `${Math.abs(days)} giorni fa`;
 }
 
+function getTodayMenuWeekdayIndex() {
+    const jsDay = new Date().getDay(); // domenica=0, lunedì=1, ..., sabato=6
+    return (jsDay + 6) % 7; // lunedì=0, martedì=1, ..., domenica=6
+}
+
+function getItalianWeekdayNameFromMenuIndex(index) {
+    const names = [
+        'lunedì',
+        'martedì',
+        'mercoledì',
+        'giovedì',
+        'venerdì',
+        'sabato',
+        'domenica',
+    ];
+
+    return names[toInt(index) % 7] ?? 'giorno sconosciuto';
+}
+
 function mealSlotLabel(dayIndex, mealType) {
     const week = Math.floor(toInt(dayIndex) / 7) + 1;
     const day = (toInt(dayIndex) % 7) + 1;
@@ -34,7 +53,7 @@ function mealSlotLabel(dayIndex, mealType) {
 function buildMenuRoutes(seasonType) {
     const encoded = encodeURIComponent(seasonType);
     return {
-        menu: `/menu/edit/${encoded}`,
+        menu: `/menu/edit/${encoded}?openModifyMenu=1`,
         fixed_dishes: `/menu/edit/${encoded}/piatti_fissi`,
         menus_list: '/menu',
         create_menu: '/menu/create',
@@ -80,6 +99,7 @@ function enrichMenu(row) {
 
     const base = {
         ...row,
+        day_index: toInt(row.day_index),
         days_until_start: toInt(row.days_until_start),
         days_until_end: toInt(row.days_until_end),
         is_current: toInt(row.is_current) === 1,
@@ -152,6 +172,31 @@ function buildAlerts({
         });
     }
 
+    if (currentMenu) {
+        const expectedWeekdayIndex = toInt(currentMenu.day_index) % 7;
+        const todayWeekdayIndex = getTodayMenuWeekdayIndex();
+
+        if (expectedWeekdayIndex !== todayWeekdayIndex) {
+            const expectedDayName =
+                getItalianWeekdayNameFromMenuIndex(expectedWeekdayIndex);
+            const actualDayName =
+                getItalianWeekdayNameFromMenuIndex(todayWeekdayIndex);
+
+            alerts.push({
+                id: 'current-menu-day-index-mismatch',
+                severity: 'error',
+                priority_order: -200,
+                title: `Il giorno del menù corrente non coincide con il giorno reale`,
+                message: `Nel menù "${currentMenu.season_type}" il giorno del menù è ${currentMenu.day_index + 1}, che corrisponde a ${expectedDayName}, ma oggi è ${actualDayName}. Conviene verificare subito l’allineamento del menù.`,
+                action: {
+                    type: 'navigate',
+                    label: 'Apri menù',
+                    target: currentMenu.routes.menu,
+                },
+            });
+        }
+    }
+
     if (nextMenu && nextMenu.needs_completion) {
         const missingPieces = [];
 
@@ -191,23 +236,6 @@ function buildAlerts({
         });
     }
 
-    if (lastEndedMenu) {
-        alerts.push({
-            id: 'last-ended-not-archived',
-            severity: 'info',
-            priority_order: -100,
-            title: `Il menù concluso "${lastEndedMenu.season_type}" non è ancora stato archiviato`,
-            message: `È terminato ${formatDaysFromNow(
-                -Math.abs(lastEndedMenu.days_until_end),
-            )}. Finché resta in season continua a risultare non archiviato.`,
-            action: {
-                type: 'archive-menu',
-                label: 'Archivia',
-                season_type: lastEndedMenu.season_type,
-            },
-        });
-    }
-
     if (currentMenu && !nextMenu) {
         alerts.push({
             id: 'no-future-menu',
@@ -223,51 +251,6 @@ function buildAlerts({
         });
     }
 
-    if (nextMenu && nextMenu.incomplete_meals_count > 0) {
-        const preview = nextIncompleteMeals
-            .slice(0, 3)
-            .map((meal) => mealSlotLabel(meal.day_index, meal.type))
-            .join(' · ');
-
-        alerts.push({
-            id: 'next-menu-incomplete-meals',
-            severity: nextMenu.days_until_start <= 7 ? 'error' : 'warning',
-            priority_order: nextMenu.days_until_start,
-            title: `Ci sono ${nextMenu.incomplete_meals_count} ${pluralize(
-                nextMenu.incomplete_meals_count,
-                'pasto incompleto',
-                'pasti incompleti',
-            )} nel prossimo menù`,
-            message: preview
-                ? `Prime verifiche da fare: ${preview}.`
-                : 'Apri il menù e completa i pasti ancora vuoti.',
-            action: {
-                type: 'navigate',
-                label: 'Controlla pasti',
-                target: nextMenu.routes.menu,
-            },
-        });
-    }
-
-    if (nextMenu && nextMenu.fixed_missing_slots > 0) {
-        alerts.push({
-            id: 'next-menu-fixed-dishes-missing',
-            severity: nextMenu.days_until_start <= 7 ? 'error' : 'warning',
-            priority_order: nextMenu.days_until_start,
-            title: `Non sono stati inseriti tutti i piatti fissi nel prossimo menù`,
-            message: `Mancano ancora ${nextMenu.fixed_missing_slots} ${pluralize(
-                nextMenu.fixed_missing_slots,
-                'assegnazione fissa',
-                'assegnazioni fisse',
-            )} per completare la griglia dei piatti fissi.`,
-            action: {
-                type: 'navigate',
-                label: 'Controlla piatti',
-                target: nextMenu.routes.fixed_dishes,
-            },
-        });
-    }
-
     for (const suspension of suspensions) {
         if (
             suspension.days_until_reactivation > REACTIVATION_ALERT_WINDOW_DAYS
@@ -278,8 +261,8 @@ function buildAlerts({
         const uniqueReplacement = suspension.replacement_name;
 
         const message = uniqueReplacement
-            ? `Il piatto ${suspension.name} sta per finire il suo periodo di sospensione e verrà riattivato al posto del piatto ${uniqueReplacement} che ha fatto da sostituto.`
-            : `Il piatto ${suspension.name} sta per finire il suo periodo di sospensione. Prima della riattivazione conviene verificare i sostituti attivi nei menù coinvolti.`;
+            ? `Il piatto ${suspension.name} sta per finire il suo periodo di sospensione e verrà riattivato al posto del piatto [${uniqueReplacement}] che ha fatto da sostituto.`
+            : `Il piatto ${suspension.name} sta per finire il suo periodo di sospensione.`;
 
         alerts.push({
             id: `reactivation-${suspension.id_food}`,
@@ -313,26 +296,11 @@ function buildChecklist({
             severity: 'info',
             priority_order: 1,
             title: `Archiviare il menù ${lastEndedMenu.season_type}`,
-            message: `Il menù si è concluso il ${lastEndedMenu.end_date} ma risulta ancora presente in season.`,
+            message: `Il menù si è concluso il ${lastEndedMenu.end_date_label} ma risulta ancora presente in season.`,
             action: {
                 type: 'archive-menu',
                 label: 'Archivia',
                 season_type: lastEndedMenu.season_type,
-            },
-        });
-    }
-
-    if (nextMenu && nextMenu.needs_completion) {
-        items.push({
-            id: 'todo-complete-next-menu',
-            severity: nextMenu.days_until_start <= 7 ? 'error' : 'warning',
-            priority_order: 2,
-            title: `Completare il menù che inizia il ${nextMenu.start_date}`,
-            message: `Il menù ${nextMenu.season_type} è compilato al ${nextMenu.completion_pct}% e ha ancora elementi mancanti.`,
-            action: {
-                type: 'navigate',
-                label: 'Apri menù',
-                target: nextMenu.routes.menu,
             },
         });
     }
@@ -345,8 +313,8 @@ function buildChecklist({
 
         items.push({
             id: 'todo-check-missing-meals',
-            severity: 'warning',
-            priority_order: 3,
+            severity: nextMenu.days_until_start <= 7 ? 'error' : 'warning',
+            priority_order: 2,
             title: 'Controllare i pasti mancanti',
             message: preview
                 ? `Pasti ancora senza portate reali: ${preview}.`
@@ -362,29 +330,14 @@ function buildChecklist({
     if (nextMenu && nextMenu.fixed_missing_slots > 0) {
         items.push({
             id: 'todo-check-fixed-dishes',
-            severity: 'warning',
-            priority_order: 4,
+            severity: nextMenu.days_until_start <= 7 ? 'error' : 'warning',
+            priority_order: 3,
             title: 'Verificare i piatti fissi mancanti',
             message: `Restano ${nextMenu.fixed_missing_slots} assegnazioni da completare nella sezione piatti fissi del menù ${nextMenu.season_type}.`,
             action: {
                 type: 'navigate',
                 label: 'Controlla piatti',
                 target: nextMenu.routes.fixed_dishes,
-            },
-        });
-    }
-
-    if (currentMenu && !nextMenu) {
-        items.push({
-            id: 'todo-create-future-menu',
-            severity: currentMenu.days_until_end <= 7 ? 'error' : 'warning',
-            priority_order: 5,
-            title: 'Creare il prossimo menù',
-            message: `Dopo ${currentMenu.season_type} non risulta ancora programmato nessun menù futuro.`,
-            action: {
-                type: 'navigate',
-                label: 'Crea menù',
-                target: '/menu/create',
             },
         });
     }

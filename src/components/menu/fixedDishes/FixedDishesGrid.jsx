@@ -2,22 +2,26 @@ import { COURSE_ROWS } from './constants';
 import FixedDishesCell from './FixedDishesCell';
 
 function HDivider() {
+    return <div className="col-start-2 col-end-5 h-px w-full bg-black/50" />;
+}
+
+function VDivider({ isLast = false }) {
     return (
-        <div className="col-start-2 col-end-5 h-[2px] w-full bg-[repeating-linear-gradient(to_right,#1F1F1F_0,#1F1F1F_10px,transparent_10px,transparent_18px)]" />
+        <div
+            className={`w-px self-stretch bg-black/40 ${
+                isLast ? 'rounded-br-xl' : ''
+            }`}
+        />
     );
 }
 
-function VDivider() {
+function SideLabel({ children, isLast = false }) {
     return (
-        <div className="relative w-[2px] self-stretch bg-brand-sidebar">
-            <div className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,#1F1F1F_0,#1F1F1F_10px,transparent_10px,transparent_20px)]" />
-        </div>
-    );
-}
-
-function SideLabel({ children }) {
-    return (
-        <div className="bg-brand-primary rounded-l-xl w-[45px] flex items-center justify-center">
+        <div
+            className={`bg-brand-primary rounded-l-xl w-[45px] flex items-center justify-center ${
+                isLast ? 'border-b border-black/40 rounded-bl-xl' : ''
+            }`}
+        >
             <span className="[writing-mode:vertical-rl] rotate-180 text-white font-bold text-lg tracking-widest">
                 {children}
             </span>
@@ -58,11 +62,15 @@ export default function FixedDishesGrid({
 
                 return (
                     <div key={row.key} className="contents">
-                        <SideLabel>{row.label}</SideLabel>
+                        <SideLabel isLast={isLast}>{row.label}</SideLabel>
 
                         {/* PRANZO */}
                         {pranzoSlots === 0 ? (
-                            <div className="bg-brand-sidebar px-8 py-6" />
+                            <div
+                                className={`bg-white/80 px-8 py-6 ${
+                                    isLast ? 'border-b border-black/30' : ''
+                                }`}
+                            />
                         ) : (
                             <FixedDishesCell
                                 readOnly={readOnly}
@@ -86,9 +94,11 @@ export default function FixedDishesGrid({
 
                         {/* CENA */}
                         <div
-                            className={
-                                isLast ? 'bg-brand-sidebar rounded-br-xl' : ''
-                            }
+                            className={`border-r border-black/30 ${
+                                isLast
+                                    ? 'border-b border-black/30 rounded-br-xl'
+                                    : ''
+                            }`}
                         >
                             <FixedDishesCell
                                 readOnly={readOnly}

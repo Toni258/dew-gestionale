@@ -3,12 +3,15 @@ export async function listMenuSummaries(poolOrConn) {
         `
             SELECT
                 s.season_type,
+                s.day_index,
                 DATE_FORMAT(s.start_date, '%Y-%m-%d') AS start_date,
                 DATE_FORMAT(s.end_date,   '%Y-%m-%d') AS end_date,
+                DATE_FORMAT(s.start_date, '%d/%m/%Y') AS start_date_label,
+                DATE_FORMAT(s.end_date,   '%d/%m/%Y') AS end_date_label,
                 CONCAT(
-                    DATE_FORMAT(s.start_date, '%d.%m.%Y'),
+                    DATE_FORMAT(s.start_date, '%d/%m/%Y'),
                     ' - ',
-                    DATE_FORMAT(s.end_date,   '%d.%m.%Y')
+                    DATE_FORMAT(s.end_date,   '%d/%m/%Y')
                 ) AS period_label,
                 DATEDIFF(s.start_date, CURDATE()) AS days_until_start,
                 DATEDIFF(s.end_date,   CURDATE()) AS days_until_end,
@@ -252,6 +255,8 @@ export async function listActiveSuspensions(poolOrConn) {
                 f.type,
                 DATE_FORMAT(fa.valid_from, '%Y-%m-%d') AS valid_from,
                 DATE_FORMAT(fa.valid_to,   '%Y-%m-%d') AS valid_to,
+                DATE_FORMAT(fa.valid_from, '%d/%m/%Y') AS valid_from_label,
+                DATE_FORMAT(fa.valid_to,   '%d/%m/%Y') AS valid_to_label,
                 fa.reason,
                 fa.restored_at,
                 DATEDIFF(DATE(fa.valid_to), CURDATE()) AS days_until_reactivation

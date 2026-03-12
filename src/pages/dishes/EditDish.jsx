@@ -483,7 +483,7 @@ export default function EditDish() {
                         </p>
 
                         <table className="w-full text-sm border border-brand-divider mb-6">
-                            <thead className="bg-brand-bgSecondary">
+                            <thead className="bg-white/80">
                                 <tr>
                                     <th className="p-2 text-left">Menù</th>
                                     <th className="p-2 text-left">Stato</th>

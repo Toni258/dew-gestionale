@@ -247,7 +247,7 @@ function QuickStatusCard({ title, menu, emptyTitle, emptyMessage, onAction }) {
                     {menu.fixed_missing_slots > 0 && !menu.is_ended && (
                         <Button
                             size="sm"
-                            variant="tertiary"
+                            variant="warning"
                             onClick={() =>
                                 onAction({
                                     type: 'navigate',
@@ -262,7 +262,7 @@ function QuickStatusCard({ title, menu, emptyTitle, emptyMessage, onAction }) {
                     {menu.is_ended && (
                         <Button
                             size="sm"
-                            variant="danger"
+                            variant="secondary"
                             onClick={() =>
                                 onAction({
                                     type: 'archive-menu',
@@ -356,7 +356,7 @@ function SuspendedDishRow({ dish, onAction }) {
                         <span className="font-medium text-brand-text">
                             Valido fino al:
                         </span>{' '}
-                        {dish.valid_to}
+                        {dish.valid_to_label || dish.valid_to}
                     </div>
 
                     <div className="text-sm text-brand-textSecondary">

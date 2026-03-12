@@ -7,8 +7,8 @@ import { notify } from '../../../services/notify';
 function ReadOnlyFoodCard({ food }) {
     if (!food?.name) {
         return (
-            <div className="px-4 py-3 rounded-xl border border-dashed border-brand-divider bg-white/40">
-                <div className="text-brand-textSecondary italic">
+            <div className="rounded-2xl border border-dashed border-brand-divider bg-white/60 px-4 py-4">
+                <div className="italic text-brand-textSecondary">
                     Nessun piatto selezionato
                 </div>
             </div>
@@ -16,19 +16,34 @@ function ReadOnlyFoodCard({ food }) {
     }
 
     return (
-        <div className="px-4 py-3 rounded-xl border border-brand-divider bg-white/60">
-            <div className="font-semibold text-lg truncate ml-4">
+        <div className="rounded-2xl border border-brand-divider/70 bg-white/90 px-4 py-4 shadow-[0_10px_25px_rgba(15,23,42,0.04)]">
+            <div className="truncate text-lg font-semibold text-brand-text">
                 {food.name}
             </div>
+
             {food?.type ? (
-                <div className="text-xs text-brand-textSecondary">
-                    {String(food.type).toUpperCase()}
+                <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-textSecondary">
+                    {String(food.type)}
                 </div>
             ) : null}
 
-            <InfoMacro food={food} />
+            <div className="mt-3">
+                <InfoMacro food={food} />
+            </div>
         </div>
     );
+}
+
+function SlotCard({ children }) {
+    return (
+        <div className="rounded-2xl border border-brand-divider/70 bg-white/90 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+            {children}
+        </div>
+    );
+}
+
+function SlotDivider() {
+    return <div className="h-px w-full bg-brand-divider/70" />;
 }
 
 export default function FixedDishesCell({
@@ -46,13 +61,9 @@ export default function FixedDishesCell({
     cheeseRotation,
     cheeseFilled,
 
-    onSelectFood, // ({meal, courseKey, idx, food}) => {ok, reason}
-    onChangeCheeseAt, // ({meal, idx, food}) => void
+    onSelectFood,
+    onChangeCheeseAt,
 }) {
-    const Divider = () => (
-        <div className="my-6 h-[2px] w-full bg-[repeating-linear-gradient(to_right,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
-    );
-
     const renderSelectOrReadOnly = (idx, food) => {
         if (readOnly) {
             return (
@@ -64,83 +75,95 @@ export default function FixedDishesCell({
 
         return (
             <div key={`${meal}-${courseKey}-${idx}`}>
-                <SearchableSelect
-                    placeholder="Seleziona un piatto fisso"
-                    value={String(food?.id_food ?? '')}
-                    options={mealOptions.map((f) => ({
-                        value: String(f.id_food),
-                        label: f.name,
-                    }))}
-                    onChange={(idFoodStr) => {
-                        const idFood = Number(idFoodStr);
-                        const fullFood =
-                            mealOptions.find(
-                                (f) => Number(f.id_food) === idFood,
-                            ) ?? null;
+                <SlotCard>
+                    <SearchableSelect
+                        placeholder="Seleziona un piatto fisso"
+                        value={String(food?.id_food ?? '')}
+                        options={mealOptions.map((f) => ({
+                            value: String(f.id_food),
+                            label: f.name,
+                        }))}
+                        onChange={(idFoodStr) => {
+                            const idFood = Number(idFoodStr);
+                            const fullFood =
+                                mealOptions.find(
+                                    (f) => Number(f.id_food) === idFood,
+                                ) ?? null;
 
-                        const res = onSelectFood({
-                            meal,
-                            courseKey,
-                            idx,
-                            food: fullFood,
-                        });
+                            const res = onSelectFood({
+                                meal,
+                                courseKey,
+                                idx,
+                                food: fullFood,
+                            });
 
-                        if (!res?.ok && res?.reason === 'duplicate') {
-                            notify.warning(
-                                'Questo piatto è già stato selezionato per questo pasto.',
-                            );
-                        }
-                    }}
-                    loading={loading}
-                />
-                <InfoMacro food={food} />
+                            if (!res?.ok && res?.reason === 'duplicate') {
+                                notify.warning(
+                                    'Questo piatto è già stato selezionato per questo pasto.',
+                                );
+                            }
+                        }}
+                        loading={loading}
+                    />
+
+                    <div className="mt-3">
+                        <InfoMacro food={food} />
+                    </div>
+                </SlotCard>
             </div>
         );
     };
 
-    // CASO SPECIALE: SECONDO -> 2 select normali + tabella formaggi
     if (courseKey === 'secondo' && slots === 3) {
         const food0 = selectedArr[0] ?? null;
         const food1 = selectedArr[1] ?? null;
 
         return (
-            <div className="bg-brand-sidebar px-8 py-6">
+            <div className="flex h-full flex-col gap-5 bg-white/80 px-6 py-6">
                 {renderSelectOrReadOnly(0, food0)}
-                <div className="mt-4" />
                 {renderSelectOrReadOnly(1, food1)}
-                <Divider />
 
-                <div className="text-lg font-semibold">
-                    Formaggi a rotazione
-                </div>
+                <SlotDivider />
 
-                <CheeseRotationTable
-                    readOnly={readOnly}
-                    meal={meal}
-                    cheeseRotation={cheeseRotation}
-                    cheeseOptions={cheeseOptions}
-                    onChangeAt={onChangeCheeseAt}
-                />
-
-                {!readOnly && !cheeseFilled && (
-                    <div className="mt-3 text-brand-textSecondary italic opacity-80">
-                        Seleziona un formaggio per ogni giorno ({meal}).
+                <div className="rounded-2xl border border-brand-divider/70 bg-white/85 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                    <div className="mb-4 flex items-center justify-between gap-4">
+                        <div>
+                            <div className="text-lg font-semibold text-brand-text">
+                                Formaggi a rotazione
+                            </div>
+                            <div className="mt-1 text-sm text-brand-textSecondary">
+                                Configura un formaggio per ciascun giorno del{' '}
+                                {meal}.
+                            </div>
+                        </div>
                     </div>
-                )}
+
+                    <CheeseRotationTable
+                        readOnly={readOnly}
+                        meal={meal}
+                        cheeseRotation={cheeseRotation}
+                        cheeseOptions={cheeseOptions}
+                        onChangeAt={onChangeCheeseAt}
+                    />
+
+                    {!readOnly && !cheeseFilled && (
+                        <div className="mt-4 rounded-xl bg-brand-secondary/6 px-4 py-3 text-sm text-brand-textSecondary">
+                            Seleziona un formaggio per ogni giorno ({meal}).
+                        </div>
+                    )}
+                </div>
             </div>
         );
     }
 
-    // DEFAULT
     return (
-        <div className="bg-brand-sidebar px-8 py-6">
+        <div className="flex h-full flex-col gap-5 bg-white/80 px-6 py-6">
             {Array.from({ length: slots }).map((_, idx) => {
                 const food = selectedArr[idx] ?? null;
 
                 return (
                     <div key={`${meal}-${courseKey}-${idx}`}>
                         {renderSelectOrReadOnly(idx, food)}
-                        {idx < slots - 1 && <div className="mt-4" />}
                     </div>
                 );
             })}
