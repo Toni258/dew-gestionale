@@ -13,6 +13,7 @@ import authRouter from './routes/auth.js';
 import reportsRouter from './routes/reports.js';
 import dashboardRouter from './routes/dashboard.js';
 
+import { startSchedulers } from './jobs/startSchedulers.js';
 import { requireAuth, requireRole } from './middlewares/auth.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
@@ -49,6 +50,9 @@ app.use('/api/dashboard', requireAuth, dashboardRouter);
 
 // ERROR HANDLER MIDDLEWARE
 app.use(errorHandler);
+
+// AVVIO SCHEDULER PER CONTROLLO SOSPENSIONI SCADUTE
+startSchedulers();
 
 const PORT = 3001;
 

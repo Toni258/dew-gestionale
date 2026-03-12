@@ -131,7 +131,7 @@ function buildAlerts({
 }) {
     const alerts = [];
 
-    if (currentMenu && currentMenu.days_until_end <= 114) {
+    if (currentMenu && currentMenu.days_until_end <= 14) {
         alerts.push({
             id: 'current-menu-expiring',
             severity: currentMenu.days_until_end <= 7 ? 'error' : 'warning',
@@ -177,7 +177,7 @@ function buildAlerts({
 
         alerts.push({
             id: 'next-menu-starting-incomplete',
-            severity: nextMenu.days_until_start <= 117 ? 'error' : 'warning',
+            severity: nextMenu.days_until_start <= 7 ? 'error' : 'warning',
             priority_order: nextMenu.days_until_start,
             title: `Il prossimo menù "${nextMenu.season_type}" inizia ${formatDaysFromNow(
                 nextMenu.days_until_start,
@@ -419,15 +419,23 @@ export async function getDashboard() {
                     validTo: row.valid_to,
                 });
 
+            const uniqueReplacementNames = [
+                ...new Set(
+                    replacementCandidates
+                        .map((candidate) => candidate.name?.trim())
+                        .filter(Boolean),
+                ),
+            ];
+
             return {
                 ...row,
                 days_until_reactivation: toInt(row.days_until_reactivation),
                 type_label: capitalize(row.type),
                 replacement_name:
-                    replacementCandidates.length === 1
-                        ? replacementCandidates[0].name
+                    uniqueReplacementNames.length > 0
+                        ? uniqueReplacementNames.join(', ')
                         : null,
-                replacement_candidates_count: replacementCandidates.length,
+                replacement_candidates_count: uniqueReplacementNames.length,
                 action: {
                     type: 'navigate',
                     label: 'Apri piatto',

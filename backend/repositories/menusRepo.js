@@ -301,6 +301,7 @@ export async function deleteMealCompositionNoCoperto(
         WHERE dp.season_type = ?
           AND dp.id_meal = ?
           AND f.type <> 'coperto'
+          AND dp.used = 1
         `,
         [seasonType, idMeal],
     );

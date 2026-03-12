@@ -253,11 +253,18 @@ export async function listActiveSuspensions(poolOrConn) {
                 DATE_FORMAT(fa.valid_from, '%Y-%m-%d') AS valid_from,
                 DATE_FORMAT(fa.valid_to,   '%Y-%m-%d') AS valid_to,
                 fa.reason,
+                fa.restored_at,
                 DATEDIFF(DATE(fa.valid_to), CURDATE()) AS days_until_reactivation
             FROM food_availability fa
             JOIN food f ON f.id_food = fa.id_food
-            WHERE NOW() BETWEEN fa.valid_from AND fa.valid_to
-            ORDER BY fa.valid_to ASC, f.name ASC
+            WHERE fa.restored_at IS NULL
+            ORDER BY
+                CASE
+                    WHEN NOW() BETWEEN fa.valid_from AND fa.valid_to THEN 0
+                    ELSE 1
+                END,
+                fa.valid_to ASC,
+                f.name ASC
         `,
     );
 

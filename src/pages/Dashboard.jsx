@@ -175,7 +175,7 @@ function QuickStatusCard({ title, menu, emptyTitle, emptyMessage, onAction }) {
                             {menu.meals_compiled}/{menu.meals_total}
                         </div>
                         <div className="text-xs text-brand-textSecondary">
-                            {menu.completion_pct}% dei pasti avviati
+                            {menu.completion_pct}% dei pasti completati
                         </div>
                     </div>
 
@@ -369,13 +369,13 @@ function SuspendedDishRow({ dish, onAction }) {
                     <div className="text-sm text-brand-textSecondary">
                         {dish.replacement_name ? (
                             <>
-                                Sostituto attualmente inferito:{' '}
+                                Piatti sostitutivi:{' '}
                                 <span className="font-semibold text-brand-primary">
                                     {dish.replacement_name}
                                 </span>
                             </>
                         ) : (
-                            'Questa sostituzione non intacca nessun menù.'
+                            'Nessun piatto sostitutivo trovato al momento.'
                         )}
                     </div>
                 </div>

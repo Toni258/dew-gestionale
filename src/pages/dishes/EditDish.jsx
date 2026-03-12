@@ -283,6 +283,7 @@ export default function EditDish() {
                 validateOnSubmit
                 onSubmit={async (values) => {
                     const changed = hasDishChanged(originalDish, values);
+                    const imageChanged = values.img instanceof File;
                     const suspensionEnabled = !!values.suspension_enabled;
                     let suspensionActionHandled = false;
 
@@ -300,26 +301,30 @@ export default function EditDish() {
                                 'Impossibile disattivare la sospensione.',
                             fn: async () => {
                                 await unsuspendDish(dishId);
+                                console.log('1');
                                 return true;
                             },
                         });
 
+                        console.log('2');
                         if (!unsuspendRes.ok) return;
+                        console.log('3');
 
                         suspensionActionHandled = true;
                     }
 
+                    console.log('4');
+
                     // === 2) gestione SUSPEND (se ON + cambiata)
                     const suspensionChanged =
-                        initialSuspension &&
-                        (suspensionEnabled !== initialSuspension.enabled ||
-                            (suspensionEnabled &&
-                                (values.start_date !==
-                                    initialSuspension.valid_from ||
-                                    values.end_date !==
-                                        initialSuspension.valid_to ||
-                                    (values.reason ?? '') !==
-                                        (initialSuspension.reason ?? ''))));
+                        suspensionEnabled !== !!initialSuspension?.enabled ||
+                        (suspensionEnabled &&
+                            ((values.start_date ?? '') !==
+                                (initialSuspension?.valid_from ?? '') ||
+                                (values.end_date ?? '') !==
+                                    (initialSuspension?.valid_to ?? '') ||
+                                (values.reason ?? '') !==
+                                    (initialSuspension?.reason ?? '')));
 
                     if (suspensionEnabled && suspensionChanged) {
                         const suspendPreviewRes = await withLoaderNotify({
@@ -337,19 +342,32 @@ export default function EditDish() {
                             },
                         });
 
+                        console.log('5');
+
                         if (!suspendPreviewRes.ok) return;
+
+                        console.log('6');
 
                         const result = suspendPreviewRes.data;
 
+                        console.log('6.1');
                         if (result?.pending) return;
+                        console.log('6.2');
                         if (result?.applied === false) {
                             notify.warning('Operazione annullata');
+                            console.log('6.3');
                             return;
                         }
                         if (result?.applied === true) {
+                            console.log('6.4');
                             suspensionActionHandled = true;
+                            notify.success('Sospensione salvata correttamente');
                         }
+
+                        console.log('7');
                     }
+
+                    console.log('8');
 
                     // se NON è cambiato nulla (piatto) e immagine non è File
                     if (!changed && !imageChanged && !suspensionActionHandled) {
@@ -358,10 +376,14 @@ export default function EditDish() {
                         return;
                     }
 
+                    console.log('9');
+
                     if (suspensionActionHandled && !changed && !imageChanged) {
                         navigate('/dishes');
                         return;
                     }
+
+                    console.log('10');
 
                     // === 3) update dish (senza i campi sospensione)
                     const formData = new FormData();
