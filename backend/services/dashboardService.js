@@ -148,8 +148,33 @@ function buildAlerts({
     lastEndedMenu,
     nextIncompleteMeals,
     suspensions,
+    passwordResetRequests = [],
+    isSuperUser = false,
 }) {
     const alerts = [];
+
+    if (isSuperUser && passwordResetRequests.length > 0) {
+        const count = passwordResetRequests.length;
+
+        alerts.push({
+            id: 'password-reset-requests',
+            severity: 'error',
+            priority_order: -1000,
+            title:
+                count === 1
+                    ? 'Un utente ha richiesto il reset password'
+                    : `${count} utenti hanno richiesto il reset password`,
+            message:
+                count === 1
+                    ? 'È presente una richiesta urgente di ripristino password da gestire.'
+                    : `Sono presenti ${count} richieste urgenti di ripristino password da gestire.`,
+            action: {
+                type: 'navigate',
+                label: 'Apri utenti',
+                target: '/user-manager/gestionale',
+            },
+        });
+    }
 
     if (currentMenu && currentMenu.days_until_end <= 14) {
         alerts.push({
@@ -345,7 +370,7 @@ function buildChecklist({
     return sortBySeverity(items);
 }
 
-export async function getDashboard() {
+export async function getDashboard(reqUser = null) {
     const menuRows = await repo.listMenuSummaries(pool);
     const menus = menuRows.map(enrichMenu);
 
@@ -398,12 +423,19 @@ export async function getDashboard() {
         }),
     );
 
+    const passwordResetRequests =
+        reqUser?.role === 'super_user'
+            ? await repo.listPasswordResetRequests(pool)
+            : [];
+
     const alerts = buildAlerts({
         currentMenu,
         nextMenu,
         lastEndedMenu,
         nextIncompleteMeals,
         suspensions: activeSuspensions,
+        passwordResetRequests,
+        isSuperUser: reqUser?.role === 'super_user',
     });
 
     const checklist = buildChecklist({
@@ -423,5 +455,6 @@ export async function getDashboard() {
         alerts,
         checklist,
         suspended_dishes: activeSuspensions,
+        password_reset_requests: passwordResetRequests,
     };
 }

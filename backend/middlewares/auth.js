@@ -10,9 +10,18 @@ export function requireAuth(req, res, next) {
         const payload = jwt.verify(token, JWT_SECRET);
 
         // se admin sospende un utente dopo il login, lo blocchi comunque
-        if (payload?.status === 'suspended') {
+        if (
+            payload?.status === 'suspended' ||
+            payload?.status === 'password_reset_requested'
+        ) {
             res.clearCookie('dew_session', { sameSite: 'lax', secure: false });
-            return res.status(403).json({ message: 'Utente sospeso' });
+
+            return res.status(403).json({
+                message:
+                    payload?.status === 'password_reset_requested'
+                        ? 'Hai richiesto il reset della password. Attendi una password temporanea dal super user.'
+                        : 'Utente sospeso',
+            });
         }
 
         req.user = payload; // { id, role, name, surname, email }

@@ -159,7 +159,13 @@ export async function getFilteredUsersGestionale(req, res) {
 
             ${where}
 
-            ORDER BY c.id ASC
+            ORDER BY
+                CASE
+                    WHEN c.status = 'password_reset_requested' THEN 0
+                    WHEN c.role = 'super_user' THEN 1
+                    ELSE 2
+                END,
+                c.id ASC
             LIMIT ? OFFSET ?
         `;
 

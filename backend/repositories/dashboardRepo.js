@@ -311,3 +311,24 @@ export async function listReplacementCandidatesForSuspension(
 
     return rows;
 }
+
+export async function listPasswordResetRequests(poolOrConn) {
+    const [rows] = await poolOrConn.query(
+        `
+            SELECT
+                id,
+                email,
+                name,
+                surname,
+                role,
+                status,
+                DATE_FORMAT(updated_at, '%d/%m/%Y %H:%i') AS requested_at_label,
+                DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') AS requested_at
+            FROM backoffice_users
+            WHERE status = 'password_reset_requested'
+            ORDER BY updated_at ASC, id ASC
+        `,
+    );
+
+    return rows;
+}

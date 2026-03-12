@@ -12,6 +12,9 @@ import { withLoaderNotify } from '../services/withLoaderNotify';
 import { getDashboardData } from '../services/dashboardApi';
 import { archiveMenu } from '../services/menusApi';
 
+import { useAuth } from '../context/AuthContext';
+import PasswordResetRequestsModal from '../components/modals/PasswordResetRequestsModal';
+
 const ALERT_STYLES = {
     error: {
         container: 'border-brand-error bg-brand-error/5',
@@ -397,6 +400,10 @@ function SuspendedDishRow({ dish, onAction }) {
 export default function Dashboard() {
     const navigate = useNavigate();
 
+    const { isSuperUser } = useAuth();
+    const [showPasswordResetRequestsModal, setShowPasswordResetRequestsModal] =
+        useState(false);
+
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -431,6 +438,19 @@ export default function Dashboard() {
                 'nonBlocking',
             );
             setData(result);
+
+            if (
+                isSuperUser &&
+                Array.isArray(result?.password_reset_requests) &&
+                result.password_reset_requests.length > 0 &&
+                !sessionStorage.getItem('password-reset-requests-modal-shown')
+            ) {
+                setShowPasswordResetRequestsModal(true);
+                sessionStorage.setItem(
+                    'password-reset-requests-modal-shown',
+                    '1',
+                );
+            }
         } catch (err) {
             console.error(err);
             setData(null);
@@ -648,6 +668,16 @@ export default function Dashboard() {
                     setMenuToArchive(null);
                 }}
                 onConfirm={handleConfirmArchive}
+            />
+
+            <PasswordResetRequestsModal
+                show={showPasswordResetRequestsModal}
+                requests={data?.password_reset_requests ?? []}
+                onClose={() => setShowPasswordResetRequestsModal(false)}
+                onOpenUsers={() => {
+                    setShowPasswordResetRequestsModal(false);
+                    navigate('/user-manager/gestionale');
+                }}
             />
         </AppLayout>
     );

@@ -51,10 +51,15 @@ export default function UserManagerGestionale() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
 
+    const passwordResetRequestsCount = rows.filter(
+        (row) => row.status === 'password_reset_requested',
+    ).length;
+
     const STATUS_LABELS = {
         active: 'Attivo',
         suspended: 'Sospeso',
         must_change_password: 'Password da cambiare',
+        password_reset_requested: 'Reset password richiesto',
     };
 
     // Applica filtri: li “blocchi” e resetti pagina a 1
@@ -128,6 +133,41 @@ export default function UserManagerGestionale() {
                 Elenco utenti del gestionale
             </h1>
 
+            {isSuperUser && passwordResetRequestsCount > 0 && (
+                <div className="m-4">
+                    <div className="rounded-2xl border border-brand-error/30 bg-brand-error/5 px-5 py-4">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <div className="text-lg font-semibold text-brand-error">
+                                    Richieste reset password da gestire
+                                </div>
+                                <div className="text-sm text-brand-textSecondary mt-1">
+                                    {passwordResetRequestsCount === 1
+                                        ? 'È presente 1 utente che ha richiesto il ripristino password.'
+                                        : `Sono presenti ${passwordResetRequestsCount} utenti che hanno richiesto il ripristino password.`}
+                                </div>
+                            </div>
+
+                            <Button
+                                type="button"
+                                variant="danger"
+                                size="md"
+                                className="rounded-lg shrink-0"
+                                onClick={() => {
+                                    setAppliedFilters((prev) => ({
+                                        ...prev,
+                                        status: 'password_reset_requested',
+                                    }));
+                                    setPage(1);
+                                }}
+                            >
+                                Mostra richieste
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* BARRA FILTRI */}
             <div className="mt-1 mb-3 h-[60px] flex justify-between items-center">
                 {/* SEARCH INPUT */}
@@ -142,6 +182,7 @@ export default function UserManagerGestionale() {
 
                 {/* FILTRI */}
                 <Form
+                    key={`${appliedFilters.ruolo}-${appliedFilters.status}`}
                     initialValues={{
                         ruolo: appliedFilters.ruolo,
                         status: appliedFilters.status,
@@ -169,7 +210,7 @@ export default function UserManagerGestionale() {
                             />
                         </FormGroup>
 
-                        <FormGroup name="status" className="w-[210px]">
+                        <FormGroup name="status" className="w-[250px]">
                             <CustomSelect
                                 name="status"
                                 placeholder="Stato utente"
@@ -178,6 +219,10 @@ export default function UserManagerGestionale() {
                                     {
                                         value: 'active',
                                         label: 'Attivo',
+                                    },
+                                    {
+                                        value: 'password_reset_requested',
+                                        label: 'Reset password richiesto',
                                     },
                                     {
                                         value: 'must_change_password',
@@ -218,7 +263,7 @@ export default function UserManagerGestionale() {
                             </th>
                             <th className="px-4 py-3 text-left">CREATO IL</th>
                             <th className="px-4 py-3 text-left">
-                                ULTIMA AZIONE
+                                ULTIMO AGGIORNAMENTO
                             </th>
                             {isSuperUser && (
                                 <th className="px-4 py-3 text-left">AZIONI</th>
@@ -244,11 +289,20 @@ export default function UserManagerGestionale() {
                             return (
                                 <tr key={user.id} className="border-b">
                                     <td className="px-4 py-3">
-                                        <span>
-                                            {user.role == 'super_user'
-                                                ? 'Super user'
-                                                : 'Operatore'}
-                                        </span>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span>
+                                                {user.role == 'super_user'
+                                                    ? 'Super user'
+                                                    : 'Operatore'}
+                                            </span>
+
+                                            {user.status ===
+                                                'password_reset_requested' && (
+                                                <span className="inline-flex items-center rounded-full border border-brand-error/25 bg-brand-error/10 px-3 py-1 text-xs font-semibold text-brand-error">
+                                                    Richiesta urgente
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span>{user.email}</span>
@@ -259,8 +313,22 @@ export default function UserManagerGestionale() {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span>
-                                            {STATUS_LABELS[user.status] ||
+                                        <span
+                                            className={[
+                                                'inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold',
+                                                user.status ===
+                                                'password_reset_requested'
+                                                    ? 'border-brand-error/25 bg-brand-error/10 text-brand-error'
+                                                    : user.status ===
+                                                        'suspended'
+                                                      ? 'border-brand-error/20 bg-brand-error/8 text-brand-error'
+                                                      : user.status ===
+                                                          'must_change_password'
+                                                        ? 'border-brand-warning/20 bg-brand-warning/10 text-brand-warning'
+                                                        : 'border-brand-primary/20 bg-brand-primary/10 text-brand-primary',
+                                            ].join(' ')}
+                                        >
+                                            {STATUS_LABELS[user.status] ??
                                                 user.status}
                                         </span>
                                     </td>

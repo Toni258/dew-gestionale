@@ -18,3 +18,9 @@ export function changePassword(currentPassword, newPassword) {
         newPassword,
     });
 }
+
+export function requestPasswordReset(email) {
+    return postJson('/api/auth/request-password-reset', {
+        email,
+    });
+}

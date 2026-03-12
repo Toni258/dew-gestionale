@@ -92,6 +92,28 @@ export default function Login() {
                         </div>
                     )}
 
+                    {reason === 'idle_logout' && (
+                        <AlertBox
+                            variant="warning"
+                            title="Sessione scaduta per inattività"
+                            className="w-[85%] mb-4"
+                        >
+                            Sei stato disconnesso automaticamente dopo 10 minuti
+                            senza attività.
+                        </AlertBox>
+                    )}
+
+                    {reason === 'password_reset_requested' && (
+                        <AlertBox
+                            variant="warning"
+                            title="Reset password richiesto"
+                            className="w-[85%] mb-4"
+                        >
+                            Hai richiesto il ripristino della password. Attendi
+                            che il super user imposti una password temporanea.
+                        </AlertBox>
+                    )}
+
                     {/* FORM */}
                     <Form
                         className="w-full flex flex-col items-center"

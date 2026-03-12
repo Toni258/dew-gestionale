@@ -28,6 +28,14 @@ export async function login(req, res, next) {
             return res.status(403).json({ message: 'Utente sospeso' });
         }
 
+        if (user.status === 'password_reset_requested') {
+            return res.status(403).json({
+                code: 'PASSWORD_RESET_REQUESTED',
+                message:
+                    'Hai già richiesto il reset della password. Attendi che il super user imposti una password temporanea.',
+            });
+        }
+
         const ok = await bcrypt.compare(password, user.password_hash);
         if (!ok)
             return res.status(401).json({ message: 'Credenziali non valide' });
@@ -144,6 +152,79 @@ export async function changePassword(req, res, next) {
                 surname: user.surname,
                 status: 'active',
             },
+        });
+    } catch (e) {
+        next(e);
+    }
+}
+
+export async function requestPasswordReset(req, res, next) {
+    try {
+        const rawEmail = String(req.body?.email ?? '')
+            .trim()
+            .toLowerCase();
+
+        if (!rawEmail) {
+            return res.status(400).json({
+                message: 'Email obbligatoria',
+            });
+        }
+
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!re.test(rawEmail)) {
+            return res.status(400).json({
+                message: 'Email non valida',
+            });
+        }
+
+        const [rows] = await pool.query(
+            `
+                SELECT id, status
+                FROM backoffice_users
+                WHERE email = ?
+                LIMIT 1
+            `,
+            [rawEmail],
+        );
+
+        const user = rows?.[0];
+
+        if (!user) {
+            return res.status(404).json({
+                message:
+                    'Nessun utente del gestionale trovato con questa email',
+            });
+        }
+
+        if (user.status === 'suspended') {
+            return res.status(403).json({
+                message: 'Utente sospeso. Contatta il super user.',
+            });
+        }
+
+        if (user.status === 'password_reset_requested') {
+            return res.json({
+                ok: true,
+                alreadyRequested: true,
+                message:
+                    'La richiesta di reset password è già stata inviata al super user.',
+            });
+        }
+
+        await pool.query(
+            `
+                UPDATE backoffice_users
+                SET status = 'password_reset_requested',
+                    updated_at = NOW()
+                WHERE id = ?
+            `,
+            [user.id],
+        );
+
+        return res.json({
+            ok: true,
+            message:
+                'Richiesta inviata correttamente. Il super user imposterà una password temporanea.',
         });
     } catch (e) {
         next(e);
