@@ -1,6 +1,10 @@
+/**
+ * Report page for food consumption.
+ * Shared helpers keep common formatting logic outside the page file.
+ */
 import AppLayout from '../../components/layout/AppLayout';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Form, { useFormContext } from '../../components/ui/Form';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Form from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -10,36 +14,24 @@ import SearchableSelect from '../../components/ui/SearchableSelect';
 import Pagination from '../../components/ui/Pagination';
 import { withLoader } from '../../services/withLoader';
 import { getConsumiMenus, getConsumiReport } from '../../services/reportsApi';
+import StatsMenuSelectionSync from '../../components/statistics/StatsMenuSelectionSync';
+import StatsKpiCard from '../../components/statistics/StatsKpiCard';
+import {
+    buildMenuValue,
+    parseMenuValue,
+} from '../../utils/statistics/menuValue';
+import {
+    fmtDec,
+    fmtInt,
+    formatDateTime,
+} from '../../utils/statistics/reportFormatters';
 
-function fmtInt(n) {
-    const x = Number(n) || 0;
-    return Math.round(x).toLocaleString('it-IT');
-}
+const MenuSelectionSync = StatsMenuSelectionSync;
+const KpiCard = StatsKpiCard;
 
-function formatDateTime(value) {
-    if (!value) return '';
-    const d = new Date(value);
-    return d.toLocaleString('it-IT', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    });
-}
-
-function fmtDec(n, digits = 2) {
-    const x = Number(n) || 0;
-    return x.toLocaleString('it-IT', {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-    });
-}
-
-function fmtPct(n) {
-    const x = Number(n) || 0;
-    return `${fmtInt(x)}%`;
+function fmtPct(value) {
+    const numericValue = Number(value) || 0;
+    return `${fmtInt(numericValue)}%`;
 }
 
 const MEAL_OPTIONS = [
@@ -57,55 +49,6 @@ const COURSE_OPTIONS = [
     { value: 'coperto', label: 'Coperto' },
     { value: 'speciale', label: 'Speciale' },
 ];
-
-function buildMenuValue(menu) {
-    return `${menu.kind}:${menu.ref}`;
-}
-
-function parseMenuValue(value) {
-    const [menuKind = '', ...rest] = String(value || '').split(':');
-    return {
-        menuKind,
-        menuRef: rest.join(':'),
-    };
-}
-
-function MenuSelectionSync({
-    menuRows,
-    selectedMenu,
-    setSelectedMenu,
-    setFormVersion,
-}) {
-    const form = useFormContext();
-    const prevMenuValueRef = useRef('');
-
-    const menuValue = form?.values?.menuValue ?? '';
-
-    useEffect(() => {
-        if (!menuValue) return;
-
-        const found = (menuRows || []).find(
-            (m) => buildMenuValue(m) === menuValue,
-        );
-        if (!found) return;
-
-        const prev = prevMenuValueRef.current;
-        prevMenuValueRef.current = menuValue;
-
-        const firstMount = prev === '';
-        const changed = prev !== '' && prev !== menuValue;
-
-        setSelectedMenu(found);
-
-        if (firstMount) return;
-        if (!changed) return;
-
-        setFormVersion((v) => v + 1);
-    }, [menuValue, menuRows, form, setSelectedMenu, setFormVersion]);
-
-    return null;
-}
-
 export default function StatisticheConsumi() {
     const [menus, setMenus] = useState([]);
     const [menusLoading, setMenusLoading] = useState(true);
@@ -364,30 +307,6 @@ export default function StatisticheConsumi() {
         setCommentsPage(1);
     };
 
-    const KpiCard = ({ icon, iconBg, value, label, sub }) => (
-        <Card className="p-5">
-            <div className="flex items-start gap-3">
-                <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}
-                >
-                    <span className="text-lg">{icon}</span>
-                </div>
-                <div>
-                    <div className="text-2xl font-bold text-brand-text">
-                        {value}
-                    </div>
-                    <div className="text-sm text-brand-textSecondary">
-                        {label}
-                    </div>
-                    {sub && (
-                        <div className="text-xs text-brand-textSecondary opacity-80 mt-1">
-                            {sub}
-                        </div>
-                    )}
-                </div>
-            </div>
-        </Card>
-    );
 
     const renderRankList = (rows, mode) => {
         const badgeBg = mode === 'good' ? 'bg-brand-primary' : 'bg-red-600';

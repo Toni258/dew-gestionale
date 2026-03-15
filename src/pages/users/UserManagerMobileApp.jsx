@@ -1,35 +1,34 @@
+/**
+ * Mobile app user manager page.
+ * Shared table and filter helpers keep the page focused on actions and modals.
+ */
+import { useState } from 'react';
+
 import AppLayout from '../../components/layout/AppLayout';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import SearchInput from '../../components/ui/SearchInput';
-import CustomSelect from '../../components/ui/CustomSelect';
-import Form from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
-import Button from '../../components/ui/Button';
-import Pagination from '../../components/ui/Pagination';
+import CustomSelect from '../../components/ui/CustomSelect';
+import UsersFiltersBar from '../../components/users/UsersFiltersBar';
+import MobileAppUsersTable from '../../components/users/MobileAppUsersTable';
+import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
+import DisableAppUserPassword from '../../components/modals/DisableAppUserPassword';
+import DeleteUserModal from '../../components/modals/DeleteUserModal';
 
-import { formatDateTime } from '../../utils/formatDateTime';
 import { useAuth } from '../../context/AuthContext';
-import { withLoader } from '../../services/withLoader';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
+import { useUsersTable } from '../../hooks/users/useUsersTable';
 import {
     deleteMobileAppUser,
     disableMobileAppUser,
     getMobileAppUsers,
     updateMobileAppUserInfo,
 } from '../../services/usersApi';
-
-import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
-import DisableAppUserPassword from '../../components/modals/DisableAppUserPassword';
-import DeleteUserModal from '../../components/modals/DeleteUserModal';
+import {
+    MOBILE_MODAL_ROLE_OPTIONS,
+    MOBILE_ROLE_OPTIONS,
+} from '../../domain/users';
 
 export default function UserManagerMobileApp() {
     const { isSuperUser } = useAuth();
-
-    const [query, setQuery] = useState('');
-    const [appliedFilters, setAppliedFilters] = useState({
-        ruolo: '',
-    });
 
     const [showModifyUserInfoModal, setShowModifyUserInfoModal] =
         useState(false);
@@ -38,68 +37,32 @@ export default function UserManagerMobileApp() {
     const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
     const [userSelected, setUserSelected] = useState(null);
 
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const {
+        appliedFilters,
+        page,
+        pageSize,
+        rows,
+        total,
+        totalPages,
+        loading,
+        handleSearch,
+        applyFilters,
+        handlePageSizeChange,
+        setPage,
+        fetchRows,
+    } = useUsersTable({
+        initialFilters: {
+            ruolo: '',
+        },
+        fetcher: getMobileAppUsers,
+    });
 
-    const [rows, setRows] = useState([]);
-    const [total, setTotal] = useState(0);
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(false);
-
-    const STATUS_LABELS = {
-        Altro: 'Altro',
-        caregiver: 'Caregiver',
-        super_user: 'Super User',
-    };
-
-    // Applica filtri: li “blocchi” e resetti pagina a 1
-    const handleFilters = (values) => {
-        setAppliedFilters({
-            ruolo: values.ruolo || '',
-        });
-        setPage(1);
-    };
-
-    const handlePageSizeChange = (e) => {
-        setPageSize(Number(e.target.value));
-        setPage(1);
-    };
-
-    // Payload “finale” usato per chiamare API
-    const requestParams = useMemo(() => {
-        return {
-            search: query,
-            ruolo: appliedFilters.ruolo || '',
-            page,
-            pageSize,
-        };
-    }, [query, appliedFilters, page, pageSize]);
-
-    const fetchUsers = useCallback(async () => {
-        setLoading(true);
-        setError('');
-
-        try {
-            await withLoader('Caricamento utenti…', async () => {
-                const json = await getMobileAppUsers(requestParams);
-                setRows(json.data || []);
-                setTotal(json.total || 0);
-            });
-        } catch {
-            setError('Errore nel caricamento degli utenti.');
-            setRows([]);
-            setTotal(0);
-        } finally {
-            setLoading(false);
-        }
-    }, [requestParams]);
-
-    // Caricamento iniziale + quando cambiano filtri applicati/pagina/query
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+    function clearSelection() {
+        setUserSelected(null);
+        setShowModifyUserInfoModal(false);
+        setShowDisableAppUserModal(false);
+        setShowDeleteUserModal(false);
+    }
 
     return (
         <AppLayout title="GESTIONE UTENTI">
@@ -107,182 +70,59 @@ export default function UserManagerMobileApp() {
                 Elenco utenti dell'app mobile
             </h1>
 
-            {/* BARRA FILTRI */}
-            <div className="mt-1 mb-3 h-[60px] flex justify-between items-center">
-                {/* SEARCH INPUT */}
-                <SearchInput
-                    placeholder="Cerca un utente per nome..."
-                    onSearch={(q) => {
-                        setQuery(q);
-                        setPage(1);
-                    }}
-                    className="w-[400px] [&>input]:rounded-full"
-                />
+            <UsersFiltersBar
+                searchPlaceholder="Cerca un utente per nome..."
+                onSearch={handleSearch}
+                formKey={appliedFilters.ruolo}
+                initialValues={{
+                    ruolo: appliedFilters.ruolo,
+                }}
+                onSubmit={(values) =>
+                    applyFilters({
+                        ruolo: values.ruolo || '',
+                    })
+                }
+            >
+                <FormGroup name="ruolo" className="w-[145px]">
+                    <CustomSelect
+                        name="ruolo"
+                        placeholder="Ruolo utente"
+                        options={MOBILE_ROLE_OPTIONS}
+                        height="h-[45px]"
+                        className="w-full [&>div>button]:rounded-full"
+                    />
+                </FormGroup>
+            </UsersFiltersBar>
 
-                {/* FILTRI */}
-                <Form
-                    initialValues={{
-                        stato: appliedFilters.stato,
-                        allergeni: appliedFilters.allergeni,
-                        tipologia: appliedFilters.tipologia,
-                    }}
-                    onSubmit={handleFilters}
-                >
-                    <div className="flex items-center gap-5">
-                        <FormGroup name="ruolo" className="w-[145px]">
-                            <CustomSelect
-                                name="ruolo"
-                                placeholder="Ruolo utente"
-                                options={[
-                                    { value: '', label: '— Ruolo —' },
-                                    {
-                                        value: 'super_user',
-                                        label: 'Super User',
-                                    },
-                                    {
-                                        value: 'caregiver',
-                                        label: 'Caregiver',
-                                    },
-                                    { value: 'altro', label: 'Altro' },
-                                ]}
-                                height="h-[45px]"
-                                className="w-full [&>div>button]:rounded-full"
-                            />
-                        </FormGroup>
+            <MobileAppUsersTable
+                rows={rows}
+                loading={loading}
+                isSuperUser={isSuperUser}
+                total={total}
+                page={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={handlePageSizeChange}
+                onEdit={(selectedUser) => {
+                    setUserSelected(selectedUser);
+                    setShowModifyUserInfoModal(true);
+                }}
+                onDisable={(selectedUser) => {
+                    setUserSelected(selectedUser);
+                    setShowDisableAppUserModal(true);
+                }}
+                onDelete={(selectedUser) => {
+                    setUserSelected(selectedUser);
+                    setShowDeleteUserModal(true);
+                }}
+            />
 
-                        <Button
-                            type="submit"
-                            size="md"
-                            variant="primary"
-                            className="px-4 py-2 rounded-full"
-                        >
-                            Applica filtri
-                        </Button>
-                    </div>
-                </Form>
-            </div>
-
-            <div className="bg-white border border-brand-divider rounded-xl overflow-hidden">
-                <table className="w-full text-sm table-auto">
-                    <thead className="bg-brand-primary text-white">
-                        <tr>
-                            <th className="px-4 py-3 text-left">STATO</th>
-                            <th className="px-4 py-3 text-left">ID</th>
-                            <th className="px-4 py-3 text-left">RUOLO</th>
-                            <th className="px-4 py-3 text-left">EMAIL</th>
-                            <th className="px-4 py-3 text-left">UTENTE</th>
-                            <th className="px-4 py-3 text-left">
-                                ACCEPTANCE IP
-                            </th>
-                            <th className="px-4 py-3 text-left">
-                                ACCEPTANCE TIME
-                            </th>
-                            {isSuperUser && (
-                                <th className="px-4 py-3 text-left">AZIONI</th>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {!loading && rows.length === 0 && (
-                            <tr>
-                                <td
-                                    colSpan={isSuperUser ? 8 : 7}
-                                    className="px-4 py-4 text-brand-textSecondary"
-                                >
-                                    Nessun utente trovato.
-                                </td>
-                            </tr>
-                        )}
-
-                        {rows.map((r) => (
-                            <tr key={r.id_caregiver} className="border-b">
-                                <td className="px-4 py-3">
-                                    {r.is_disabled
-                                        ? 'Disabilitato'
-                                        : 'Abilitato'}
-                                </td>
-                                <td className="px-4 py-3">{r.id_caregiver}</td>
-                                <td className="px-4 py-3">
-                                    {STATUS_LABELS[r.role] || r.role}
-                                </td>
-                                <td className="px-4 py-3">{r.email}</td>
-                                <td className="px-4 py-3">
-                                    {r.name} {r.surname}
-                                </td>
-                                <td className="px-4 py-3">{r.acceptance_ip}</td>
-                                <td className="px-4 py-3">
-                                    {formatDateTime(r.acceptance_time)}
-                                </td>
-                                {isSuperUser && (
-                                    <td className="px-4 py-3">
-                                        <button
-                                            className="text-red-500"
-                                            onClick={() => {
-                                                setUserSelected(r);
-                                                setShowModifyUserInfoModal(
-                                                    true,
-                                                );
-                                            }}
-                                        >
-                                            ✏
-                                        </button>
-                                        {!r.is_disabled && (
-                                            <button
-                                                className="ml-3 text-red-500"
-                                                onClick={() => {
-                                                    setUserSelected(r);
-                                                    setShowDisableAppUserModal(
-                                                        true,
-                                                    );
-                                                }}
-                                            >
-                                                🚫
-                                            </button>
-                                        )}
-
-                                        <button
-                                            className="ml-3 text-red-500"
-                                            onClick={() => {
-                                                setUserSelected(r);
-                                                setShowDeleteUserModal(true);
-                                            }}
-                                        >
-                                            🗑
-                                        </button>
-                                    </td>
-                                )}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                <Pagination
-                    total={total}
-                    page={page}
-                    totalPages={totalPages}
-                    pageSize={pageSize}
-                    loading={loading}
-                    onPageChange={setPage}
-                    onPageSizeChange={handlePageSizeChange}
-                />
-            </div>
-
-            {/* MODALE MODIFICA INFO UTENTE */}
             <ModifyUserInfoModal
                 show={showModifyUserInfoModal}
                 user={userSelected}
-                ruoli={[
-                    {
-                        value: 'super_user',
-                        label: 'Super User',
-                    },
-                    { value: 'caregiver', label: 'Caregiver' },
-                    { value: 'Altro', label: 'Altro' },
-                ]}
-                onClose={() => {
-                    setUserSelected(null);
-                    setShowModifyUserInfoModal(false);
-                }}
+                ruoli={MOBILE_MODAL_ROLE_OPTIONS}
+                onClose={clearSelection}
                 onConfirm={async (payload) => {
                     const result = await withLoaderNotify({
                         message: 'Salvataggio modifiche…',
@@ -292,16 +132,18 @@ export default function UserManagerMobileApp() {
                         errorMessage:
                             'Impossibile aggiornare le informazioni utente.',
                         fn: async () => {
-                            await updateMobileAppUserInfo(userSelected.id_caregiver, {
-                                name: payload.name,
-                                surname: payload.surname,
-                                email: payload.email,
-                                role: payload.role,
-                            });
+                            await updateMobileAppUserInfo(
+                                userSelected.id_caregiver,
+                                {
+                                    name: payload.name,
+                                    surname: payload.surname,
+                                    email: payload.email,
+                                    role: payload.role,
+                                },
+                            );
 
-                            setUserSelected(null);
-                            setShowModifyUserInfoModal(false);
-                            await fetchUsers();
+                            clearSelection();
+                            await fetchRows();
                             return true;
                         },
                     });
@@ -310,15 +152,11 @@ export default function UserManagerMobileApp() {
                 }}
             />
 
-            {/* MODALE REIMPOSTA PASSWORD UTENTE */}
             <DisableAppUserPassword
                 show={showDisableAppUserModal}
                 user={userSelected}
-                onClose={() => {
-                    setUserSelected(null);
-                    setShowDisableAppUserModal(false);
-                }}
-                onConfirm={async (values) => {
+                onClose={clearSelection}
+                onConfirm={async () => {
                     const result = await withLoaderNotify({
                         message: 'Disabilitazione utente…',
                         mode: 'blocking',
@@ -326,11 +164,12 @@ export default function UserManagerMobileApp() {
                         errorTitle: 'Errore disabilitazione utente',
                         errorMessage: 'Impossibile disabilitare l’utente.',
                         fn: async () => {
-                            await disableMobileAppUser(userSelected.id_caregiver);
+                            await disableMobileAppUser(
+                                userSelected.id_caregiver,
+                            );
 
-                            setUserSelected(null);
-                            setShowDisableAppUserModal(false);
-                            await fetchUsers();
+                            clearSelection();
+                            await fetchRows();
                             return true;
                         },
                     });
@@ -339,14 +178,10 @@ export default function UserManagerMobileApp() {
                 }}
             />
 
-            {/* MODALE ELIMINA UTENTE */}
             <DeleteUserModal
                 show={showDeleteUserModal}
                 user={userSelected}
-                onClose={() => {
-                    setUserSelected(null);
-                    setShowDeleteUserModal(false);
-                }}
+                onClose={clearSelection}
                 onConfirm={async () => {
                     const result = await withLoaderNotify({
                         message: 'Eliminazione utente…',
@@ -355,11 +190,12 @@ export default function UserManagerMobileApp() {
                         errorTitle: 'Errore eliminazione utente',
                         errorMessage: 'Impossibile eliminare l’utente.',
                         fn: async () => {
-                            await deleteMobileAppUser(userSelected.id_caregiver);
+                            await deleteMobileAppUser(
+                                userSelected.id_caregiver,
+                            );
 
-                            setUserSelected(null);
-                            setShowDeleteUserModal(false);
-                            await fetchUsers();
+                            clearSelection();
+                            await fetchRows();
                             return true;
                         },
                     });

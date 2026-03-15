@@ -1,6 +1,10 @@
+/**
+ * Report page for food choices.
+ * Shared helpers keep formatting and presentational cards outside the page file.
+ */
 import AppLayout from '../../components/layout/AppLayout';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Form, { useFormContext } from '../../components/ui/Form';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Form from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -10,62 +14,26 @@ import SearchableSelect from '../../components/ui/SearchableSelect';
 import Pagination from '../../components/ui/Pagination';
 import { withLoader } from '../../services/withLoader';
 import { getScelteMenus, getScelteReport } from '../../services/reportsApi';
+import StatsMenuSelectionSync from '../../components/statistics/StatsMenuSelectionSync';
+import StatsKpiCard from '../../components/statistics/StatsKpiCard';
+import StatsRankCard from '../../components/statistics/StatsRankCard';
+import StatsBarsCard from '../../components/statistics/StatsBarsCard';
+import {
+    buildMenuValue,
+    parseMenuValue,
+} from '../../utils/statistics/menuValue';
+import {
+    fmtInt,
+    fmtPct,
+    formatChooserLabel,
+    formatCourseLabel,
+    formatDate,
+} from '../../utils/statistics/reportFormatters';
 
-function fmtInt(n) {
-    const x = Number(n) || 0;
-    return Math.round(x).toLocaleString('it-IT');
-}
-
-function fmtDec(n, digits = 2) {
-    const x = Number(n) || 0;
-    return x.toLocaleString('it-IT', {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-    });
-}
-
-function fmtPct(n, digits = 1) {
-    const x = Number(n) || 0;
-    return `${x.toLocaleString('it-IT', {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-    })}%`;
-}
-
-function formatDate(value) {
-    if (!value) return '';
-    const d = new Date(value);
-    return d.toLocaleDateString('it-IT', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    });
-}
-
-function formatCourseLabel(value) {
-    if (value === 'ultimo') return 'Dessert';
-    if (!value) return '';
-    return String(value).charAt(0).toUpperCase() + String(value).slice(1);
-}
-
-function formatChooserLabel(value) {
-    if (value === 'guest') return 'Ospite';
-    if (value === 'family') return 'Famiglia';
-    if (value === 'caregiver') return 'Caregiver';
-    return value || '';
-}
-
-function buildMenuValue(menu) {
-    return `${menu.kind}:${menu.ref}`;
-}
-
-function parseMenuValue(value) {
-    const [menuKind = '', ...rest] = String(value || '').split(':');
-    return {
-        menuKind,
-        menuRef: rest.join(':'),
-    };
-}
+const MenuSelectionSync = StatsMenuSelectionSync;
+const KpiCard = StatsKpiCard;
+const RankCard = StatsRankCard;
+const BarsCard = StatsBarsCard;
 
 const MEAL_OPTIONS = [
     { value: '', label: 'Tutti i pasti' },
@@ -103,222 +71,6 @@ const BABY_FOOD_OPTIONS = [
     { value: '1', label: 'Solo baby food' },
     { value: '0', label: 'Escludi baby food' },
 ];
-
-function MenuSelectionSync({ menuRows, setSelectedMenu, setFormVersion }) {
-    const form = useFormContext();
-    const prevMenuValueRef = useRef('');
-
-    const menuValue = form?.values?.menuValue ?? '';
-
-    useEffect(() => {
-        if (!menuValue) return;
-
-        const found = (menuRows || []).find(
-            (m) => buildMenuValue(m) === menuValue,
-        );
-        if (!found) return;
-
-        const prev = prevMenuValueRef.current;
-        prevMenuValueRef.current = menuValue;
-
-        const firstMount = prev === '';
-        const changed = prev !== '' && prev !== menuValue;
-
-        setSelectedMenu(found);
-
-        if (firstMount) return;
-        if (!changed) return;
-
-        setFormVersion((v) => v + 1);
-    }, [menuValue, menuRows, setSelectedMenu, setFormVersion]);
-
-    return null;
-}
-
-function KpiCard({ icon, iconBg, value, label, sub }) {
-    return (
-        <Card className="p-5">
-            <div className="flex items-start gap-3">
-                <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}
-                >
-                    <span className="text-lg">{icon}</span>
-                </div>
-                <div className="min-w-0">
-                    <div className="text-2xl font-bold text-brand-text break-words capitalize">
-                        {value}
-                    </div>
-                    <div className="text-sm text-brand-textSecondary">
-                        {label}
-                    </div>
-                    {sub && (
-                        <div className="text-xs text-brand-textSecondary opacity-80 mt-1">
-                            {sub}
-                        </div>
-                    )}
-                </div>
-            </div>
-        </Card>
-    );
-}
-
-function RankCard({ title, icon, rows, mode = 'top' }) {
-    const badgeBg =
-        mode === 'top'
-            ? 'bg-brand-primary'
-            : mode === 'bottom'
-              ? 'bg-red-600'
-              : 'bg-slate-600';
-
-    const valueTextClass =
-        mode === 'top'
-            ? 'text-brand-primary'
-            : mode === 'bottom'
-              ? 'text-red-600'
-              : 'text-slate-700';
-
-    return (
-        <Card>
-            <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">{icon}</span>
-                <div className="font-semibold text-brand-text">{title}</div>
-            </div>
-
-            {!rows || rows.length === 0 ? (
-                <div className="text-brand-textSecondary italic">
-                    Nessun dato nel periodo selezionato.
-                </div>
-            ) : (
-                <div className="flex flex-col gap-3">
-                    {rows.map((r, idx) => (
-                        <div
-                            key={`${r.food_id}-${idx}`}
-                            className="bg-brand-sidebar rounded-xl px-4 py-3 flex items-center justify-between gap-3"
-                        >
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div
-                                    className={`w-8 h-8 rounded-full text-white flex items-center justify-center font-bold shrink-0 ${badgeBg}`}
-                                >
-                                    {idx + 1}
-                                </div>
-
-                                <div className="min-w-0">
-                                    <div className="font-semibold text-brand-text truncate">
-                                        {r.name}
-                                    </div>
-                                    <div className="text-xs text-brand-textSecondary">
-                                        {formatCourseLabel(r.type)}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="text-right shrink-0">
-                                {mode === 'never' ? (
-                                    <>
-                                        <div
-                                            className={`font-bold ${valueTextClass}`}
-                                        >
-                                            0 scelte
-                                        </div>
-                                        <div className="text-xs text-brand-textSecondary">
-                                            {fmtInt(r.availability_count)}{' '}
-                                            disponibilità
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div
-                                            className={`font-bold ${valueTextClass}`}
-                                        >
-                                            {fmtPct(r.selection_rate_pct, 1)}
-                                        </div>
-                                        <div className="text-xs text-brand-textSecondary">
-                                            {fmtInt(r.chosen_count)} scelte ·{' '}
-                                            {fmtInt(r.availability_count)}{' '}
-                                            disponibilità
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </Card>
-    );
-}
-
-function BarsCard({
-    title,
-    icon,
-    rows,
-    barMode = 'percent',
-    emptyText = 'Nessun dato nel periodo selezionato.',
-    metaRenderer,
-}) {
-    const maxValue =
-        barMode === 'relative'
-            ? Math.max(1, ...(rows || []).map((r) => Number(r.value ?? 0)))
-            : 100;
-
-    return (
-        <Card>
-            <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">{icon}</span>
-                <div className="font-semibold text-brand-text">{title}</div>
-            </div>
-
-            {!rows || rows.length === 0 ? (
-                <div className="text-brand-textSecondary italic">
-                    {emptyText}
-                </div>
-            ) : (
-                <div className="flex flex-col gap-4">
-                    {rows.map((row, idx) => {
-                        const rawValue = Number(row.value ?? 0);
-                        const width =
-                            barMode === 'percent'
-                                ? Math.max(0, Math.min(100, rawValue))
-                                : Math.max(
-                                      0,
-                                      Math.min(
-                                          100,
-                                          (rawValue / maxValue) * 100,
-                                      ),
-                                  );
-
-                        return (
-                            <div key={`${row.label}-${idx}`}>
-                                <div className="flex items-center justify-between gap-3 mb-1">
-                                    <div className="font-medium text-brand-text">
-                                        {row.label}
-                                    </div>
-                                    <div className="text-sm font-semibold text-brand-text shrink-0">
-                                        {row.valueLabel}
-                                    </div>
-                                </div>
-
-                                <div className="w-full h-3 rounded-full bg-brand-sidebar overflow-hidden">
-                                    <div
-                                        className="h-full rounded-full bg-brand-primary transition-all duration-300"
-                                        style={{ width: `${width}%` }}
-                                    />
-                                </div>
-
-                                {metaRenderer && (
-                                    <div className="text-xs text-brand-textSecondary mt-1">
-                                        {metaRenderer(row)}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </Card>
-    );
-}
-
 export default function StatisticheScelte() {
     const [menus, setMenus] = useState([]);
     const [menusLoading, setMenusLoading] = useState(true);

@@ -1,3 +1,7 @@
+/**
+ * Service layer for dish CRUD operations.
+ * It validates payloads, coordinates repository calls and handles uploaded images.
+ */
 import { pool } from '../db/db.js';
 import { withTransaction } from '../db/tx.js';
 import { HttpError } from '../utils/httpError.js';
@@ -19,9 +23,11 @@ import {
 
 function normalizeAllergyNotes(allergyNotes) {
     if (!Array.isArray(allergyNotes)) return null;
+
     const cleaned = allergyNotes
         .map((entry) => String(entry ?? '').trim())
         .filter(Boolean);
+
     return cleaned.length ? cleaned.join(', ') : null;
 }
 
@@ -55,13 +61,12 @@ function normalizeNonNegativeNumber(value, label) {
         throw new HttpError(400, `${label} obbligatorio`);
     }
 
-    const num = Number(value);
-
-    if (!Number.isFinite(num) || num < 0) {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue) || numericValue < 0) {
         throw new HttpError(400, `${label} non valido`);
     }
 
-    return num;
+    return numericValue;
 }
 
 function normalizeDishPayload(body = {}) {
@@ -162,6 +167,7 @@ export async function createDishData(body = {}, file = null) {
 export async function deleteDishData(dishIdRaw) {
     const dishId = toNumericDishId(dishIdRaw);
     const dish = await findDishSummaryById(pool, dishId);
+
     if (!dish) {
         throw new HttpError(404, 'Piatto non trovato per immagine');
     }
@@ -193,14 +199,12 @@ export async function deleteDishData(dishIdRaw) {
 export async function getDishByIdData(dishIdRaw) {
     const dishId = toNumericDishId(dishIdRaw);
     const dish = await findDishSummaryById(pool, dishId);
+
     if (!dish) {
         throw new HttpError(404, 'Piatto non trovato');
     }
 
-    const suspension = await findCurrentOrFutureSuspensionByFoodId(
-        pool,
-        dishId,
-    );
+    const suspension = await findCurrentOrFutureSuspensionByFoodId(pool, dishId);
 
     return {
         ...dish,
@@ -243,6 +247,7 @@ export async function updateDishData(dishIdRaw, body = {}, file = null) {
             }
         });
 
+        // Delete the old image only after the transaction is safely committed.
         if (
             newImageFilename &&
             oldImageFilename &&

@@ -1,27 +1,30 @@
-// src/pages/dishes/CreateDish.jsx
+/**
+ * Page used to create a new dish.
+ * Validation and FormData mapping live in shared helpers so create/edit stay aligned.
+ */
 import { useNavigate } from 'react-router-dom';
 
 import AppLayout from '../../components/layout/AppLayout';
 import Form from '../../components/ui/Form';
 import Button from '../../components/ui/Button';
-
 import DishFormFields from '../../components/dishes/DishFormFields';
 
 import { withLoaderNotify } from '../../services/withLoaderNotify';
-
-import {
-    isDecimal,
-    isPositive,
-    validateMacrosVsGrammage,
-} from '../../utils/validators';
 import { checkDishNameExists, createDish } from '../../services/dishesApi';
+import {
+    getDishFieldValidators,
+    validateDishForm,
+} from '../../utils/dishes/dishFormValidation';
+import { buildDishFormData } from '../../utils/dishes/dishFormData';
+
+const DISH_VALIDATORS = getDishFieldValidators({ requireImage: true });
 
 export default function CreateDish() {
     const navigate = useNavigate();
 
     return (
         <AppLayout title="GESTIONE PIATTI">
-            <div className="w-full max-w-7xl mx-auto">
+            <div className="mx-auto w-full max-w-7xl">
                 <h1 className="text-3xl font-semibold">Crea un piatto nuovo</h1>
 
                 <div className="mt-6" />
@@ -38,44 +41,18 @@ export default function CreateDish() {
                         fats: '',
                         allergy_notes: [],
                     }}
-                    validate={{
-                        name: (v) =>
-                            !v
-                                ? 'Obbligatorio'
-                                : v.length < 3
-                                  ? 'Troppo corto'
-                                  : null,
-                        type: (v) => (!v ? 'Seleziona un tipo' : null),
-                        img: (v) => (!v ? 'Carica un’immagine' : null),
-
-                        grammage_tot: (v) =>
-                            v === '' || v === null || v === undefined
-                                ? 'Obbligatorio'
-                                : isDecimal(v) || isPositive(v),
-                        kcal_tot: (v) =>
-                            v === '' || v === null || v === undefined
-                                ? 'Obbligatorio'
-                                : isDecimal(v) || isPositive(v),
-                        proteins: (v) =>
-                            v === '' || v === null || v === undefined
-                                ? 'Obbligatorio'
-                                : isDecimal(v) || isPositive(v),
-                        carbohydrates: (v) =>
-                            v === '' || v === null || v === undefined
-                                ? 'Obbligatorio'
-                                : isDecimal(v) || isPositive(v),
-                        fats: (v) =>
-                            v === '' || v === null || v === undefined
-                                ? 'Obbligatorio'
-                                : isDecimal(v) || isPositive(v),
-                    }}
+                    validate={DISH_VALIDATORS}
                     asyncValidate={{
                         name: async (value) => {
-                            const v = (value ?? '').trim();
-                            if (!v || v.length < 3) return null;
+                            const normalizedValue = (value ?? '').trim();
+                            if (!normalizedValue || normalizedValue.length < 3) {
+                                return null;
+                            }
 
                             try {
-                                const data = await checkDishNameExists(v);
+                                const data = await checkDishNameExists(
+                                    normalizedValue,
+                                );
                                 return data.exists
                                     ? 'Questo nome è già in uso'
                                     : null;
@@ -84,24 +61,10 @@ export default function CreateDish() {
                             }
                         },
                     }}
-                    validateForm={validateMacrosVsGrammage}
+                    validateForm={(values) => validateDishForm(values)}
                     validateOnBlur
                     validateOnSubmit
                     onSubmit={async (values) => {
-                        const formData = new FormData();
-
-                        Object.entries(values).forEach(([key, value]) => {
-                            if (value === null || value === '') return;
-
-                            if (Array.isArray(value)) {
-                                value.forEach((v) =>
-                                    formData.append(`${key}[]`, v),
-                                );
-                            } else {
-                                formData.append(key, value);
-                            }
-                        });
-
                         const result = await withLoaderNotify({
                             message: 'Creazione piatto…',
                             mode: 'blocking',
@@ -110,7 +73,7 @@ export default function CreateDish() {
                             errorMessage:
                                 'Impossibile creare il piatto, riprova.',
                             fn: async () => {
-                                return createDish(formData);
+                                return createDish(buildDishFormData(values));
                             },
                         });
 
@@ -121,7 +84,7 @@ export default function CreateDish() {
                 >
                     <DishFormFields existingImageUrl={null} />
 
-                    <div className="flex justify-center mt-6 rounded-md">
+                    <div className="mt-6 flex justify-center rounded-md">
                         <Button
                             type="submit"
                             size="md"

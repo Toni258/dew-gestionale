@@ -1,37 +1,42 @@
-export const isDecimal = (v) => {
-    // lascia che "required" venga gestito altrove
-    if (v === '' || v === null || v === undefined) return null;
+/**
+ * Small reusable validators shared by multiple forms.
+ * They intentionally stay lightweight and framework-agnostic.
+ */
+export const isDecimal = (value) => {
+    // Leave the "required" check to the caller.
+    if (value === '' || value === null || value === undefined) return null;
 
-    const s = String(v).trim();
+    const normalized = String(value).trim();
 
-    // accetta: 10 | 10.5 | 0.25 | 20.123
-    // rifiuta: 10,5 | .5 | 5. | -1 | 1e3 |  10
-    const regex = /^\d+(\.\d+)?$/;
+    // Accepts: 10 | 10.5 | 0.25 | 20.123
+    // Rejects: 10,5 | .5 | 5. | -1 | 1e3
+    const decimalRegex = /^\d+(\.\d+)?$/;
 
-    return regex.test(s)
+    return decimalRegex.test(normalized)
         ? null
         : 'Deve essere un numero (usa il punto per i decimali, es. 20.5)';
 };
 
-export const isPositive = (v) => {
-    if (v === '' || v === null) return null;
-    return Number(v) < 0 ? 'Deve essere ≥ 0' : null;
+export const isPositive = (value) => {
+    if (value === '' || value === null || value === undefined) return null;
+    return Number(value) < 0 ? 'Deve essere ≥ 0' : null;
 };
 
-export const validateMacrosVsGrammage = (v) => {
-    const g = Number(v.grammage_tot);
-    const p = Number(v.proteins);
-    const c = Number(v.carbohydrates);
-    const f = Number(v.fats);
+export const validateMacrosVsGrammage = (values) => {
+    const grammage = Number(values.grammage_tot);
+    const proteins = Number(values.proteins);
+    const carbohydrates = Number(values.carbohydrates);
+    const fats = Number(values.fats);
 
-    // se mancano valori, non bloccare
-    if ([g, p, c, f].some(isNaN)) return null;
-    if (!g) return null;
+    // If one numeric field is still missing, let the field-level validators speak first.
+    if ([grammage, proteins, carbohydrates, fats].some(Number.isNaN)) {
+        return null;
+    }
 
-    const sum = p + c + f;
+    const macrosSum = proteins + carbohydrates + fats;
 
-    // tolleranza 1g
-    if (sum > g + 1) {
+    // Keep a 1g tolerance because macro data can be rounded.
+    if (macrosSum > grammage + 1) {
         return {
             grammage_tot:
                 'Proteine + carboidrati + grassi superano la grammatura',
