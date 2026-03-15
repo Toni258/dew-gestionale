@@ -1,6 +1,8 @@
 // Caricamento dish + mapping in initialValues/originalDish/initialSuspension
 
 import { useEffect, useState } from 'react';
+import { clientConfig } from '../config/appConfig';
+import { buildApiUrl } from '../services/apiClient';
 import { getDishById } from '../services/dishesApi';
 
 export function useDish(dishId) {
@@ -23,7 +25,11 @@ export function useDish(dishId) {
                 const data = await getDishById(dishId);
 
                 const imgUrl = data.image_url
-                    ? `/food-images/${data.image_url}`
+                    ? buildApiUrl(
+                          `${clientConfig.foodImagesPublicPath}/${encodeURIComponent(
+                              data.image_url,
+                          )}`,
+                      )
                     : null;
 
                 if (!alive) return;

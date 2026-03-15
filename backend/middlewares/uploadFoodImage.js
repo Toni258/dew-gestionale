@@ -1,37 +1,42 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { HttpError } from '../utils/httpError.js';
+import { storageConfig } from '../config/storageConfig.js';
+import {
+    buildFoodImageFilename,
+    ensureFoodImagesDirectory,
+} from '../services/fileStorageService.js';
 
-const uploadDir = path.join(process.cwd(), '..', 'public', 'food-images');
-
-// crea la cartella se non esiste
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+await ensureFoodImagesDirectory();
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
+    destination: async (req, file, cb) => {
+        try {
+            await ensureFoodImagesDirectory();
+            cb(null, storageConfig.foodImagesDir);
+        } catch (error) {
+            cb(error);
+        }
     },
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const base = file.originalname
-            .replace(ext, '')
-            .toLowerCase()
-            .replace(/\s+/g, '_')
-            .replace(/[^a-z0-9_-]/g, '');
+        const filename = buildFoodImageFilename(file);
+        if (!filename) {
+            cb(new HttpError(400, 'Formato immagine non supportato'));
+            return;
+        }
 
-        cb(null, `${Date.now()}-${base}${ext}`);
+        cb(null, filename);
     },
 });
 
 export const uploadFoodImage = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: storageConfig.maxFoodImageSizeBytes },
     fileFilter: (req, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-            return cb(new Error('File non valido'));
+        if (!storageConfig.allowedFoodImageMimeTypes.includes(file.mimetype)) {
+            cb(new HttpError(400, 'Sono supportate solo immagini JPG, PNG o WEBP'));
+            return;
         }
+
         cb(null, true);
     },
 });

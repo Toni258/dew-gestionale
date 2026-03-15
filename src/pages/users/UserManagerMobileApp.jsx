@@ -10,9 +10,14 @@ import Pagination from '../../components/ui/Pagination';
 
 import { formatDateTime } from '../../utils/formatDateTime';
 import { useAuth } from '../../context/AuthContext';
-import { notify } from '../../services/notify';
 import { withLoader } from '../../services/withLoader';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
+import {
+    deleteMobileAppUser,
+    disableMobileAppUser,
+    getMobileAppUsers,
+    updateMobileAppUserInfo,
+} from '../../services/usersApi';
 
 import ModifyUserInfoModal from '../../components/modals/ModifyUserInfoModal';
 import DisableAppUserPassword from '../../components/modals/DisableAppUserPassword';
@@ -77,17 +82,8 @@ export default function UserManagerMobileApp() {
         setError('');
 
         try {
-            const qs = new URLSearchParams();
-            if (requestParams.search) qs.set('search', requestParams.search);
-            if (requestParams.ruolo) qs.set('ruolo', requestParams.ruolo);
-            qs.set('page', String(requestParams.page));
-            qs.set('pageSize', String(requestParams.pageSize));
-
             await withLoader('Caricamento utenti…', async () => {
-                const res = await fetch(`/api/users/mobile?${qs.toString()}`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const json = await res.json();
+                const json = await getMobileAppUsers(requestParams);
                 setRows(json.data || []);
                 setTotal(json.total || 0);
             });
@@ -296,28 +292,12 @@ export default function UserManagerMobileApp() {
                         errorMessage:
                             'Impossibile aggiornare le informazioni utente.',
                         fn: async () => {
-                            const res = await fetch(
-                                `/api/users/${userSelected.id_caregiver}/update-info/app`,
-                                {
-                                    method: 'POST',
-                                    credentials: 'include',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        name: payload.name,
-                                        surname: payload.surname,
-                                        email: payload.email,
-                                        role: payload.role,
-                                    }),
-                                },
-                            );
-
-                            const json = await res.json().catch(() => null);
-                            if (!res.ok)
-                                throw new Error(
-                                    json?.message || `HTTP ${res.status}`,
-                                );
+                            await updateMobileAppUserInfo(userSelected.id_caregiver, {
+                                name: payload.name,
+                                surname: payload.surname,
+                                email: payload.email,
+                                role: payload.role,
+                            });
 
                             setUserSelected(null);
                             setShowModifyUserInfoModal(false);
@@ -346,22 +326,7 @@ export default function UserManagerMobileApp() {
                         errorTitle: 'Errore disabilitazione utente',
                         errorMessage: 'Impossibile disabilitare l’utente.',
                         fn: async () => {
-                            const res = await fetch(
-                                `/api/users/${userSelected.id_caregiver}/disable/app`,
-                                {
-                                    method: 'POST',
-                                    credentials: 'include',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                },
-                            );
-
-                            const json = await res.json().catch(() => null);
-                            if (!res.ok)
-                                throw new Error(
-                                    json?.message || `HTTP ${res.status}`,
-                                );
+                            await disableMobileAppUser(userSelected.id_caregiver);
 
                             setUserSelected(null);
                             setShowDisableAppUserModal(false);
@@ -390,19 +355,7 @@ export default function UserManagerMobileApp() {
                         errorTitle: 'Errore eliminazione utente',
                         errorMessage: 'Impossibile eliminare l’utente.',
                         fn: async () => {
-                            const res = await fetch(
-                                `/api/users/${userSelected.id_caregiver}/delete/app`,
-                                {
-                                    method: 'POST',
-                                    credentials: 'include',
-                                },
-                            );
-
-                            const json = await res.json().catch(() => null);
-                            if (!res.ok)
-                                throw new Error(
-                                    json?.message || `HTTP ${res.status}`,
-                                );
+                            await deleteMobileAppUser(userSelected.id_caregiver);
 
                             setUserSelected(null);
                             setShowDeleteUserModal(false);

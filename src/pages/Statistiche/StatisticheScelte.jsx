@@ -9,6 +9,7 @@ import CustomSelect from '../../components/ui/CustomSelect';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import Pagination from '../../components/ui/Pagination';
 import { withLoader } from '../../services/withLoader';
+import { getScelteMenus, getScelteReport } from '../../services/reportsApi';
 
 function fmtInt(n) {
     const x = Number(n) || 0;
@@ -388,18 +389,7 @@ export default function StatisticheScelte() {
             setError('');
 
             try {
-                const res = await fetch('/api/reports/scelte/menus');
-
-                if (!res.ok) {
-                    let msg = `HTTP ${res.status}`;
-                    try {
-                        const j = await res.json();
-                        if (j?.error) msg = j.error;
-                    } catch {}
-                    throw new Error(msg);
-                }
-
-                const json = await res.json();
+                const json = await getScelteMenus();
                 const rows = json?.data || [];
 
                 if (cancelled) return;
@@ -525,49 +515,23 @@ export default function StatisticheScelte() {
 
         try {
             await withLoader('Caricamento report scelte…', async () => {
-                const qs = new URLSearchParams();
-
-                qs.set('menuKind', requestParams.menuKind);
-                qs.set('menuRef', requestParams.menuRef);
-                qs.set('start', requestParams.start);
-                qs.set('end', requestParams.end);
-
-                if (requestParams.meal) qs.set('meal', requestParams.meal);
-                if (requestParams.patientId) {
-                    qs.set('patientId', requestParams.patientId);
-                }
-                if (requestParams.floor) qs.set('floor', requestParams.floor);
-                if (requestParams.course) {
-                    qs.set('course', requestParams.course);
-                }
-                if (requestParams.week) qs.set('week', requestParams.week);
-                if (requestParams.chooser) {
-                    qs.set('chooser', requestParams.chooser);
-                }
-                if (requestParams.babyFood !== '') {
-                    qs.set('babyFood', requestParams.babyFood);
-                }
-
-                qs.set('page', String(requestParams.page));
-                qs.set('pageSize', String(requestParams.pageSize));
-                qs.set('detailsPage', String(requestParams.detailsPage));
-                qs.set(
-                    'detailsPageSize',
-                    String(requestParams.detailsPageSize),
-                );
-
-                const res = await fetch(`/api/reports/scelte?${qs.toString()}`);
-
-                if (!res.ok) {
-                    let msg = `HTTP ${res.status}`;
-                    try {
-                        const j = await res.json();
-                        if (j?.error) msg = j.error;
-                    } catch {}
-                    throw new Error(msg);
-                }
-
-                const json = await res.json();
+                const json = await getScelteReport({
+                    menuKind: requestParams.menuKind,
+                    menuRef: requestParams.menuRef,
+                    start: requestParams.start,
+                    end: requestParams.end,
+                    meal: requestParams.meal,
+                    patientId: requestParams.patientId,
+                    floor: requestParams.floor,
+                    course: requestParams.course,
+                    week: requestParams.week,
+                    chooser: requestParams.chooser,
+                    babyFood: requestParams.babyFood,
+                    page: requestParams.page,
+                    pageSize: requestParams.pageSize,
+                    detailsPage: requestParams.detailsPage,
+                    detailsPageSize: requestParams.detailsPageSize,
+                });
 
                 setKpi(json.kpi || {});
                 setRankings(

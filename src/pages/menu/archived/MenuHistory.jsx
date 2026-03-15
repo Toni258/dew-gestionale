@@ -2,6 +2,7 @@ import AppLayout from '../../../components/layout/AppLayout';
 import ArchivedMenuCard from '../../../components/menu/ArchivedMenuCard';
 import { useCallback, useEffect, useState } from 'react';
 import { withLoader } from '../../../services/withLoader';
+import { getArchivedMenus } from '../../../services/menusApi';
 
 export default function MenuHistory() {
     const [menus, setMenus] = useState([]);
@@ -12,10 +13,7 @@ export default function MenuHistory() {
 
         try {
             await withLoader('Caricamento menù…', async () => {
-                const res = await fetch('/api/archived-menus');
-                if (!res.ok) throw new Error('Errore fetch menù');
-
-                const data = await res.json();
+                const data = await getArchivedMenus();
                 setMenus(data.data ?? []);
             });
         } catch (err) {

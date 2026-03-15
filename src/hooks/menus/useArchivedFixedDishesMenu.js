@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { CHEESE_IDS } from '../../../shared/constants.js';
 import { getCheeses } from '../../services/foodsApi';
 import {
     getArchivedMenuFixedDishes,
@@ -28,12 +29,12 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
     useEffect(() => {
         let alive = true;
 
-        async function loadAll() {
+        async function load() {
             setLoading(true);
             try {
                 const [fixedJson, cheesesJson, rotJson] = await Promise.all([
                     getArchivedMenuFixedDishes(idArchMenu),
-                    getCheeses(), // opzionale: se vuoi mostrare anche “lista formaggi” altrove
+                    getCheeses(),
                     getArchivedFixedCheesesRotation(idArchMenu),
                 ]);
 
@@ -52,9 +53,7 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
                     if (!nextSelected[meal][course]) continue;
                     if (meal === 'pranzo' && course === 'speciale') continue;
 
-                    const isCheese = [195, 196, 197].includes(
-                        Number(dish.id_food),
-                    );
+                    const isCheese = CHEESE_IDS.includes(Number(dish.id_food));
                     if (isCheese) continue;
 
                     const arr = nextSelected[meal][course];
@@ -75,20 +74,39 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
                 setSelectedFoods(nextSelected);
             } catch (e) {
                 console.error(e);
+                if (!alive) return;
+                setCheeseOptions([]);
+                setCheeseRotation(makeEmptyCheeseRotation());
+                setSelectedFoods(makeEmptySelected());
             } finally {
                 if (alive) setLoading(false);
             }
         }
 
-        loadAll();
+        if (idArchMenu) load();
+        else {
+            setLoading(false);
+            setSelectedFoods(makeEmptySelected());
+            setCheeseOptions([]);
+            setCheeseRotation(makeEmptyCheeseRotation());
+        }
+
         return () => {
             alive = false;
         };
     }, [idArchMenu]);
 
+    const rows = useMemo(() => {
+        return COURSE_ROWS.map((row) => ({
+            ...row,
+            pranzoSelected: selectedFoods.pranzo[row.key],
+            cenaSelected: selectedFoods.cena[row.key],
+        }));
+    }, [selectedFoods]);
+
     return {
         loading,
-        selectedFoods,
+        rows,
         cheeseOptions,
         cheeseRotation,
     };

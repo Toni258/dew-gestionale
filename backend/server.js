@@ -1,7 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-
 import cookieParser from 'cookie-parser';
 
 import dishesRouter from './routes/dishes.js';
@@ -13,38 +11,68 @@ import authRouter from './routes/auth.js';
 import reportsRouter from './routes/reports.js';
 import dashboardRouter from './routes/dashboard.js';
 
+import { appConfig } from './config/appConfig.js';
+import { storageConfig } from './config/storageConfig.js';
 import { startSchedulers } from './jobs/startSchedulers.js';
-import { requireAuth, requireRole } from './middlewares/auth.js';
+import { requireAuth } from './middlewares/auth.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { ensureRuntimeDirectoriesSync, logger } from './utils/logger.js';
+
+ensureRuntimeDirectoriesSync();
 
 const app = express();
 
-app.use(express.json());
-app.use(cookieParser());
+app.disable('x-powered-by');
 
-// IMPORTANTISSIMO: se frontend e backend sono su domini/porte diverse (5173 e 3001)
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+if (appConfig.app.trustProxy) {
+    app.set('trust proxy', 1);
+}
 
 app.use(
     cors({
-        origin: corsOrigin, // metti la origin del frontend
+        origin(origin, callback) {
+            if (!origin) {
+                callback(null, true);
+                return;
+            }
+
+            if (appConfig.app.corsOrigins.includes(origin)) {
+                callback(null, true);
+                return;
+            }
+
+            callback(new Error('Origin non consentita dal CORS'));
+        },
         credentials: true,
     }),
 );
+app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
 
 // ESPOSIZIONE IMMAGINI PIATTI (STATIC FILES)
 app.use(
-    '/food-images',
-    express.static(path.join(process.cwd(), '..', 'public', 'food-images')),
+    storageConfig.foodImagesPublicPath,
+    express.static(storageConfig.foodImagesDir),
 );
 
+
+// HEALTHCHECK TECNICO
+app.get('/health', (req, res) => {
+    res.json({
+        ok: true,
+        status: 'up',
+        env: appConfig.app.nodeEnv,
+        time: new Date().toISOString(),
+    });
+});
+
 // ROUTES API
+app.use('/api/auth', authRouter);
 app.use('/api/dishes', requireAuth, dishesRouter);
 app.use('/api/menus', requireAuth, menusRouter);
 app.use('/api/archived-menus', requireAuth, archivedMenusRouter);
 app.use('/api/foods', requireAuth, foodsRouter);
 app.use('/api/users', requireAuth, usersRouter);
-app.use('/api/auth', authRouter);
 app.use('/api/reports', requireAuth, reportsRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
 
@@ -54,8 +82,10 @@ app.use(errorHandler);
 // AVVIO SCHEDULER PER CONTROLLO SOSPENSIONI SCADUTE
 startSchedulers();
 
-const PORT = 3001;
-
-app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
+app.listen(appConfig.app.port, () => {
+    logger.info(`Backend running on http://localhost:${appConfig.app.port}`, {
+        foodImagesDir: storageConfig.foodImagesDir,
+        foodImagesPublicPath: storageConfig.foodImagesPublicPath,
+        schedulersEnabled: appConfig.schedulers.enableSchedulers,
+    });
 });

@@ -24,7 +24,6 @@ import StatisticheScelte from '../pages/Statistiche/StatisticheScelte';
 import UserManagerGestionale from '../pages/users/UserManagerGestionale';
 import UserManagerMobileApp from '../pages/users/UserManagerMobileApp';
 import CreateUserGestionale from '../pages/users/CreateUserGestionale';
-import Test from '../pages/Test';
 
 import ProtectedRoute from './ProtectedRoute';
 import { IdleLogoutProvider } from '../context/IdleLogoutContext';
@@ -109,7 +108,6 @@ export default function AppRouter() {
                             element={<CreateUserGestionale />}
                         />
 
-                        <Route path="/test" element={<Test />} />
                     </Route>
                 </Routes>
             </IdleLogoutProvider>

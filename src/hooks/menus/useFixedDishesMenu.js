@@ -1,3 +1,4 @@
+import { CHEESE_IDS } from '../../../shared/constants.js';
 // Contiene tutta la logica: load (options + fixed + cheeses + rotation), regole duplicate, calcoli allFilled, e save().
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { getAvailableFoodsForMenu, getCheeses } from '../../services/foodsApi';
@@ -201,7 +202,7 @@ export function useFixedDishesMenu(seasonTypeRaw) {
                     if (!nextSelected[meal][course]) continue;
                     if (meal === 'pranzo' && course === 'speciale') continue;
 
-                    const isCheese = [195, 196, 197].includes(
+                    const isCheese = CHEESE_IDS.includes(
                         Number(dish.id_food),
                     );
                     if (isCheese) continue;

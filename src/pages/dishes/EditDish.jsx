@@ -30,6 +30,7 @@ import {
     suspendDishDryRun,
     suspendDishApply,
 } from '../../services/dishesApi';
+import { getAvailableFoodsForMenu } from '../../services/foodsApi';
 
 export default function EditDish() {
     const { dishId } = useParams();
@@ -112,7 +113,7 @@ export default function EditDish() {
             for (const key of keySet) {
                 const [season_type, meal_type, type] = key.split('__');
 
-                const qs = new URLSearchParams({
+                const json = await getAvailableFoodsForMenu({
                     type,
                     season_type,
                     meal_type,
@@ -120,11 +121,6 @@ export default function EditDish() {
                     date_to: suspensionPreview.suspension.valid_to,
                     exclude_id_food: String(dishId),
                 });
-
-                const res = await fetch(
-                    `/api/foods/available-for-menu?${qs.toString()}`,
-                );
-                const json = await res.json().catch(() => ({}));
 
                 result[key] = (json.data ?? []).map((f) => ({
                     value: String(f.id_food),
@@ -301,19 +297,15 @@ export default function EditDish() {
                                 'Impossibile disattivare la sospensione.',
                             fn: async () => {
                                 await unsuspendDish(dishId);
-                                console.log('1');
                                 return true;
                             },
                         });
 
-                        console.log('2');
                         if (!unsuspendRes.ok) return;
-                        console.log('3');
 
                         suspensionActionHandled = true;
                     }
 
-                    console.log('4');
 
                     // === 2) gestione SUSPEND (se ON + cambiata)
                     const suspensionChanged =
@@ -342,32 +334,24 @@ export default function EditDish() {
                             },
                         });
 
-                        console.log('5');
 
                         if (!suspendPreviewRes.ok) return;
 
-                        console.log('6');
 
                         const result = suspendPreviewRes.data;
 
-                        console.log('6.1');
                         if (result?.pending) return;
-                        console.log('6.2');
                         if (result?.applied === false) {
                             notify.warning('Operazione annullata');
-                            console.log('6.3');
                             return;
                         }
                         if (result?.applied === true) {
-                            console.log('6.4');
                             suspensionActionHandled = true;
                             notify.success('Sospensione salvata correttamente');
                         }
 
-                        console.log('7');
                     }
 
-                    console.log('8');
 
                     // se NON è cambiato nulla (piatto) e immagine non è File
                     if (!changed && !imageChanged && !suspensionActionHandled) {
@@ -376,14 +360,12 @@ export default function EditDish() {
                         return;
                     }
 
-                    console.log('9');
 
                     if (suspensionActionHandled && !changed && !imageChanged) {
                         navigate('/dishes');
                         return;
                     }
 
-                    console.log('10');
 
                     // === 3) update dish (senza i campi sospensione)
                     const formData = new FormData();

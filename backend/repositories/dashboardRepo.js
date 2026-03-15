@@ -1,3 +1,5 @@
+import { CHEESE_IDS_SQL_ORDER } from '../../shared/constants.js';
+
 export async function listMenuSummaries(poolOrConn) {
     const [rows] = await poolOrConn.query(
         `
@@ -94,7 +96,7 @@ export async function listMenuSummaries(poolOrConn) {
                             COUNT(DISTINCT CASE
                                 WHEN m.type = 'pranzo'
                                  AND f.type = 'secondo'
-                                 AND dp.id_food NOT IN (195, 196, 197)
+                                 AND dp.id_food NOT IN (${CHEESE_IDS_SQL_ORDER})
                                 THEN dp.id_food
                             END),
                             2
@@ -103,7 +105,7 @@ export async function listMenuSummaries(poolOrConn) {
                         LEAST(
                             COUNT(DISTINCT CASE
                                 WHEN m.type = 'pranzo'
-                                 AND dp.id_food IN (195, 196, 197)
+                                 AND dp.id_food IN (${CHEESE_IDS_SQL_ORDER})
                                 THEN MOD(m.day_index, 7)
                             END),
                             7
@@ -145,7 +147,7 @@ export async function listMenuSummaries(poolOrConn) {
                             COUNT(DISTINCT CASE
                                 WHEN m.type = 'cena'
                                  AND f.type = 'secondo'
-                                 AND dp.id_food NOT IN (195, 196, 197)
+                                 AND dp.id_food NOT IN (${CHEESE_IDS_SQL_ORDER})
                                 THEN dp.id_food
                             END),
                             2
@@ -154,7 +156,7 @@ export async function listMenuSummaries(poolOrConn) {
                         LEAST(
                             COUNT(DISTINCT CASE
                                 WHEN m.type = 'cena'
-                                 AND dp.id_food IN (195, 196, 197)
+                                 AND dp.id_food IN (${CHEESE_IDS_SQL_ORDER})
                                 THEN MOD(m.day_index, 7)
                             END),
                             7
@@ -259,10 +261,30 @@ export async function listActiveSuspensions(poolOrConn) {
                 DATE_FORMAT(fa.valid_to,   '%d/%m/%Y') AS valid_to_label,
                 fa.reason,
                 fa.restored_at,
-                DATEDIFF(DATE(fa.valid_to), CURDATE()) AS days_until_reactivation
+                DATEDIFF(DATE(fa.valid_to), CURDATE()) AS days_until_reactivation,
+                GROUP_CONCAT(
+                    DISTINCT repl_food.name
+                    ORDER BY repl_food.name ASC
+                    SEPARATOR ', '
+                ) AS replacement_names,
+                COUNT(DISTINCT track.replacement_id_dish_pairing) AS replacement_candidates_count
             FROM food_availability fa
             JOIN food f ON f.id_food = fa.id_food
+            LEFT JOIN food_availability_pairing_replacements track
+                ON track.id_avail = fa.id_avail
+               AND track.disabled_at IS NULL
+            LEFT JOIN food repl_food
+                ON repl_food.id_food = track.replacement_id_food
             WHERE fa.restored_at IS NULL
+            GROUP BY
+                fa.id_avail,
+                fa.id_food,
+                f.name,
+                f.type,
+                fa.valid_from,
+                fa.valid_to,
+                fa.reason,
+                fa.restored_at
             ORDER BY
                 CASE
                     WHEN NOW() BETWEEN fa.valid_from AND fa.valid_to THEN 0
@@ -271,42 +293,6 @@ export async function listActiveSuspensions(poolOrConn) {
                 fa.valid_to ASC,
                 f.name ASC
         `,
-    );
-
-    return rows;
-}
-
-export async function listReplacementCandidatesForSuspension(
-    poolOrConn,
-    { idFood, validFrom, validTo },
-) {
-    const [rows] = await poolOrConn.query(
-        `
-            SELECT
-                nf.id_food,
-                nf.name,
-                COUNT(*) AS occurrences
-            FROM dish_pairing old_dp
-            JOIN food old_f
-                ON old_f.id_food = old_dp.id_food
-            JOIN season s
-                ON s.season_type = old_dp.season_type
-            JOIN dish_pairing new_dp
-                ON new_dp.season_type = old_dp.season_type
-            AND new_dp.id_meal = old_dp.id_meal
-            AND new_dp.used = 1
-            AND new_dp.id_food <> old_dp.id_food
-            JOIN food nf
-                ON nf.id_food = new_dp.id_food
-            AND nf.type = old_f.type
-            WHERE old_dp.id_food = ?
-            AND old_dp.used = 0
-            AND s.start_date <= ?
-            AND s.end_date >= ?
-            GROUP BY nf.id_food, nf.name
-            ORDER BY occurrences DESC, nf.name ASC
-        `,
-        [idFood, validTo, validFrom],
     );
 
     return rows;

@@ -8,8 +8,7 @@ import {
     oneOf,
 } from '../utils/params.js';
 import * as repo from '../repositories/menusRepo.js';
-
-const CHEESE_IDS = [195, 196, 197];
+import { CHEESE_IDS } from '../../shared/constants.js';
 
 export async function getMenus() {
     return repo.listMenus(pool);

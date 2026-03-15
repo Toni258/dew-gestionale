@@ -6,6 +6,7 @@ import CustomSelect from '../ui/CustomSelect';
 import Button from '../ui/Button';
 import { weekDayToDayIndex, dayIndexToWeekDay } from '../../utils/dayIndex';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
+import { checkMenuDatesOverlap } from '../../services/menusApi';
 
 export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
     if (!open || !menu) return null;
@@ -74,22 +75,9 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                             errorMessage:
                                 'Impossibile verificare le sovrapposizioni.',
                             fn: async () => {
-                                const qs = new URLSearchParams({
-                                    start_date,
-                                    end_date,
+                                return checkMenuDatesOverlap(start_date, end_date, {
                                     excludeName: menu.season_type,
                                 });
-
-                                const r = await fetch(
-                                    `/api/menus/dates-overlap?${qs.toString()}`,
-                                );
-
-                                if (!r.ok)
-                                    throw new Error(
-                                        'Impossibile verificare overlap',
-                                    );
-                                const data = await r.json();
-                                return data;
                             },
                         });
 

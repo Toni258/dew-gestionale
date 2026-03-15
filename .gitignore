@@ -1,5 +1,6 @@
 # Logs
-logs
+logs/*
+!logs/.gitkeep
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,11 +8,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Runtime storage
+storage/*
+!storage/.gitkeep
+storage/food-images/*
+!storage/food-images/.gitkeep
+
 node_modules
 dist
 dist-ssr
 *.local
 .env
+backend/.env
 _chatgpt_exports
 scripts
 

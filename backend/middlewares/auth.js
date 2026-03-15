@@ -1,53 +1,56 @@
-import jwt from 'jsonwebtoken';
+import { getSessionCookieClearOptions, getSessionCookieName, getSessionCookieOptions, signSessionToken, verifySessionToken } from '../config/authConfig.js';
+import { loadAuthenticatedBackofficeUser } from '../services/authService.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
-
-export function requireAuth(req, res, next) {
-    const token = req.cookies?.dew_session;
-    if (!token) return res.status(401).json({ message: 'Non autenticato' });
+export async function requireAuth(req, res, next) {
+    const cookieName = getSessionCookieName();
+    const token = req.cookies?.[cookieName];
+    if (!token) {
+        return res.status(401).json({ message: 'Non autenticato' });
+    }
 
     try {
-        const payload = jwt.verify(token, JWT_SECRET);
-
-        // se admin sospende un utente dopo il login, lo blocchi comunque
-        if (
-            payload?.status === 'suspended' ||
-            payload?.status === 'password_reset_requested'
-        ) {
-            res.clearCookie('dew_session', { sameSite: 'lax', secure: false });
-
-            return res.status(403).json({
-                message:
-                    payload?.status === 'password_reset_requested'
-                        ? 'Hai richiesto il reset della password. Attendi una password temporanea dal super user.'
-                        : 'Utente sospeso',
-            });
-        }
-
-        req.user = payload; // { id, role, name, surname, email }
+        const payload = verifySessionToken(token);
+        const user = await loadAuthenticatedBackofficeUser(payload?.id);
+        req.user = user;
         next();
-    } catch {
-        return res.status(401).json({ message: 'Sessione non valida' });
+    } catch (error) {
+        res.clearCookie(cookieName, getSessionCookieClearOptions());
+
+        const status = Number(error?.status ?? 401);
+        return res.status(status).json({
+            message:
+                error?.message ||
+                (status === 403 ? 'Permessi insufficienti' : 'Sessione non valida'),
+            ...(error?.details?.code
+                ? {
+                      code: error.details.code,
+                  }
+                : {}),
+        });
     }
 }
 
 export function requireRole(...roles) {
     return (req, res, next) => {
-        if (!req.user)
+        if (!req.user) {
             return res.status(401).json({ message: 'Non autenticato' });
-        if (!roles.includes(req.user.role))
+        }
+
+        if (!roles.includes(req.user.role)) {
             return res.status(403).json({ message: 'Permessi insufficienti' });
+        }
+
         next();
     };
 }
 
 export function signSessionCookie(res, userPayload) {
-    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '8h' });
+    const cookieName = getSessionCookieName();
+    const token = signSessionToken(userPayload);
 
-    res.cookie('dew_session', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: false, // in produzione -> true (https)
-        maxAge: 8 * 60 * 60 * 1000, // 8h
-    });
+    res.cookie(cookieName, token, getSessionCookieOptions());
+}
+
+export function clearSessionCookie(res) {
+    res.clearCookie(getSessionCookieName(), getSessionCookieClearOptions());
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { withLoader } from '../../services/withLoader';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
 import ArchiveMenuModal from '../../components/modals/ArchiveMenuModal';
+import { archiveMenu, getMenus } from '../../services/menusApi';
 
 export default function MenuList() {
     const [menus, setMenus] = useState([]);
@@ -17,10 +18,7 @@ export default function MenuList() {
 
         try {
             await withLoader('Caricamento menù…', async () => {
-                const res = await fetch('/api/menus');
-                if (!res.ok) throw new Error('Errore fetch menù');
-
-                const data = await res.json();
+                const data = await getMenus();
                 setMenus(data.data ?? []);
             });
         } catch (err) {
@@ -55,21 +53,7 @@ export default function MenuList() {
             errorTitle: 'Errore archiviazione menù',
             errorMessage: 'Impossibile archiviare il menù.',
             fn: async () => {
-                const res = await fetch(
-                    `/api/menus/${encodeURIComponent(menu.season_type)}/archive`,
-                    {
-                        method: 'POST',
-                        credentials: 'include',
-                    },
-                );
-
-                const json = await res.json().catch(() => null);
-
-                if (!res.ok) {
-                    throw new Error(json?.message || `HTTP ${res.status}`);
-                }
-
-                return json;
+                return archiveMenu(menu.season_type);
             },
         });
 

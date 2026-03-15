@@ -1,3 +1,23 @@
+function normalizeBaseUrl(value) {
+    const raw = String(value ?? '').trim();
+    return raw.replace(/\/+$/, '');
+}
+
+const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
+
+export function buildApiUrl(path) {
+    const normalizedPath = String(path ?? '').trim();
+    if (!normalizedPath) return normalizedPath;
+    if (/^https?:\/\//i.test(normalizedPath)) return normalizedPath;
+
+    const pathWithLeadingSlash = normalizedPath.startsWith('/')
+        ? normalizedPath
+        : `/${normalizedPath}`;
+
+    if (!API_BASE_URL) return pathWithLeadingSlash;
+    return `${API_BASE_URL}${pathWithLeadingSlash}`;
+}
+
 async function safeJson(res) {
     try {
         return await res.json();
@@ -6,15 +26,21 @@ async function safeJson(res) {
     }
 }
 
-async function requestJson(url, { method = 'GET', body, headers } = {}) {
-    const res = await fetch(url, {
+async function request(url, { method = 'GET', body, headers, credentials = 'include' } = {}) {
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
+    const res = await fetch(buildApiUrl(url), {
         method,
-        credentials: 'include', // Per inviare cookie di sessione
+        credentials,
         headers: {
-            ...(body ? { 'Content-Type': 'application/json' } : {}),
+            ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
             ...(headers ?? {}),
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: body
+            ? isFormData
+                ? body
+                : JSON.stringify(body)
+            : undefined,
     });
 
     const data = await safeJson(res);
@@ -33,32 +59,25 @@ async function requestJson(url, { method = 'GET', body, headers } = {}) {
 }
 
 export function getJson(url, options) {
-    return requestJson(url, { ...(options ?? {}), method: 'GET' });
+    return request(url, { ...(options ?? {}), method: 'GET' });
 }
 
 export function postJson(url, body, options) {
-    return requestJson(url, { ...(options ?? {}), method: 'POST', body });
+    return request(url, { ...(options ?? {}), method: 'POST', body });
 }
 
 export function putJson(url, body, options) {
-    return requestJson(url, { ...(options ?? {}), method: 'PUT', body });
+    return request(url, { ...(options ?? {}), method: 'PUT', body });
 }
 
-export async function delJson(url, options) {
-    const res = await fetch(url, {
-        method: 'DELETE',
-        credentials: 'include',
-        ...(options ?? {}),
-    });
+export function postForm(url, formData, options) {
+    return request(url, { ...(options ?? {}), method: 'POST', body: formData });
+}
 
-    if (!res.ok) {
-        const data = await safeJson(res);
-        const message =
-            data?.error ||
-            data?.message ||
-            `Eliminazione fallita (${res.status})`;
-        throw new Error(message);
-    }
+export function putForm(url, formData, options) {
+    return request(url, { ...(options ?? {}), method: 'PUT', body: formData });
+}
 
-    return true;
+export function delJson(url, options) {
+    return request(url, { ...(options ?? {}), method: 'DELETE' });
 }

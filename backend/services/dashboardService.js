@@ -388,40 +388,18 @@ export async function getDashboard(reqUser = null) {
 
     const activeSuspensionsRaw = await repo.listActiveSuspensions(pool);
 
-    const activeSuspensions = await Promise.all(
-        activeSuspensionsRaw.map(async (row) => {
-            const replacementCandidates =
-                await repo.listReplacementCandidatesForSuspension(pool, {
-                    idFood: row.id_food,
-                    validFrom: row.valid_from,
-                    validTo: row.valid_to,
-                });
-
-            const uniqueReplacementNames = [
-                ...new Set(
-                    replacementCandidates
-                        .map((candidate) => candidate.name?.trim())
-                        .filter(Boolean),
-                ),
-            ];
-
-            return {
-                ...row,
-                days_until_reactivation: toInt(row.days_until_reactivation),
-                type_label: capitalize(row.type),
-                replacement_name:
-                    uniqueReplacementNames.length > 0
-                        ? uniqueReplacementNames.join(', ')
-                        : null,
-                replacement_candidates_count: uniqueReplacementNames.length,
-                action: {
-                    type: 'navigate',
-                    label: 'Apri piatto',
-                    target: `/dishes/edit/${row.id_food}`,
-                },
-            };
-        }),
-    );
+    const activeSuspensions = activeSuspensionsRaw.map((row) => ({
+        ...row,
+        days_until_reactivation: toInt(row.days_until_reactivation),
+        type_label: capitalize(row.type),
+        replacement_name: String(row.replacement_names ?? '').trim() || null,
+        replacement_candidates_count: toInt(row.replacement_candidates_count),
+        action: {
+            type: 'navigate',
+            label: 'Apri piatto',
+            target: `/dishes/edit/${row.id_food}`,
+        },
+    }));
 
     const passwordResetRequests =
         reqUser?.role === 'super_user'

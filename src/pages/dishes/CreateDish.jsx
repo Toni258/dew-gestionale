@@ -14,7 +14,7 @@ import {
     isPositive,
     validateMacrosVsGrammage,
 } from '../../utils/validators';
-import { checkDishNameExists } from '../../services/dishesApi';
+import { checkDishNameExists, createDish } from '../../services/dishesApi';
 
 export default function CreateDish() {
     const navigate = useNavigate();
@@ -49,15 +49,25 @@ export default function CreateDish() {
                         img: (v) => (!v ? 'Carica un’immagine' : null),
 
                         grammage_tot: (v) =>
-                            !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+                            v === '' || v === null || v === undefined
+                                ? 'Obbligatorio'
+                                : isDecimal(v) || isPositive(v),
                         kcal_tot: (v) =>
-                            !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+                            v === '' || v === null || v === undefined
+                                ? 'Obbligatorio'
+                                : isDecimal(v) || isPositive(v),
                         proteins: (v) =>
-                            !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+                            v === '' || v === null || v === undefined
+                                ? 'Obbligatorio'
+                                : isDecimal(v) || isPositive(v),
                         carbohydrates: (v) =>
-                            !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+                            v === '' || v === null || v === undefined
+                                ? 'Obbligatorio'
+                                : isDecimal(v) || isPositive(v),
                         fats: (v) =>
-                            !v ? 'Obbligatorio' : isDecimal(v) || isPositive(v),
+                            v === '' || v === null || v === undefined
+                                ? 'Obbligatorio'
+                                : isDecimal(v) || isPositive(v),
                     }}
                     asyncValidate={{
                         name: async (value) => {
@@ -100,23 +110,7 @@ export default function CreateDish() {
                             errorMessage:
                                 'Impossibile creare il piatto, riprova.',
                             fn: async () => {
-                                const res = await fetch('/api/dishes', {
-                                    method: 'POST',
-                                    body: formData,
-                                });
-
-                                // provo a leggere un messaggio server (se c'è)
-                                const json = await res.json().catch(() => null);
-
-                                if (!res.ok) {
-                                    throw new Error(
-                                        json?.message ||
-                                            json?.error ||
-                                            'Errore creazione piatto',
-                                    );
-                                }
-
-                                return json;
+                                return createDish(formData);
                             },
                         });
 

@@ -1,15 +1,23 @@
-import { getJson, postJson, putJson, delJson } from './apiClient';
+import { delJson, getJson, postJson, putJson } from './apiClient';
+
+export function getMenus() {
+    return getJson('/api/menus');
+}
 
 export function checkMenuNameExists(name) {
     const qs = new URLSearchParams({ name: (name ?? '').trim() });
     return getJson(`/api/menus/exists?${qs.toString()}`);
-    // atteso: { exists: boolean }
 }
 
-export function checkMenuDatesOverlap(start_date, end_date) {
+export function checkMenuDatesOverlap(
+    start_date,
+    end_date,
+    { excludeName = '', excludeArchMenuId = '' } = {},
+) {
     const qs = new URLSearchParams({ start_date, end_date });
+    if (excludeName) qs.set('excludeName', excludeName);
+    if (excludeArchMenuId) qs.set('excludeArchMenuId', excludeArchMenuId);
     return getJson(`/api/menus/dates-overlap?${qs.toString()}`);
-    // atteso: { overlap: boolean, season_type?: string }
 }
 
 export function createMenu(payload) {
@@ -22,7 +30,6 @@ export function getMenuBySeasonType(seasonType) {
 
 export function getMenuMealsStatus(seasonType) {
     return getJson(`/api/menus/${encodeURIComponent(seasonType)}/meals-status`);
-    // atteso: { data: [...] } oppure direttamente [...]
 }
 
 export function updateMenu(seasonType, payload) {
@@ -57,7 +64,6 @@ export function upsertMenuMealComposition(
 
 export function getMenuFixedDishes(seasonType) {
     return getJson(`/api/menus/${encodeURIComponent(seasonType)}/fixed-dishes`);
-    // atteso: { data: [...] }
 }
 
 export function upsertMenuFixedDishes(seasonType, payload) {
@@ -71,12 +77,11 @@ export function getFixedCheesesRotation(seasonType) {
     return getJson(
         `/api/menus/${encodeURIComponent(seasonType)}/fixed-cheeses-rotation`,
     );
-    // atteso: { data: { pranzo:[...], cena:[...] } }
 }
 
-// -------------------------------
-// ----- PER MENU ARCHIVIATI -----
-// -------------------------------
+export function getArchivedMenus() {
+    return getJson('/api/archived-menus');
+}
 
 export function getArchivedMenuByID(id_arch_menu) {
     return getJson(
@@ -94,14 +99,12 @@ export function getArchivedMenuFixedDishes(id_arch_menu) {
     return getJson(
         `/api/archived-menus/${encodeURIComponent(id_arch_menu)}/fixed-dishes`,
     );
-    // atteso: { data: [...] }
 }
 
 export function getArchivedFixedCheesesRotation(id_arch_menu) {
     return getJson(
         `/api/archived-menus/${encodeURIComponent(id_arch_menu)}/fixed-cheeses-rotation`,
     );
-    // atteso: { data: { pranzo:[...], cena:[...] } }
 }
 
 export function getArchivedMenuMealComposition(
@@ -117,5 +120,5 @@ export function getArchivedMenuMealComposition(
 }
 
 export function archiveMenu(seasonType) {
-    return postJson(`/api/menus/${encodeURIComponent(seasonType)}/archive`);
+    return postJson(`/api/menus/${encodeURIComponent(seasonType)}/archive`, {});
 }

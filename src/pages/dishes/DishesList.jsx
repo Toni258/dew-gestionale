@@ -12,9 +12,9 @@ import DishesTable from '../../components/dishes/DishesTable';
 import DeleteDishModal from '../../components/modals/DeleteDishModal';
 import AllergensModal from '../../components/modals/AllergensModal';
 
-import { notify } from '../../services/notify';
 import { withLoader } from '../../services/withLoader';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
+import { deleteDish, getDishes } from '../../services/dishesApi';
 
 import { ALLERGEN_OPTIONS } from '../../domain/allergens';
 import { TIPOLOGIA_OPTIONS } from '../../domain/tipologia';
@@ -41,38 +41,22 @@ export default function DishesList() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Quando cambio la page size, resetto a pagina 1
     const handlePageSizeChange = (e) => {
         setPageSize(Number(e.target.value));
         setPage(1);
     };
 
-    // Funzione per chiamata API DELETE piatto
-    const deleteDish = async (id_food) => {
-        const res = await fetch(`/api/dishes/${id_food}`, { method: 'DELETE' });
-
-        if (!res.ok) {
-            let msg = 'Errore eliminazione piatto';
-            try {
-                const data = await res.json();
-                if (data?.error) msg = data.error;
-            } catch {}
-
-            throw new Error(msg);
-        }
-    };
-
-    // Payload “finale” usato per chiamare API
-    const requestParams = useMemo(() => {
-        return {
+    const requestParams = useMemo(
+        () => ({
             search: query,
             stato: appliedFilters.stato || '',
             tipologia: appliedFilters.tipologia || '',
             allergeni: appliedFilters.allergeni || [],
             page,
             pageSize,
-        };
-    }, [query, appliedFilters, page, pageSize]);
+        }),
+        [query, appliedFilters, page, pageSize],
+    );
 
     const fetchDishes = useCallback(async () => {
         setLoading(true);
@@ -80,22 +64,7 @@ export default function DishesList() {
 
         try {
             await withLoader('Caricamento piatti…', async () => {
-                const qs = new URLSearchParams();
-                if (requestParams.search)
-                    qs.set('search', requestParams.search);
-                if (requestParams.stato) qs.set('stato', requestParams.stato);
-                if (requestParams.tipologia)
-                    qs.set('tipologia', requestParams.tipologia);
-                qs.set('page', String(requestParams.page));
-                qs.set('pageSize', String(requestParams.pageSize));
-                (requestParams.allergeni || []).forEach((a) =>
-                    qs.append('allergeni', a),
-                );
-
-                const res = await fetch(`/api/dishes?${qs.toString()}`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const json = await res.json();
+                const json = await getDishes(requestParams);
                 setRows(json.data || []);
                 setTotal(json.total || 0);
             });
@@ -108,12 +77,10 @@ export default function DishesList() {
         }
     }, [requestParams]);
 
-    // Caricamento iniziale + quando cambiano filtri applicati/pagina/query
     useEffect(() => {
         fetchDishes();
     }, [fetchDishes]);
 
-    // Applica filtri: li “blocchi” e resetti pagina a 1
     const handleFilters = (values) => {
         setAppliedFilters({
             stato: values.stato || '',
@@ -127,9 +94,7 @@ export default function DishesList() {
         <AppLayout title="GESTIONE PIATTI">
             <h1 className="text-3xl font-semibold">Elenco piatti</h1>
 
-            {/* BARRA FILTRI */}
             <div className="mt-1 mb-3 h-[60px] flex justify-between items-center">
-                {/* SEARCH INPUT */}
                 <SearchInput
                     placeholder="Cerca un piatto per nome..."
                     onSearch={(q) => {
@@ -139,7 +104,6 @@ export default function DishesList() {
                     className="w-[400px] [&>input]:rounded-full"
                 />
 
-                {/* FILTRI */}
                 <Form
                     initialValues={{
                         stato: appliedFilters.stato,
@@ -191,7 +155,6 @@ export default function DishesList() {
                 </Form>
             </div>
 
-            {/* TABELLA PIATTI */}
             <DishesTable
                 rows={rows}
                 loading={loading}
@@ -205,7 +168,6 @@ export default function DishesList() {
                 onShowAllergensInfo={() => setShowAllergensInfo(true)}
             />
 
-            {/* MODALE ELIMINA PIATTO */}
             <DeleteDishModal
                 dish={dishToDelete}
                 onClose={() => setDishToDelete(null)}
@@ -224,20 +186,15 @@ export default function DishesList() {
                         },
                     });
 
-                    if (!res.ok) {
-                        // noop: notifica già mostrata
-                        return;
-                    }
+                    if (!res.ok) return;
                 }}
             />
 
-            {/* MODALE LEGENDA ALLERGENI */}
             <AllergensModal
                 open={showAllergensInfo}
                 onClose={() => setShowAllergensInfo(false)}
             />
 
-            {/* STATO */}
             {error && <div className="text-brand-error mb-2">{error}</div>}
             {loading && <div className="mb-2">Caricamento…</div>}
         </AppLayout>
