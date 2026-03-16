@@ -1,6 +1,7 @@
-// src/services/notify.js
+// Frontend service helpers for notify.
 let api = null;
 
+// Helper function used by notify.
 export const notify = {
     success(message, title) {
         api?.success?.({ message, title });
@@ -16,6 +17,7 @@ export const notify = {
     },
 };
 
+// Helper function used by register notify.
 export function registerNotify(nextApi) {
     api = nextApi;
 }

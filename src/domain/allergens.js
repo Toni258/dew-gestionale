@@ -1,3 +1,4 @@
+// Domain constants for allergens.
 export const ALLERGENS = [
     { key: 'glutine', label: 'Glutine', emoji: '🌾', patterns: ['glutine'] },
     {
@@ -45,6 +46,7 @@ export const ALLERGENS = [
     { key: 'lupini', label: 'Lupini', emoji: '🌻', patterns: ['lupini'] },
 ];
 
+// Helper function used by allergen options.
 export const ALLERGEN_OPTIONS = [
     { value: 'Glutine', label: 'Glutine' },
     { value: 'Crostacei', label: 'Crostacei' },

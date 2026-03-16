@@ -1,6 +1,4 @@
-/**
- * Compact KPI card shared by report pages.
- */
+// Compact KPI card shared by report pages.
 import Card from '../ui/Card';
 
 export default function StatsKpiCard({

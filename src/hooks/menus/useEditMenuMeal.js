@@ -1,3 +1,4 @@
+// Custom hook used to manage edit menu meal.
 import { useEffect, useMemo, useState } from 'react';
 import { getAvailableFoodsForMenu } from '../../services/foodsApi';
 import {
@@ -14,6 +15,7 @@ const COURSE_TYPES = [
     { key: 'ultimo', label: 'Ultimo' },
 ];
 
+// Empty fallback values used before data is loaded
 const EMPTY_SELECTED = {
     primo: null,
     secondo: null,
@@ -21,6 +23,7 @@ const EMPTY_SELECTED = {
     ultimo: null,
 };
 
+// Helper function used by make initial food ids from selected.
 function makeInitialFoodIdsFromSelected(selected) {
     return {
         primo: selected.primo?.id_food ?? null,
@@ -30,7 +33,9 @@ function makeInitialFoodIdsFromSelected(selected) {
     };
 }
 
+// Manages the state and side effects for edit menu meal.
 export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
+    // Main state used by the page
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -52,6 +57,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
     useEffect(() => {
         let alive = true;
 
+        // Loads the data used by all foods.
         async function loadAllFoods() {
             try {
                 const results = await Promise.all(
@@ -85,6 +91,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
     useEffect(() => {
         let alive = true;
 
+        // Loads the current data.
         async function load() {
             setLoading(true);
             try {
@@ -118,6 +125,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
             alive = false;
         };
     }, [seasonType, dayIndex, mealType]);
+    // Derived data used by the UI
 
     const hasSomethingSaved = useMemo(() => {
         const dishes = data?.dishes ?? [];
@@ -131,13 +139,11 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
     }, [data]);
 
     // Selezione completa (tutti i corsi hanno un piatto selezionato)
-    /*
-        const allSelectedNow = useMemo(() => {
-            return COURSE_TYPES.every((c) =>
-                Boolean(selectedFoods[c.key]?.id_food),
-            );
-        }, [selectedFoods]);
-    */
+    // const allSelectedNow = useMemo(() => {
+    // return COURSE_TYPES.every((c) =>
+    // Boolean(selectedFoods[c.key]?.id_food),
+    // );
+    // }, [selectedFoods]);
 
     // Selezione parziale (almeno un piatto selezionato)
     const hasAtLeastOneSelectedNow = useMemo(() => {
@@ -177,6 +183,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         );
     }, [selectedFoods]);
 
+    // Helper function used by set selected food.
     function setSelectedFood(courseKey, idFoodStr) {
         if (!idFoodStr) {
             setSelectedFoods((prev) => ({
@@ -197,6 +204,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         }));
     }
 
+    // Helper function used by save.
     async function save() {
         // validazione
         if (!hasAtLeastOneSelectedNow) {

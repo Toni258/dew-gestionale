@@ -1,3 +1,4 @@
+// Database queries used for foods.
 export async function listFoodsByType(poolOrConn, { type, search = '' }) {
     const [rows] = await poolOrConn.query(
         `
@@ -22,6 +23,7 @@ export async function listFoodsByType(poolOrConn, { type, search = '' }) {
     return rows;
 }
 
+// Returns the list used by foods available for menu.
 export async function listFoodsAvailableForMenu(
     poolOrConn,
     {
@@ -100,6 +102,7 @@ export async function listFoodsAvailableForMenu(
     return rows;
 }
 
+// Returns the list used by cheese foods.
 export async function listCheeseFoods(poolOrConn, cheeseIds, orderSqlList) {
     const [rows] = await poolOrConn.query(
         `

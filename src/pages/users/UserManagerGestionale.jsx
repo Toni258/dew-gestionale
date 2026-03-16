@@ -1,7 +1,5 @@
-/**
- * Backoffice user manager page.
- * Data loading and table rendering are split into smaller helpers to keep this page readable.
- */
+// Backoffice user manager page.
+// Data loading and table rendering are split into smaller helpers to keep this page readable.
 import { useMemo, useState } from 'react';
 
 import AppLayout from '../../components/layout/AppLayout';
@@ -40,6 +38,7 @@ export default function UserManagerGestionale() {
         useState(false);
     const [showPasswordChangeModal, setShowPasswordChangeModal] =
         useState(false);
+    // Main state used by the page
     const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
     const [showDisableUserModal, setShowDisableUserModal] = useState(false);
     const [showEnableUserModal, setShowEnableUserModal] = useState(false);
@@ -73,6 +72,7 @@ export default function UserManagerGestionale() {
         [rows],
     );
 
+    // Clears the value used by selection.
     function clearSelection() {
         setUserSelected(null);
         setShowModifyUserInfoModal(false);

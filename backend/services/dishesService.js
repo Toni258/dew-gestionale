@@ -1,7 +1,5 @@
-/**
- * Service layer for dish CRUD operations.
- * It validates payloads, coordinates repository calls and handles uploaded images.
- */
+// Service layer for dish CRUD operations.
+// It validates payloads, coordinates repository calls and handles uploaded images.
 import { pool } from '../db/db.js';
 import { withTransaction } from '../db/tx.js';
 import { HttpError } from '../utils/httpError.js';
@@ -21,6 +19,7 @@ import {
     updateDish,
 } from '../repositories/dishesRepo.js';
 
+// Normalizes the value used by allergy notes.
 function normalizeAllergyNotes(allergyNotes) {
     if (!Array.isArray(allergyNotes)) return null;
 
@@ -31,6 +30,7 @@ function normalizeAllergyNotes(allergyNotes) {
     return cleaned.length ? cleaned.join(', ') : null;
 }
 
+// Converts the input into numeric dish id.
 function toNumericDishId(dishId) {
     const numericDishId = Number(dishId);
     if (!Number.isInteger(numericDishId) || numericDishId <= 0) {
@@ -40,6 +40,7 @@ function toNumericDishId(dishId) {
     return numericDishId;
 }
 
+// Normalizes the value used by dish name.
 function normalizeDishName(name) {
     const normalized = String(name ?? '').trim();
     if (!normalized || normalized.length < 3) {
@@ -48,6 +49,7 @@ function normalizeDishName(name) {
     return normalized;
 }
 
+// Normalizes the value used by dish type.
 function normalizeDishType(type) {
     const normalized = String(type ?? '').trim();
     if (!COURSE_TYPES.includes(normalized)) {
@@ -56,6 +58,7 @@ function normalizeDishType(type) {
     return normalized;
 }
 
+// Normalizes the value used by non negative number.
 function normalizeNonNegativeNumber(value, label) {
     if (value === '' || value === null || value === undefined) {
         throw new HttpError(400, `${label} obbligatorio`);
@@ -69,6 +72,7 @@ function normalizeNonNegativeNumber(value, label) {
     return numericValue;
 }
 
+// Normalizes the value used by dish payload.
 function normalizeDishPayload(body = {}) {
     return {
         name: normalizeDishName(body.name),
@@ -88,6 +92,7 @@ function normalizeDishPayload(body = {}) {
     };
 }
 
+// Returns the data used by filtered dishes data.
 export async function getFilteredDishesData(query = {}) {
     const search = String(query.search ?? '').trim();
     const status = String(query.stato ?? '').trim();
@@ -127,6 +132,7 @@ export async function getFilteredDishesData(query = {}) {
     };
 }
 
+// Checks the current value for dish name availability.
 export async function checkDishNameAvailability({ name, excludeId } = {}) {
     const cleanName = String(name ?? '').trim();
     if (!cleanName) return { exists: false };
@@ -139,6 +145,7 @@ export async function checkDishNameAvailability({ name, excludeId } = {}) {
     return { exists };
 }
 
+// Creates the data for dish data.
 export async function createDishData(body = {}, file = null) {
     const payload = normalizeDishPayload(body);
 
@@ -164,6 +171,7 @@ export async function createDishData(body = {}, file = null) {
     }
 }
 
+// Deletes the data for dish data.
 export async function deleteDishData(dishIdRaw) {
     const dishId = toNumericDishId(dishIdRaw);
     const dish = await findDishSummaryById(pool, dishId);
@@ -196,6 +204,7 @@ export async function deleteDishData(dishIdRaw) {
     }
 }
 
+// Returns the data used by dish by id data.
 export async function getDishByIdData(dishIdRaw) {
     const dishId = toNumericDishId(dishIdRaw);
     const dish = await findDishSummaryById(pool, dishId);
@@ -222,6 +231,7 @@ export async function getDishByIdData(dishIdRaw) {
     };
 }
 
+// Updates the data for dish data.
 export async function updateDishData(dishIdRaw, body = {}, file = null) {
     const dishId = toNumericDishId(dishIdRaw);
     const payload = normalizeDishPayload(body);

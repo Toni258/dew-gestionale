@@ -1,3 +1,4 @@
+// Dish form fields.
 import FormGroup from '../ui/FormGroup';
 import Input from '../ui/Input';
 import CustomSelect from '../ui/CustomSelect';

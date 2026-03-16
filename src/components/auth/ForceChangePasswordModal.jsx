@@ -1,3 +1,4 @@
+// Modal used for force change password.
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import AlertBox from '../ui/AlertBox';
@@ -9,6 +10,7 @@ import Input from '../ui/Input';
 import { useAuth } from '../../context/AuthContext';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
 
+// Component used for force change password modal.
 function FormGlobalError() {
     const form = useFormContext();
     const err = (form?.errors?.form ?? '').toString().trim();
@@ -23,6 +25,7 @@ function FormGlobalError() {
     );
 }
 
+// Component used for force change password modal.
 function ExitButton({ onExit }) {
     const form = useFormContext();
     return (
@@ -37,6 +40,7 @@ function ExitButton({ onExit }) {
     );
 }
 
+// Component used for force change password modal.
 function SubmitButton() {
     const form = useFormContext();
 
@@ -72,7 +76,7 @@ export default function ForceChangePasswordModal() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
             <Card className="relative w-full max-w-[520px] modal-animation overflow-hidden rounded-2xl shadow-2xl">
-                {/* Header */}
+                {/* Header section */}
                 <div className="px-6 pt-6 pb-4 border-b border-brand-divider/60">
                     <div className="flex items-start gap-3">
                         <div className="w-11 h-11 rounded-xl bg-brand-primary/10 flex items-center justify-center">

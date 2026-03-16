@@ -1,3 +1,4 @@
+// Modal used for modify user password.
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Form from '../ui/Form';

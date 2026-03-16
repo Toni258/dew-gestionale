@@ -1,10 +1,11 @@
+// Layout app layout.
 import Header from './Header';
 import Sidebar from './Sidebar';
 
 export default function AppLayout({ title, children }) {
     return (
         <div className="flex flex-col h-screen">
-            {/* Header */}
+            {/* Header section */}
             <Header title={title} />
 
             {/* Layout principale */}

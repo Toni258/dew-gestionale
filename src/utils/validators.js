@@ -1,7 +1,5 @@
-/**
- * Small reusable validators shared by multiple forms.
- * They intentionally stay lightweight and framework-agnostic.
- */
+// Small reusable validators shared by multiple forms.
+// They intentionally stay lightweight and framework-agnostic.
 export const isDecimal = (value) => {
     // Leave the "required" check to the caller.
     if (value === '' || value === null || value === undefined) return null;
@@ -17,11 +15,13 @@ export const isDecimal = (value) => {
         : 'Deve essere un numero (usa il punto per i decimali, es. 20.5)';
 };
 
+// Helper function used by is positive.
 export const isPositive = (value) => {
     if (value === '' || value === null || value === undefined) return null;
     return Number(value) < 0 ? 'Deve essere ≥ 0' : null;
 };
 
+// Validates the data used by macros vs grammage.
 export const validateMacrosVsGrammage = (values) => {
     const grammage = Number(values.grammage_tot);
     const proteins = Number(values.proteins);

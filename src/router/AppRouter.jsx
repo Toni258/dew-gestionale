@@ -1,6 +1,7 @@
+// Routing component for app router.
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-/*    IMPORT PAGES    */
+// IMPORT PAGES
 import Login from '../pages/Auth/Login';
 import Dashboard from '../pages/Dashboard';
 

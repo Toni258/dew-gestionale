@@ -1,3 +1,4 @@
+// Reusable custom select.
 import { useState, useRef, useEffect } from 'react';
 import { useFormContext } from './Form';
 

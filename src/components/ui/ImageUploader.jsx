@@ -1,3 +1,4 @@
+// Reusable image uploader.
 import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFormContext } from './Form';
 

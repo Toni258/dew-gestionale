@@ -1,7 +1,5 @@
-/**
- * Shared top bar for user management pages.
- * It keeps the same search + filter layout across different user lists.
- */
+// Shared top bar for user management pages.
+// It keeps the same search + filter layout across different user lists.
 import SearchInput from '../ui/SearchInput';
 import Form from '../ui/Form';
 import Button from '../ui/Button';

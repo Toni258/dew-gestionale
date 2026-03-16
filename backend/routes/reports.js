@@ -1,4 +1,4 @@
-// backend/routes/reports.js
+// Express routes for reports.
 import { Router } from 'express';
 import {
     getConsumiMenus,
@@ -7,6 +7,7 @@ import {
     getScelteReport,
 } from '../controllers/reportsController.js';
 
+// Route definitions
 const router = Router();
 
 router.get('/consumi/menus', getConsumiMenus);

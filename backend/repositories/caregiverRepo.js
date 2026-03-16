@@ -1,5 +1,7 @@
+// Database queries used for caregiver.
 import { APP_USER_DISABLE_SENTINEL } from '../../shared/constants.js';
 
+// Builds the data needed for list where.
 function buildListWhere({ search = '', role = '' } = {}) {
     let where = ' WHERE 1=1 ';
     const params = [];
@@ -18,6 +20,7 @@ function buildListWhere({ search = '', role = '' } = {}) {
     return { where, params };
 }
 
+// Returns the list used by caregivers.
 export async function listCaregivers(
     poolOrConn,
     { search = '', role = '', page = 1, pageSize = 30 } = {},
@@ -48,6 +51,7 @@ export async function listCaregivers(
     return rows;
 }
 
+// Returns the count for caregivers.
 export async function countCaregivers(poolOrConn, { search = '', role = '' } = {}) {
     const { where, params } = buildListWhere({ search, role });
     const [rows] = await poolOrConn.query(
@@ -62,6 +66,7 @@ export async function countCaregivers(poolOrConn, { search = '', role = '' } = {
     return Number(rows[0]?.total ?? 0);
 }
 
+// Finds the data for caregiver by id.
 export async function findCaregiverById(poolOrConn, caregiverId) {
     const [rows] = await poolOrConn.query(
         `
@@ -84,6 +89,7 @@ export async function findCaregiverById(poolOrConn, caregiverId) {
     return rows[0] ?? null;
 }
 
+// Helper function used by caregiver email exists.
 export async function caregiverEmailExists(
     poolOrConn,
     email,
@@ -103,6 +109,7 @@ export async function caregiverEmailExists(
     return rows.length > 0;
 }
 
+// Updates the data for caregiver info.
 export async function updateCaregiverInfo(
     poolOrConn,
     { caregiverId, name, surname, email, role },
@@ -119,6 +126,7 @@ export async function updateCaregiverInfo(
     return result.affectedRows ?? 0;
 }
 
+// Disables the data used by caregiver.
 export async function disableCaregiver(poolOrConn, caregiverId) {
     const [result] = await poolOrConn.query(
         `
@@ -132,6 +140,7 @@ export async function disableCaregiver(poolOrConn, caregiverId) {
     return result.affectedRows ?? 0;
 }
 
+// Deletes the data for caregiver.
 export async function deleteCaregiver(poolOrConn, caregiverId) {
     const [result] = await poolOrConn.query(
         `DELETE FROM caregiver WHERE id_caregiver = ?`,

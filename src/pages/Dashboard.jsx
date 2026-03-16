@@ -1,7 +1,5 @@
-/**
- * Main operational dashboard.
- * Most visual blocks live in dedicated components so this page can focus on data and actions.
- */
+// Main operational dashboard.
+// Most visual blocks live in dedicated components so this page can focus on data and actions.
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,6 +33,7 @@ export default function Dashboard() {
         showPasswordResetRequestsModal,
         setShowPasswordResetRequestsModal,
     } = useDashboardData(isSuperUser);
+    // Main state used by the page
 
     const [showArchiveModal, setShowArchiveModal] = useState(false);
     const [menuToArchive, setMenuToArchive] = useState(null);
@@ -46,6 +45,7 @@ export default function Dashboard() {
     const alerts = data?.alerts ?? [];
     const checklist = data?.checklist ?? [];
     const suspendedDishes = data?.suspended_dishes ?? [];
+    // Derived data used by the UI
 
     const archiveCandidateBySeason = useMemo(() => {
         const map = new Map();
@@ -57,6 +57,7 @@ export default function Dashboard() {
         return map;
     }, [lastEndedMenu]);
 
+    // Helper function used by open archive for season.
     function openArchiveForSeason(seasonType) {
         const candidate = archiveCandidateBySeason.get(seasonType);
 
@@ -69,6 +70,7 @@ export default function Dashboard() {
         setShowArchiveModal(true);
     }
 
+    // Handles the logic for action.
     function handleAction(action) {
         if (!action) return;
 
@@ -82,6 +84,7 @@ export default function Dashboard() {
         }
     }
 
+    // Handles the logic for confirm archive.
     async function handleConfirmArchive(menu) {
         setArchiving(true);
 

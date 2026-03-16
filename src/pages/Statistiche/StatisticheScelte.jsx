@@ -1,7 +1,5 @@
-/**
- * Report page for food choices.
- * Shared helpers keep formatting and presentational cards outside the page file.
- */
+// Report page for food choices.
+// Main logic for filters, data loading and report sections.
 import AppLayout from '../../components/layout/AppLayout';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Form from '../../components/ui/Form';
@@ -27,6 +25,7 @@ import {
     formatDate,
 } from '../../utils/statistics/reportFormatters';
 
+// Filter options
 const MEAL_OPTIONS = [
     { value: '', label: 'Tutti i pasti' },
     { value: 'pranzo', label: 'Pranzo' },
@@ -70,6 +69,7 @@ const BABY_FOOD_OPTIONS = [
     { value: '0', label: 'Escludi baby food' },
 ];
 
+// Empty fallback values used before data is loaded or when an error happens
 const EMPTY_KPI = {
     total_choices: 0,
     distinct_dishes_chosen: 0,
@@ -129,6 +129,8 @@ const EMPTY_FORM_VALUES = {
     babyFood: '',
 };
 
+// Builds the filters object used for the report request.
+// If some values are missing, menu dates are used as default range.
 function buildAppliedFilters(menu, values = {}) {
     return {
         menuKind: menu?.kind ?? '',
@@ -146,6 +148,8 @@ function buildAppliedFilters(menu, values = {}) {
     };
 }
 
+// Validates the filter form.
+// It also checks that the selected dates stay inside the selected menu period.
 function validateScelteFilters(values, menus) {
     const errs = {};
 
@@ -184,6 +188,7 @@ function validateScelteFilters(values, menus) {
 }
 
 export default function StatisticheScelte() {
+    // Main page state
     const [menus, setMenus] = useState([]);
     const [menusLoading, setMenusLoading] = useState(true);
 
@@ -207,9 +212,11 @@ export default function StatisticheScelte() {
     const [details, setDetails] = useState(EMPTY_DETAILS);
     const [options, setOptions] = useState(EMPTY_OPTIONS);
 
+    // Load available menus when the page opens
     useEffect(() => {
         let cancelled = false;
 
+        // Loads the available menus for the page.
         async function loadMenus() {
             setMenusLoading(true);
             setError('');
@@ -247,6 +254,7 @@ export default function StatisticheScelte() {
         };
     }, []);
 
+    // Initial form values follow the selected menu and the last applied filters
     const formInitialValues = useMemo(() => {
         if (!selectedMenu) {
             return EMPTY_FORM_VALUES;
@@ -278,6 +286,7 @@ export default function StatisticheScelte() {
         };
     }, [selectedMenu, applied]);
 
+    // Changes the form key when menu changes, so the form can reset correctly
     const formKey = useMemo(() => {
         return `${selectedMenu ? buildMenuValue(selectedMenu) : 'none'}-${formVersion}`;
     }, [selectedMenu, formVersion]);
@@ -296,6 +305,7 @@ export default function StatisticheScelte() {
         ];
     }, [options.floors]);
 
+    // Full request params used by the report API, including pagination
     const requestParams = useMemo(() => {
         if (!applied) return null;
 
@@ -308,6 +318,7 @@ export default function StatisticheScelte() {
         };
     }, [applied, page, pageSize, detailsPage, detailsPageSize]);
 
+    // Loads the whole report based on current filters and pagination
     const fetchReport = useCallback(async () => {
         if (!requestParams) return;
 
@@ -356,10 +367,12 @@ export default function StatisticheScelte() {
         }
     }, [requestParams]);
 
+    // Reload report when filters or pagination change
     useEffect(() => {
         fetchReport();
     }, [fetchReport]);
 
+    // Pagination handlers
     const handlePageSizeChange = (e) => {
         setPageSize(Number(e.target.value));
         setPage(1);
@@ -370,6 +383,7 @@ export default function StatisticheScelte() {
         setDetailsPage(1);
     };
 
+    // Applies filters from the form and resets pagination
     const handleApplyFilters = (values) => {
         const menu = (menus || []).find(
             (menuRow) => buildMenuValue(menuRow) === values.menuValue,
@@ -383,6 +397,7 @@ export default function StatisticheScelte() {
         setDetailsPage(1);
     };
 
+    // Data prepared for charts
     const weeklyChartRows = useMemo(() => {
         return (charts.weeklyTrend || []).map((row) => ({
             label: row.label,
@@ -420,6 +435,7 @@ export default function StatisticheScelte() {
                 Statistiche e analisi scelte piatti
             </h1>
 
+            {/* Filters section */}
             <div className="relative z-20 mt-4">
                 <Card className="relative z-20 overflow-visible rounded-[24px] border border-black/5 bg-white/85 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
                     {selectedMenu && !menusLoading ? (
@@ -431,6 +447,7 @@ export default function StatisticheScelte() {
                             }
                             onSubmit={handleApplyFilters}
                         >
+                            {/* Keeps selected menu and form values in sync */}
                             <StatsMenuSelectionSync
                                 menuRows={menus}
                                 setSelectedMenu={setSelectedMenu}
@@ -467,6 +484,7 @@ export default function StatisticheScelte() {
                                     </FormGroup>
                                 </div>
 
+                                {/* Visual separator between main and secondary filters */}
                                 <div className="w-px w-full bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
 
                                 <div className="flex flex-col flex-[2] gap-4 min-w-[620px]">
@@ -597,6 +615,7 @@ export default function StatisticheScelte() {
                 </Card>
             </div>
 
+            {/* KPI cards */}
             <div className="mt-6 grid grid-cols-6 gap-5">
                 <StatsKpiCard
                     iconSrc="/checklist-secondary.png"
@@ -648,6 +667,7 @@ export default function StatisticheScelte() {
                 />
             </div>
 
+            {/* Small note to explain how the main rate is calculated */}
             <div className="mt-4 text-sm text-brand-textSecondary">
                 Tasso di scelta = scelte registrate / opportunità stimate. Le
                 opportunità stimate sono calcolate come apparizioni del piatto
@@ -655,6 +675,7 @@ export default function StatisticheScelte() {
                 {fmtInt(kpi.patient_scope_count)}).
             </div>
 
+            {/* Ranking cards */}
             <div className="mt-6 grid grid-cols-3 gap-6">
                 <StatsRankCard
                     title="Piatti più richiesti"
@@ -681,6 +702,7 @@ export default function StatisticheScelte() {
                 />
             </div>
 
+            {/* Main charts */}
             <div className="mt-8 grid grid-cols-2 gap-6">
                 <StatsBarsCard
                     title="Trend di scelta per settimana"
@@ -722,6 +744,7 @@ export default function StatisticheScelte() {
                 />
             </div>
 
+            {/* Aggregated dishes table */}
             <div className="mt-8">
                 <Card className="overflow-hidden rounded-[24px] border border-white/60 bg-white/85 p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
                     <div className="border-b border-black/5 px-3 pb-4 pt-1">
@@ -852,6 +875,7 @@ export default function StatisticheScelte() {
                         </table>
                     </div>
 
+                    {/* Pagination for aggregated dishes */}
                     <div className="border-t border-black/5">
                         <Pagination
                             total={dishes.total || 0}
@@ -866,6 +890,7 @@ export default function StatisticheScelte() {
                 </Card>
             </div>
 
+            {/* Detailed choices table */}
             <div className="mt-8">
                 <Card className="overflow-hidden rounded-[24px] border border-white/60 bg-white/85 p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
                     <div className="border-b border-black/5 px-3 pb-4 pt-1">
@@ -1029,6 +1054,7 @@ export default function StatisticheScelte() {
                         </table>
                     </div>
 
+                    {/* Pagination for detailed choices */}
                     <div className="border-t border-black/5">
                         <Pagination
                             total={details.total || 0}
@@ -1043,6 +1069,7 @@ export default function StatisticheScelte() {
                 </Card>
             </div>
 
+            {/* Error message */}
             {error && <div className="text-brand-error mt-3">{error}</div>}
         </AppLayout>
     );

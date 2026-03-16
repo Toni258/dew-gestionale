@@ -1,3 +1,4 @@
+// Constants.
 export const COURSE_ROWS = [
     { key: 'primo', label: 'PRIMO', slots: 3 },
     { key: 'secondo', label: 'SECONDO', slots: 3 },
@@ -7,6 +8,7 @@ export const COURSE_ROWS = [
     { key: 'speciale', label: 'SPECIALE', slots: 1 }, // solo CENA
 ];
 
+// Component used for constants.
 export const WEEKDAYS = [
     'Lunedì',
     'Martedì',

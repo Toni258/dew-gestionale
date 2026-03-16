@@ -1,3 +1,4 @@
+// Layout header.
 import { useAuth } from '../../context/AuthContext';
 
 export default function Header({ title }) {

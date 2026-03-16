@@ -1,6 +1,4 @@
-/**
- * Keeps the selected report menu in sync with the custom form component.
- */
+// Keeps the selected report menu in sync with the custom form component.
 import { useEffect, useRef } from 'react';
 import { useFormContext } from '../ui/Form';
 import { buildMenuValue } from '../../utils/statistics/menuValue';

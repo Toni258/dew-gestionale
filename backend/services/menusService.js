@@ -1,3 +1,4 @@
+// Service layer used for menus.
 import { pool } from '../db/db.js';
 import { withTransaction } from '../db/tx.js';
 import { HttpError } from '../utils/httpError.js';
@@ -10,10 +11,12 @@ import {
 import * as repo from '../repositories/menusRepo.js';
 import { CHEESE_IDS } from '../../shared/constants.js';
 
+// Returns the data used by menus.
 export async function getMenus() {
     return repo.listMenus(pool);
 }
 
+// Checks the current value for menu name.
 export async function checkMenuName({ name, excludeName }) {
     const normalized = normalizeName(name);
     if (!normalized) return { exists: false };
@@ -26,6 +29,7 @@ export async function checkMenuName({ name, excludeName }) {
     return { exists };
 }
 
+// Checks the current value for menu dates overlap.
 export async function checkMenuDatesOverlap({
     start_date,
     end_date,
@@ -44,6 +48,7 @@ export async function checkMenuDatesOverlap({
 
     if (!found) return { overlap: false };
 
+    // Formats the value used by date.
     function formatDate(d) {
         if (!d) return null;
         return d.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -59,6 +64,7 @@ export async function checkMenuDatesOverlap({
     };
 }
 
+// Returns the data used by menu by season type.
 export async function getMenuBySeasonType(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
@@ -69,6 +75,7 @@ export async function getMenuBySeasonType(season_type_param) {
     return menu;
 }
 
+// Returns the data used by menu meals status.
 export async function getMenuMealsStatus(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
@@ -76,6 +83,7 @@ export async function getMenuMealsStatus(season_type_param) {
     return repo.getMealsStatus(pool, seasonType);
 }
 
+// Creates the data for menu.
 export async function createMenu({ name, start_date, end_date }) {
     const menuName = String(name ?? '').trim();
     if (!menuName || menuName.length < 3)
@@ -94,6 +102,7 @@ export async function createMenu({ name, start_date, end_date }) {
     }
 }
 
+// Updates the data for menu.
 export async function updateMenu(
     season_type_param,
     { start_date, end_date, day_index },
@@ -137,6 +146,7 @@ export async function updateMenu(
     return { success: true };
 }
 
+// Deletes the data for menu.
 export async function deleteMenu(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
@@ -149,6 +159,7 @@ export async function deleteMenu(season_type_param) {
     });
 }
 
+// Returns the data used by menu meal composition.
 export async function getMenuMealComposition({
     season_type_param,
     day_index_param,
@@ -178,6 +189,7 @@ export async function getMenuMealComposition({
     };
 }
 
+// Helper function used by upsert menu meal composition.
 export async function upsertMenuMealComposition({
     season_type_param,
     day_index_param,
@@ -236,10 +248,11 @@ export async function upsertMenuMealComposition({
     });
 }
 
-/* ===========================
-   PIATTI FISSI + FORMAGGI
-   =========================== */
+// ===========================
+// PIATTI FISSI + FORMAGGI
+// ===========================
 
+// Returns the data used by menu fixed dishes.
 export async function getMenuFixedDishes(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
@@ -248,6 +261,7 @@ export async function getMenuFixedDishes(season_type_param) {
     return { data: rows };
 }
 
+// Returns the data used by fixed cheeses rotation.
 export async function getFixedCheesesRotation(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
@@ -277,6 +291,7 @@ export async function getFixedCheesesRotation(season_type_param) {
     return { data: out };
 }
 
+// Validates the data used by cheese rotation.
 function validateCheeseRotation(rot) {
     if (!rot || typeof rot !== 'object') return 'FORMAGGI: blocco mancante';
     if (!Array.isArray(rot.pranzo) || rot.pranzo.length !== 7)
@@ -293,6 +308,7 @@ function validateCheeseRotation(rot) {
     return null;
 }
 
+// Converts the input into ids.
 function toIds(arr) {
     if (!Array.isArray(arr)) return [];
     return arr
@@ -302,6 +318,7 @@ function toIds(arr) {
         .filter((n) => Number.isInteger(n) && n > 0);
 }
 
+// Validates the data used by block.
 function validateBlock(block, keys, label) {
     for (const k of keys) {
         if (!Array.isArray(block[k]))
@@ -327,6 +344,7 @@ function validateBlock(block, keys, label) {
     return null;
 }
 
+// Helper function used by upsert menu fixed dishes.
 export async function upsertMenuFixedDishes(season_type_param, body) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
@@ -439,6 +457,7 @@ export async function upsertMenuFixedDishes(season_type_param, body) {
     });
 }
 
+// Helper function used by archive menu.
 export async function archiveMenu(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');

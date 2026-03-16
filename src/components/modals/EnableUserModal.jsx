@@ -1,3 +1,4 @@
+// Modal used for enable user.
 import Modal from '../ui/Modal';
 
 export default function EnableUserModal({ show, user, onClose, onConfirm }) {

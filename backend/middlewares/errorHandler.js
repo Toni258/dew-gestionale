@@ -1,7 +1,9 @@
+// Middleware helpers for error handler.
 import multer from 'multer';
 import { HttpError } from '../utils/httpError.js';
 import { logger } from '../utils/logger.js';
 
+// Helper function used by error handler.
 export function errorHandler(err, req, res, next) {
     logger.error('Unhandled backend error', {
         method: req.method,

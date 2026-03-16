@@ -1,3 +1,4 @@
+// Main page for menu list.
 import AppLayout from '../../components/layout/AppLayout';
 import MenuCard from '../../components/menu/MenuCard';
 import { useCallback, useEffect, useState } from 'react';
@@ -7,11 +8,13 @@ import ArchiveMenuModal from '../../components/modals/ArchiveMenuModal';
 import { archiveMenu, getMenus } from '../../services/menusApi';
 
 export default function MenuList() {
+    // Main state used by the page
     const [menus, setMenus] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showArchiveModal, setShowArchiveModal] = useState(false);
     const [menuToArchive, setMenuToArchive] = useState(null);
     const [archiving, setArchiving] = useState(false);
+    // Memoized handler used by the page
 
     const fetchMenus = useCallback(async () => {
         setLoading(true);
@@ -28,21 +31,25 @@ export default function MenuList() {
             setLoading(false);
         }
     }, []);
+    // Load data when the component opens
 
     useEffect(() => {
         fetchMenus();
     }, [fetchMenus]);
 
+    // Handles the logic for open archive modal.
     function handleOpenArchiveModal(menu) {
         setMenuToArchive(menu);
         setShowArchiveModal(true);
     }
 
+    // Handles the logic for close archive modal.
     function handleCloseArchiveModal() {
         setMenuToArchive(null);
         setShowArchiveModal(false);
     }
 
+    // Handles the logic for confirm archive.
     async function handleConfirmArchive(menu) {
         setArchiving(true);
 

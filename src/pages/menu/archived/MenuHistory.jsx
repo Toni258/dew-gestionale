@@ -1,3 +1,4 @@
+// Main page for menu history.
 import AppLayout from '../../../components/layout/AppLayout';
 import ArchivedMenuCard from '../../../components/menu/ArchivedMenuCard';
 import { useCallback, useEffect, useState } from 'react';
@@ -5,8 +6,10 @@ import { withLoader } from '../../../services/withLoader';
 import { getArchivedMenus } from '../../../services/menusApi';
 
 export default function MenuHistory() {
+    // Main state used by the page
     const [menus, setMenus] = useState([]);
     const [loading, setLoading] = useState(true);
+    // Memoized handler used by the page
 
     const fetchMenus = useCallback(async () => {
         setLoading(true);
@@ -23,6 +26,7 @@ export default function MenuHistory() {
             setLoading(false);
         }
     }, []);
+    // Load data when the component opens
 
     useEffect(() => {
         fetchMenus();

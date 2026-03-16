@@ -1,7 +1,5 @@
-/**
- * Presentational blocks used by the dashboard page.
- * They keep the page focused on data loading and user actions.
- */
+// Presentational blocks used by the dashboard page.
+// They keep the page focused on data loading and user actions.
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -36,6 +34,7 @@ const STATUS_TONES = {
     success: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
 };
 
+// Formats the value used by days label.
 function formatDaysLabel(days) {
     if (days === null || days === undefined) return '—';
     if (days === 0) return 'oggi';
@@ -45,6 +44,7 @@ function formatDaysLabel(days) {
     return `${Math.abs(days)} giorni fa`;
 }
 
+// Component used for dashboard section blocks.
 function StatusPill({ label, tone = 'info' }) {
     return (
         <span
@@ -55,6 +55,7 @@ function StatusPill({ label, tone = 'info' }) {
     );
 }
 
+// Component used for dashboard section blocks.
 export function SectionTitle({ title, subtitle }) {
     return (
         <div className="mb-4 flex flex-col gap-1">
@@ -66,6 +67,7 @@ export function SectionTitle({ title, subtitle }) {
     );
 }
 
+// Component used for dashboard section blocks.
 export function PriorityAlertCard({ alert, onAction }) {
     const styles = ALERT_STYLES[alert.severity] || ALERT_STYLES.info;
 
@@ -118,6 +120,7 @@ export function PriorityAlertCard({ alert, onAction }) {
     );
 }
 
+// Component used for dashboard section blocks.
 export function QuickStatusCard({
     title,
     menu,
@@ -275,6 +278,7 @@ export function QuickStatusCard({
     );
 }
 
+// Component used for dashboard section blocks.
 export function ChecklistItem({ item, onAction }) {
     const severityDotClass =
         item.severity === 'error'
@@ -319,6 +323,7 @@ export function ChecklistItem({ item, onAction }) {
     );
 }
 
+// Component used for dashboard section blocks.
 export function SuspendedDishRow({ dish, onAction }) {
     return (
         <div className="flex gap-4">

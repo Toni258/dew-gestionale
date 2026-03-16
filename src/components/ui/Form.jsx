@@ -1,7 +1,9 @@
+// Reusable form component used for form.
 import { createContext, useContext, useRef, useState } from 'react';
 
 const FormContext = createContext(null);
 
+// Manages the state and side effects for form context.
 export function useFormContext() {
     return useContext(FormContext);
 }

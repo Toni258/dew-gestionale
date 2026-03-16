@@ -1,3 +1,4 @@
+// Database queries used for archived menus.
 export async function listMenus(poolOrConn) {
     const [rows] = await poolOrConn.query(`
         SELECT
@@ -38,6 +39,7 @@ export async function listMenus(poolOrConn) {
     return rows;
 }
 
+// Finds the data for menu by id.
 export async function findMenuByID(poolOrConn, id_arch_menu) {
     const [rows] = await poolOrConn.query(
         `
@@ -56,6 +58,7 @@ export async function findMenuByID(poolOrConn, id_arch_menu) {
     return rows[0] ?? null;
 }
 
+// Returns the data used by archived meals status.
 export async function getArchivedMealsStatus(poolOrConn, id_arch_menu) {
     const [rows] = await poolOrConn.query(
         `
@@ -101,6 +104,7 @@ export async function getArchivedMealsStatus(poolOrConn, id_arch_menu) {
     return rows;
 }
 
+// Returns the data used by archived menu fixed dishes.
 export async function getArchivedMenuFixedDishes(poolOrConn, idArchMenu) {
     const [rows] = await poolOrConn.query(
         `
@@ -134,6 +138,7 @@ export async function getArchivedMenuFixedDishes(poolOrConn, idArchMenu) {
     return rows;
 }
 
+// Returns the data used by archived fixed cheeses rotation.
 export async function getArchivedFixedCheesesRotation(
     poolOrConn,
     id_arch_menu,
@@ -164,6 +169,7 @@ export async function getArchivedFixedCheesesRotation(
     return rows;
 }
 
+// Returns the data used by archived meal composition.
 export async function getArchivedMealComposition(
     poolOrConn,
     { idArchMenu, dayIndex, mealType },
@@ -226,7 +232,7 @@ export async function getArchivedMealComposition(
     return rows;
 }
 
-// DA CAPIRE SE SERVONO ANCHE QUESTE CHIAMATE
+// Check later if these extra queries are still needed.
 // ------------------------------------------
 // ------------------------------------------
 // ------------------------------------------
@@ -264,6 +270,7 @@ export async function menuExistsBySeasonType(poolOrConn, seasonType) {
     return rows.length > 0;
 }
 
+// Checks the current value for name exists normalized.
 export async function checkNameExistsNormalized(
     poolOrConn,
     normalizedName,
@@ -285,6 +292,7 @@ export async function checkNameExistsNormalized(
     return rows.length > 0;
 }
 
+// Finds the data for overlap.
 export async function findOverlap(
     poolOrConn,
     { start_date, end_date, excludeName } = {},
@@ -305,6 +313,7 @@ export async function findOverlap(
     return rows[0] ?? null;
 }
 
+// Inserts the data for menu.
 export async function insertMenu(poolOrConn, { name, start_date, end_date }) {
     await poolOrConn.query(
         `INSERT INTO season (season_type, start_date, end_date, day_index) VALUES (?, ?, ?, 0)`,
@@ -312,6 +321,7 @@ export async function insertMenu(poolOrConn, { name, start_date, end_date }) {
     );
 }
 
+// Updates the data for menu row.
 export async function updateMenuRow(
     poolOrConn,
     { seasonType, start_date, end_date, day_index },
@@ -327,12 +337,14 @@ export async function updateMenuRow(
     return result.affectedRows ?? 0;
 }
 
+// Deletes the data for dish pairings by season.
 export async function deleteDishPairingsBySeason(poolOrConn, seasonType) {
     await poolOrConn.query(`DELETE FROM dish_pairing WHERE season_type = ?`, [
         seasonType,
     ]);
 }
 
+// Deletes the data for season.
 export async function deleteSeason(poolOrConn, seasonType) {
     const [result] = await poolOrConn.query(
         `DELETE FROM season WHERE season_type = ?`,
@@ -341,6 +353,7 @@ export async function deleteSeason(poolOrConn, seasonType) {
     return result.affectedRows ?? 0;
 }
 
+// Finds the data for meal id.
 export async function findMealId(poolOrConn, { dayIndex, mealType }) {
     const [rows] = await poolOrConn.query(
         `
@@ -356,6 +369,7 @@ export async function findMealId(poolOrConn, { dayIndex, mealType }) {
     return rows[0]?.id_meal ?? null;
 }
 
+// Deletes the data for meal composition no coperto.
 export async function deleteMealCompositionNoCoperto(
     poolOrConn,
     { seasonType, idMeal },
@@ -373,6 +387,7 @@ export async function deleteMealCompositionNoCoperto(
     );
 }
 
+// Inserts the data for dish pairings.
 export async function insertDishPairings(poolOrConn, values) {
     await poolOrConn.query(
         `INSERT INTO dish_pairing (id_meal, id_food, season_type, used) VALUES ?`,
@@ -380,10 +395,11 @@ export async function insertDishPairings(poolOrConn, values) {
     );
 }
 
-/* ===========================
-   PIATTI FISSI + FORMAGGI
-   =========================== */
+// ===========================
+// PIATTI FISSI + FORMAGGI
+// ===========================
 
+// Returns the data used by fixed meals.
 export async function getFixedMeals(poolOrConn) {
     const [rows] = await poolOrConn.query(
         `
@@ -397,6 +413,7 @@ export async function getFixedMeals(poolOrConn) {
     return rows;
 }
 
+// Returns the data used by daily meals.
 export async function getDailyMeals(poolOrConn) {
     const [rows] = await poolOrConn.query(
         `
@@ -410,6 +427,7 @@ export async function getDailyMeals(poolOrConn) {
     return rows;
 }
 
+// Deletes the data for all fixed pairings.
 export async function deleteAllFixedPairings(poolOrConn, seasonType) {
     await poolOrConn.query(
         `
@@ -426,6 +444,7 @@ export async function deleteAllFixedPairings(poolOrConn, seasonType) {
     );
 }
 
+// Deletes the data for daily coperti.
 export async function deleteDailyCoperti(poolOrConn, seasonType) {
     await poolOrConn.query(
         `

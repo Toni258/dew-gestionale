@@ -1,3 +1,4 @@
+// Modal used for modify user info.
 import Modal from '../ui/Modal';
 import Form, { useFormContext } from '../ui/Form';
 import FormGroup from '../ui/FormGroup';
@@ -5,6 +6,7 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import CustomSelect from '../ui/CustomSelect';
 
+// Component used for modify user info modal.
 function HDivider() {
     return (
         <div className="w-full flex justify-center mt-6 mb-4">
@@ -15,6 +17,7 @@ function HDivider() {
     );
 }
 
+// Component used for modify user info modal.
 function SubmitRow({ initialValues, onClose }) {
     const form = useFormContext();
 

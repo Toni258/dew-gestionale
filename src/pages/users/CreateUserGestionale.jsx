@@ -1,3 +1,4 @@
+// Main page for create user gestionale.
 // CreateUserGestionale.jsx
 import AppLayout from '../../components/layout/AppLayout';
 import Card from '../../components/ui/Card';
@@ -20,6 +21,7 @@ import {
     createUserGestionale,
 } from '../../services/usersApi';
 
+// Page component for create user gestionale.
 function FormGlobalError() {
     const form = useFormContext();
     const err = (form?.errors?.form ?? '').toString().trim();
@@ -36,6 +38,7 @@ function FormGlobalError() {
     );
 }
 
+// Page component for create user gestionale.
 function SubmitButton() {
     const form = useFormContext();
     return (
@@ -51,6 +54,7 @@ function SubmitButton() {
     );
 }
 
+// Page component for create user gestionale.
 function RoleHint() {
     const form = useFormContext();
     const role = form?.values?.role ?? '';

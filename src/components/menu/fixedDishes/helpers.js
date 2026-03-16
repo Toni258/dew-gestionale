@@ -1,5 +1,7 @@
+// Helpers.
 import { COURSE_ROWS } from './constants';
 
+// Helper function used by make empty selected.
 export function makeEmptySelected() {
     const base = { pranzo: {}, cena: {} };
     for (const row of COURSE_ROWS) {
@@ -11,10 +13,12 @@ export function makeEmptySelected() {
     return base;
 }
 
+// Helper function used by make empty cheese rotation.
 export function makeEmptyCheeseRotation() {
     return { pranzo: Array(7).fill(null), cena: Array(7).fill(null) };
 }
 
+// Helper function used by ensure in options.
 export function ensureInOptions(optionsMap, meal, courseKey, food) {
     if (!food?.id_food) return;
     const list = optionsMap?.[meal]?.[courseKey];
@@ -24,10 +28,12 @@ export function ensureInOptions(optionsMap, meal, courseKey, food) {
     if (!exists) list.unshift(food);
 }
 
+// Converts the input into ids array.
 export function toIdsArray(arr) {
     return (arr ?? []).map((f) => Number(f?.id_food ?? 0));
 }
 
+// Returns the data used by missing fields.
 export function getMissingFields(selected) {
     const missing = [];
 
@@ -54,6 +60,7 @@ export function getMissingFields(selected) {
     return missing;
 }
 
+// Returns the data used by used ids for meal.
 function getUsedIdsForMeal(selectedFoodsState, meal, { skip } = {}) {
     const ids = [];
 
@@ -82,6 +89,7 @@ function getUsedIdsForMeal(selectedFoodsState, meal, { skip } = {}) {
     return new Set(ids);
 }
 
+// Helper function used by is duplicate in meal.
 export function isDuplicateInMeal(selectedFoodsState, meal, idFood, skip) {
     const used = getUsedIdsForMeal(selectedFoodsState, meal, { skip });
     return used.has(Number(idFood));

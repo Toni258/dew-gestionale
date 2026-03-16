@@ -1,8 +1,6 @@
-/**
- * Modal shown when a dish suspension touches one or more menus.
- * It keeps the conflict table out of the page component and makes
- * the suspension workflow easier to read.
- */
+// Modal shown when a dish suspension touches one or more menus.
+// It keeps the conflict table out of the page component and makes
+// the suspension workflow easier to read.
 import { Fragment } from 'react';
 
 import Card from '../ui/Card';

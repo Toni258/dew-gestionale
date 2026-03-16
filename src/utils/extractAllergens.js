@@ -1,5 +1,7 @@
+// Utility helpers for extract allergens.
 import { ALLERGENS } from '../domain/allergens';
 
+// Helper function used by extract allergen emojis.
 export function extractAllergenEmojis(allergyNotes) {
     if (!allergyNotes) return [];
 

@@ -1,3 +1,4 @@
+// Reusable pagination.
 import { memo } from 'react';
 import PageButton from './PageButton';
 

@@ -1,3 +1,4 @@
+// Reusable multi select checkbox.
 import { useState, useRef, useEffect } from 'react';
 import { useFormContext } from './Form';
 

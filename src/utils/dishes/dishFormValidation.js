@@ -1,23 +1,24 @@
-/**
- * Shared validation helpers for dish create/edit forms.
- * The goal is to keep page components small and keep the rules in one place.
- */
+// Shared validation helpers for dish create/edit forms.
+// The goal is to keep page components small and keep the rules in one place.
 import {
     isDecimal,
     isPositive,
     validateMacrosVsGrammage,
 } from '../validators';
 
+// Helper function used by is dish field empty.
 export function isDishFieldEmpty(value) {
     return value === '' || value === null || value === undefined;
 }
 
+// Validates the data used by required number field.
 function validateRequiredNumberField(value) {
     return isDishFieldEmpty(value)
         ? 'Obbligatorio'
         : isDecimal(value) || isPositive(value);
 }
 
+// Returns the data used by dish field validators.
 export function getDishFieldValidators({ requireImage = false } = {}) {
     return {
         name: (value) =>
@@ -40,6 +41,7 @@ export function getDishFieldValidators({ requireImage = false } = {}) {
     };
 }
 
+// Validates the data used by dish form.
 export function validateDishForm(values, { includeSuspension = false } = {}) {
     const errors = validateMacrosVsGrammage(values) || {};
 

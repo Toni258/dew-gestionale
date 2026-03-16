@@ -1,3 +1,4 @@
+// Express routes for dishes.
 import { Router } from 'express';
 import {
     getFilteredDishes,
@@ -11,6 +12,7 @@ import {
 } from '../controllers/dishesController.js';
 import { uploadFoodImage } from '../middlewares/uploadFoodImage.js';
 
+// Route definitions
 const router = Router();
 
 router.get('/', getFilteredDishes);

@@ -1,3 +1,4 @@
+// Custom hook used to manage archived fixed dishes menu.
 import { useEffect, useMemo, useState } from 'react';
 import { CHEESE_IDS } from '../../../shared/constants.js';
 import { getCheeses } from '../../services/foodsApi';
@@ -12,11 +13,13 @@ import {
     makeEmptyCheeseRotation,
 } from '../../components/menu/fixedDishes/helpers';
 
+// Manages the state and side effects for archived fixed dishes menu.
 export function useArchivedFixedDishesMenu(idArchMenuRaw) {
     const idArchMenu = useMemo(
         () => String(idArchMenuRaw ?? ''),
         [idArchMenuRaw],
     );
+    // Main state used by the page
 
     const [loading, setLoading] = useState(true);
 
@@ -25,10 +28,12 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
     const [cheeseRotation, setCheeseRotation] = useState(
         makeEmptyCheeseRotation,
     );
+    // Load data when the component opens
 
     useEffect(() => {
         let alive = true;
 
+        // Loads the current data.
         async function load() {
             setLoading(true);
             try {
@@ -95,6 +100,7 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
             alive = false;
         };
     }, [idArchMenu]);
+    // Derived data used by the UI
 
     const rows = useMemo(() => {
         return COURSE_ROWS.map((row) => ({

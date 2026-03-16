@@ -1,6 +1,4 @@
-/**
- * User-related labels and select options shared by the management pages.
- */
+// User-related labels and select options shared by the management pages.
 export const BACKOFFICE_STATUS_LABELS = {
     active: 'Attivo',
     suspended: 'Sospeso',
@@ -8,12 +6,14 @@ export const BACKOFFICE_STATUS_LABELS = {
     password_reset_requested: 'Reset password richiesto',
 };
 
+// Helper function used by backoffice role options.
 export const BACKOFFICE_ROLE_OPTIONS = [
     { value: '', label: '— Tutti —' },
     { value: 'super_user', label: 'Super User' },
     { value: 'operator', label: 'Operatore' },
 ];
 
+// Helper function used by backoffice status options.
 export const BACKOFFICE_STATUS_OPTIONS = [
     { value: '', label: '— Tutti —' },
     { value: 'active', label: 'Attivo' },
@@ -22,11 +22,13 @@ export const BACKOFFICE_STATUS_OPTIONS = [
     { value: 'suspended', label: 'Sospeso' },
 ];
 
+// Helper function used by backoffice modal role options.
 export const BACKOFFICE_MODAL_ROLE_OPTIONS = [
     { value: 'super_user', label: 'Super User' },
     { value: 'operator', label: 'Operatore' },
 ];
 
+// Helper function used by mobile role labels.
 export const MOBILE_ROLE_LABELS = {
     Altro: 'Altro',
     altro: 'Altro',
@@ -34,6 +36,7 @@ export const MOBILE_ROLE_LABELS = {
     super_user: 'Super User',
 };
 
+// Helper function used by mobile role options.
 export const MOBILE_ROLE_OPTIONS = [
     { value: '', label: '— Ruolo —' },
     { value: 'super_user', label: 'Super User' },
@@ -41,12 +44,14 @@ export const MOBILE_ROLE_OPTIONS = [
     { value: 'altro', label: 'Altro' },
 ];
 
+// Helper function used by mobile modal role options.
 export const MOBILE_MODAL_ROLE_OPTIONS = [
     { value: 'super_user', label: 'Super User' },
     { value: 'caregiver', label: 'Caregiver' },
     { value: 'Altro', label: 'Altro' },
 ];
 
+// Returns the data used by backoffice status badge class.
 export function getBackofficeStatusBadgeClass(status) {
     if (status === 'password_reset_requested') {
         return 'border-brand-error/25 bg-brand-error/10 text-brand-error';

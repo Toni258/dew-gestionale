@@ -1,22 +1,27 @@
+// Service layer used for dashboard.
 import { pool } from '../db/db.js';
 import * as repo from '../repositories/dashboardRepo.js';
 
 const REACTIVATION_ALERT_WINDOW_DAYS = 7;
 
+// Converts the input value into an integer.
 function toInt(value) {
     const num = Number(value);
     return Number.isFinite(num) ? num : 0;
 }
 
+// Helper function used by pluralize.
 function pluralize(count, singular, plural = `${singular}i`) {
     return count === 1 ? singular : plural;
 }
 
+// Helper function used by capitalize.
 function capitalize(value) {
     if (!value) return '';
     return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+// Formats the value used by days from now.
 function formatDaysFromNow(days) {
     if (days === 0) return 'oggi';
     if (days === 1) return 'domani';
@@ -25,11 +30,13 @@ function formatDaysFromNow(days) {
     return `${Math.abs(days)} giorni fa`;
 }
 
+// Returns the data used by today menu weekday index.
 function getTodayMenuWeekdayIndex() {
     const jsDay = new Date().getDay(); // domenica=0, lunedì=1, ..., sabato=6
     return (jsDay + 6) % 7; // lunedì=0, martedì=1, ..., domenica=6
 }
 
+// Returns the data used by italian weekday name from menu index.
 function getItalianWeekdayNameFromMenuIndex(index) {
     const names = [
         'lunedì',
@@ -44,12 +51,14 @@ function getItalianWeekdayNameFromMenuIndex(index) {
     return names[toInt(index) % 7] ?? 'giorno sconosciuto';
 }
 
+// Helper function used by meal slot label.
 function mealSlotLabel(dayIndex, mealType) {
     const week = Math.floor(toInt(dayIndex) / 7) + 1;
     const day = (toInt(dayIndex) % 7) + 1;
     return `Settimana ${week}, Giorno ${day}, ${mealType}`;
 }
 
+// Builds the data needed for menu routes.
 function buildMenuRoutes(seasonType) {
     const encoded = encodeURIComponent(seasonType);
     return {
@@ -60,6 +69,7 @@ function buildMenuRoutes(seasonType) {
     };
 }
 
+// Helper function used by derive menu state.
 function deriveMenuState(row) {
     if (!row) return 'Non disponibile';
     if (row.is_current) return 'In corso';
@@ -68,6 +78,7 @@ function deriveMenuState(row) {
     return 'Pronto';
 }
 
+// Helper function used by derive menu tone.
 function deriveMenuTone(row) {
     if (!row) return 'info';
     if (row.is_ended) return 'info';
@@ -78,6 +89,7 @@ function deriveMenuTone(row) {
     return 'success';
 }
 
+// Helper function used by enrich menu.
 function enrichMenu(row) {
     if (!row) return null;
 
@@ -124,12 +136,14 @@ function enrichMenu(row) {
     };
 }
 
+// Helper function used by severity weight.
 function severityWeight(severity) {
     if (severity === 'error') return 3;
     if (severity === 'warning') return 2;
     return 1;
 }
 
+// Helper function used by sort by severity.
 function sortBySeverity(items) {
     return [...items].sort((a, b) => {
         const severityDiff =
@@ -142,6 +156,7 @@ function sortBySeverity(items) {
     });
 }
 
+// Builds the data needed for alerts.
 function buildAlerts({
     currentMenu,
     nextMenu,
@@ -307,6 +322,7 @@ function buildAlerts({
     return sortBySeverity(alerts);
 }
 
+// Builds the data needed for checklist.
 function buildChecklist({
     currentMenu,
     nextMenu,
@@ -370,6 +386,7 @@ function buildChecklist({
     return sortBySeverity(items);
 }
 
+// Returns the data used by dashboard.
 export async function getDashboard(reqUser = null) {
     const menuRows = await repo.listMenuSummaries(pool);
     const menus = menuRows.map(enrichMenu);

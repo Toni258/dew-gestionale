@@ -1,6 +1,4 @@
-/**
- * Generic bar card used by the "Statistiche Scelte" page.
- */
+// Generic bar card used by the "Statistiche Scelte" page.
 import Card from '../ui/Card';
 
 export default function StatsBarsCard({

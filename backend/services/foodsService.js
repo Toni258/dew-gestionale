@@ -1,3 +1,4 @@
+// Service layer used for foods.
 import { pool } from '../db/db.js';
 import { HttpError } from '../utils/httpError.js';
 import { COURSE_TYPES, MEAL_TYPES, CHEESE_IDS, CHEESE_IDS_SQL_ORDER } from '../../shared/constants.js';
@@ -7,6 +8,7 @@ import {
     listFoodsByType,
 } from '../repositories/foodsRepo.js';
 
+// Returns the data used by foods by type.
 export async function getFoodsByType(query = {}) {
     const type = String(query.type ?? '').trim();
     const search = String(query.search ?? '').trim();
@@ -26,6 +28,7 @@ export async function getFoodsByType(query = {}) {
     return { data: await listFoodsByType(pool, { type, search }) };
 }
 
+// Returns the data used by foods available for menu data.
 export async function getFoodsAvailableForMenuData(query = {}) {
     const type = String(query.type ?? '').trim();
     const seasonType = String(query.season_type ?? '').trim();
@@ -60,6 +63,7 @@ export async function getFoodsAvailableForMenuData(query = {}) {
     };
 }
 
+// Returns the data used by cheese foods data.
 export async function getCheeseFoodsData() {
     return {
         data: await listCheeseFoods(pool, CHEESE_IDS, CHEESE_IDS_SQL_ORDER),

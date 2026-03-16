@@ -1,3 +1,4 @@
+// Service layer used for dish suspensions.
 import { withTransaction } from '../db/tx.js';
 import { pool } from '../db/db.js';
 import { HttpError } from '../utils/httpError.js';
@@ -19,6 +20,7 @@ import {
     upsertFoodAvailability,
 } from '../repositories/dishesRepo.js';
 
+// Converts the input into numeric dish id.
 function toNumericDishId(dishId) {
     const numericDishId = Number(dishId);
     if (!Number.isInteger(numericDishId) || numericDishId <= 0) {
@@ -28,11 +30,13 @@ function toNumericDishId(dishId) {
     return numericDishId;
 }
 
+// Normalizes the value used by reason.
 function normalizeReason(reason) {
     const normalized = String(reason ?? '').trim();
     return normalized || null;
 }
 
+// Parses the value used by replacement map.
 function parseReplacementMap(replacements = []) {
     return new Map(
         (Array.isArray(replacements) ? replacements : [])
@@ -46,6 +50,7 @@ function parseReplacementMap(replacements = []) {
     );
 }
 
+// Helper function used by summarize conflicts.
 function summarizeConflicts(conflicts) {
     return {
         conflicts_total: conflicts.length,
@@ -55,6 +60,7 @@ function summarizeConflicts(conflicts) {
     };
 }
 
+// Returns the data used by dish or throw.
 async function getDishOrThrow(poolOrConn, dishId) {
     const dish = await findDishSummaryById(poolOrConn, dishId);
     if (!dish) {
@@ -64,6 +70,7 @@ async function getDishOrThrow(poolOrConn, dishId) {
     return dish;
 }
 
+// Validates the data used by suspension payload.
 function validateSuspensionPayload({ valid_from, valid_to, mode, action }) {
     if (!valid_from || !valid_to) {
         throw new HttpError(400, 'Parametri obbligatori: valid_from, valid_to');
@@ -82,6 +89,7 @@ function validateSuspensionPayload({ valid_from, valid_to, mode, action }) {
     }
 }
 
+// Helper function used by preview dish suspension.
 export async function previewDishSuspension(dishIdRaw, payload = {}) {
     const dishId = toNumericDishId(dishIdRaw);
     validateSuspensionPayload({ ...payload, mode: 'dry-run' });
@@ -113,6 +121,7 @@ export async function previewDishSuspension(dishIdRaw, payload = {}) {
     };
 }
 
+// Helper function used by reset existing suspension state.
 async function resetExistingSuspensionState(conn, { dishId, existingSuspension }) {
     if (!existingSuspension) {
         return {
@@ -138,6 +147,7 @@ async function resetExistingSuspensionState(conn, { dishId, existingSuspension }
     };
 }
 
+// Applies the changes used by dish suspension.
 export async function applyDishSuspension(dishIdRaw, payload = {}) {
     const dishId = toNumericDishId(dishIdRaw);
     const {
@@ -338,6 +348,7 @@ export async function applyDishSuspension(dishIdRaw, payload = {}) {
     });
 }
 
+// Disables the data used by dish suspension by dish id.
 export async function disableDishSuspensionByDishId(dishIdRaw) {
     const dishId = toNumericDishId(dishIdRaw);
 

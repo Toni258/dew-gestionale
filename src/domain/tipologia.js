@@ -1,3 +1,4 @@
+// Domain constants for tipologia.
 export const TIPOLOGIA_OPTIONS = [
     { value: '', label: '— Tipologia —' },
     { value: 'primo', label: 'Primo' },

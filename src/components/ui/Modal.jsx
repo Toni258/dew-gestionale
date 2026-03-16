@@ -1,9 +1,11 @@
+// Reusable modal used for modal.
 export default function Modal({
     children,
     onClose,
     contentClassName = '',
     closeOnBackdrop = true,
 }) {
+    // Handles the logic for backdrop click.
     function handleBackdropClick() {
         if (!closeOnBackdrop) return;
         onClose?.();

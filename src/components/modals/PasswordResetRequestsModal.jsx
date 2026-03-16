@@ -1,3 +1,4 @@
+// Modal used for password reset requests.
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Card from '../ui/Card';

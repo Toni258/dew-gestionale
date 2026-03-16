@@ -1,3 +1,4 @@
+// Reusable button.
 export default function Button({
     children,
     variant = 'primary',

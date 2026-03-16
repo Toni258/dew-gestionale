@@ -1,8 +1,6 @@
-/**
- * Handles the suspension preview/apply flow for a dish.
- * The page only keeps the submit orchestration, while this hook stores
- * the preview state, grouped conflicts and replacement options.
- */
+// Handles the suspension preview/apply flow for a dish.
+// The page only keeps the submit orchestration, while this hook stores
+// the preview state, grouped conflicts and replacement options.
 import { useEffect, useMemo, useState } from 'react';
 import {
     suspendDishApply,
@@ -15,13 +13,16 @@ import {
     groupDishConflictsBySeason,
 } from '../../utils/dishes/dishSuspension';
 
+// Manages the state and side effects for dish suspension flow.
 export function useDishSuspensionFlow(dishId) {
+    // Main state used by the page
     const [suspensionPreview, setSuspensionPreview] = useState(null);
     const [expandedMenus, setExpandedMenus] = useState({});
     const [replacementByPairing, setReplacementByPairing] = useState({});
     const [optionsByType, setOptionsByType] = useState({});
     const [optionsLoading, setOptionsLoading] = useState(false);
     const [optionsError, setOptionsError] = useState('');
+    // Derived data used by the UI
 
     const groupedConflicts = useMemo(() => {
         return suspensionPreview
@@ -42,10 +43,12 @@ export function useDishSuspensionFlow(dishId) {
             allConflictIds.every((id) => !!replacementByPairing[id]),
         [allConflictIds, replacementByPairing],
     );
+    // Load data when the component opens
 
     useEffect(() => {
         let alive = true;
 
+        // Loads the data used by options.
         async function loadOptions() {
             if (!suspensionPreview?.conflicts?.length) {
                 setOptionsByType({});
@@ -117,6 +120,7 @@ export function useDishSuspensionFlow(dishId) {
         };
     }, [dishId, suspensionPreview]);
 
+    // Helper function used by toggle menu.
     function toggleMenu(seasonType) {
         setExpandedMenus((prev) => ({
             ...prev,
@@ -124,10 +128,12 @@ export function useDishSuspensionFlow(dishId) {
         }));
     }
 
+    // Helper function used by close suspension preview.
     function closeSuspensionPreview() {
         setSuspensionPreview(null);
     }
 
+    // Helper function used by set replacement for pairing.
     function setReplacementForPairing(pairingId, value) {
         setReplacementByPairing((prev) => ({
             ...prev,
@@ -135,6 +141,7 @@ export function useDishSuspensionFlow(dishId) {
         }));
     }
 
+    // Helper function used by run dish suspension flow.
     async function runDishSuspensionFlow({ start_date, end_date, reason }) {
         const dryJson = await suspendDishDryRun(dishId, {
             valid_from: start_date,
@@ -163,6 +170,7 @@ export function useDishSuspensionFlow(dishId) {
         return { applied: false, pending: true };
     }
 
+    // Applies the changes used by suspension.
     async function applySuspension({ start_date, end_date, reason, action }) {
         await suspendDishApply(dishId, {
             valid_from: start_date,

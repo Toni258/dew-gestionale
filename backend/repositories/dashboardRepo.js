@@ -1,5 +1,7 @@
+// Database queries used for dashboard.
 import { CHEESE_IDS_SQL_ORDER } from '../../shared/constants.js';
 
+// Returns the list used by menu summaries.
 export async function listMenuSummaries(poolOrConn) {
     const [rows] = await poolOrConn.query(
         `
@@ -215,6 +217,7 @@ export async function listMenuSummaries(poolOrConn) {
     return rows;
 }
 
+// Returns the list used by incomplete meals.
 export async function listIncompleteMeals(poolOrConn, seasonType) {
     const [rows] = await poolOrConn.query(
         `
@@ -247,6 +250,7 @@ export async function listIncompleteMeals(poolOrConn, seasonType) {
     return rows;
 }
 
+// Returns the list used by active suspensions.
 export async function listActiveSuspensions(poolOrConn) {
     const [rows] = await poolOrConn.query(
         `
@@ -298,6 +302,7 @@ export async function listActiveSuspensions(poolOrConn) {
     return rows;
 }
 
+// Returns the list used by password reset requests.
 export async function listPasswordResetRequests(poolOrConn) {
     const [rows] = await poolOrConn.query(
         `

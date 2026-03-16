@@ -1,3 +1,4 @@
+// Main page for edit menu.
 import AppLayout from '../../components/layout/AppLayout';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
@@ -25,9 +26,11 @@ export default function EditMenu() {
 
     const { menu, mealsByDay, loading, setMenu } =
         useEditMenu(decodedSeasonType);
+    // Main state used by the page
 
     const [menuToDelete, setMenuToDelete] = useState(null);
     const [modifyMenu, setModifyMenu] = useState(false);
+    // Load data when the component opens
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);

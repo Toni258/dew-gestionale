@@ -1,5 +1,7 @@
+// Database helper for tx.
 import { pool } from './db.js';
 
+// Helper function used by with transaction.
 export async function withTransaction(fn) {
     const conn = await pool.getConnection();
     try {

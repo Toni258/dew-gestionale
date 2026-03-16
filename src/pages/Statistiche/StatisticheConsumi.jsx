@@ -1,7 +1,5 @@
-/**
- * Report page for food consumption.
- * Shared helpers keep common formatting logic outside the page file.
- */
+// Report page for food consumption.
+// Shared helpers keep common formatting logic outside the page file.
 import AppLayout from '../../components/layout/AppLayout';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Form from '../../components/ui/Form';
@@ -30,11 +28,13 @@ import {
 const MenuSelectionSync = StatsMenuSelectionSync;
 const KpiCard = StatsKpiCard;
 
+// Helper function used by fmt pct.
 function fmtPct(value) {
     const numericValue = Number(value) || 0;
     return `${fmtInt(numericValue)}%`;
 }
 
+// Select options used by the form
 const MEAL_OPTIONS = [
     { value: '', label: 'Tutti i pasti' },
     { value: 'pranzo', label: 'Pranzo' },
@@ -57,6 +57,7 @@ const FIRST_CHOICE_OPTIONS = [
     { value: '1', label: 'Solo piatti fissi' },
 ];
 
+// Page component for statistiche consumi.
 function ConsumiRankCard({
     title,
     iconSrc,
@@ -150,6 +151,7 @@ function ConsumiRankCard({
 }
 
 export default function StatisticheConsumi() {
+    // Main state used by the page
     const [menus, setMenus] = useState([]);
     const [menusLoading, setMenusLoading] = useState(true);
 
@@ -194,10 +196,12 @@ export default function StatisticheConsumi() {
         patients: [],
         floors: [],
     });
+    // Load data when the component opens
 
     useEffect(() => {
         let cancelled = false;
 
+        // Loads the available menus for the page.
         async function loadMenus() {
             setMenusLoading(true);
             setError('');
@@ -244,6 +248,7 @@ export default function StatisticheConsumi() {
             cancelled = true;
         };
     }, []);
+    // Derived data used by the UI
 
     const formInitialValues = useMemo(() => {
         if (!selectedMenu) {
@@ -314,6 +319,7 @@ export default function StatisticheConsumi() {
             commentsPageSize,
         };
     }, [applied, page, pageSize, commentsPage, commentsPageSize]);
+    // Memoized handler used by the page
 
     const fetchReport = useCallback(async () => {
         if (!requestParams) return;

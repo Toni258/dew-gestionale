@@ -1,3 +1,4 @@
+// Express routes for menus.
 import { Router } from 'express';
 import {
     getMenus,
@@ -16,6 +17,7 @@ import {
     getMenuFixedCheesesRotation,
 } from '../controllers/menusController.js';
 
+// Route definitions
 const router = Router();
 
 router.get('/', getMenus);

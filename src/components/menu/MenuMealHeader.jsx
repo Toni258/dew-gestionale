@@ -1,3 +1,4 @@
+// Menu meal header.
 import { capitalize } from '../../utils/capitalize';
 
 export default function MenuMealHeader({

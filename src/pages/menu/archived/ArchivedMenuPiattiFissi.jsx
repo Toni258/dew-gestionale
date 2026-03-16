@@ -1,3 +1,4 @@
+// Main page for archived menu piatti fissi.
 import AppLayout from '../../../components/layout/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 

@@ -1,3 +1,4 @@
+// Dashed divider.
 export default function DashedDivider({ className = '' }) {
     return (
         <div

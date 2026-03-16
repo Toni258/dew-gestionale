@@ -1,7 +1,5 @@
-/**
- * Sticky save bar used in the dish edit page.
- * It shows the save button only when the form really changed.
- */
+// Sticky save bar used in the dish edit page.
+// It shows the save button only when the form really changed.
 import { useNavigate } from 'react-router-dom';
 
 import Button from '../ui/Button';

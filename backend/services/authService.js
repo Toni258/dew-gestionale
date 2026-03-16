@@ -1,3 +1,4 @@
+// Service layer used for auth.
 import bcrypt from 'bcrypt';
 import { pool } from '../db/db.js';
 import { HttpError } from '../utils/httpError.js';
@@ -9,6 +10,7 @@ import {
     updateBackofficeUserPasswordAndStatus,
 } from '../repositories/backofficeUsersRepo.js';
 
+// Helper function used by sanitize user.
 function sanitizeUser(user) {
     if (!user) return null;
 
@@ -25,12 +27,14 @@ function sanitizeUser(user) {
     };
 }
 
+// Helper function used by make session payload.
 export function makeSessionPayload(user) {
     return {
         id: user.id,
     };
 }
 
+// Helper function used by authenticate backoffice user.
 export async function authenticateBackofficeUser({ email, password }) {
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     const normalizedPassword = String(password ?? '');
@@ -69,6 +73,7 @@ export async function authenticateBackofficeUser({ email, password }) {
     return sanitizeUser(freshUser);
 }
 
+// Loads the data used by authenticated backoffice user.
 export async function loadAuthenticatedBackofficeUser(userId) {
     const numericUserId = Number(userId);
     if (!Number.isInteger(numericUserId) || numericUserId <= 0) {
@@ -93,6 +98,7 @@ export async function loadAuthenticatedBackofficeUser(userId) {
     return sanitizeUser(user);
 }
 
+// Helper function used by change authenticated user password.
 export async function changeAuthenticatedUserPassword({ userId, currentPassword, newPassword }) {
     const numericUserId = Number(userId);
 
@@ -133,6 +139,7 @@ export async function changeAuthenticatedUserPassword({ userId, currentPassword,
     return sanitizeUser(freshUser);
 }
 
+// Helper function used by request backoffice password reset.
 export async function requestBackofficePasswordReset(email) {
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     if (!normalizedEmail) {

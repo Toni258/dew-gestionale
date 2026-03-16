@@ -1,3 +1,4 @@
+// Reusable allergen checkbox group.
 import { useFormContext } from './Form';
 import { ALLERGEN_OPTIONS } from '../../domain/allergens';
 

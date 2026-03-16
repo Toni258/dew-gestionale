@@ -1,6 +1,7 @@
-// src/services/loader.js
+// Frontend service helpers for loader.
 let api = null;
 
+// Loads the data used by er.
 export const loader = {
     start(message, mode = 'nonBlocking') {
         api?.start?.({ message, mode });
@@ -10,6 +11,7 @@ export const loader = {
     },
 };
 
+// Helper function used by register loader.
 export function registerLoader(nextApi) {
     api = nextApi;
 }

@@ -1,3 +1,4 @@
+// Controller handlers for users.
 import {
     adminResetPassword,
     checkBackofficeEmailAvailability,
@@ -13,6 +14,7 @@ import {
     updateMobileAppUserInfo,
 } from '../services/usersService.js';
 
+// Sends known service errors back to the client.
 function handleServiceError(res, next, error) {
     if (error?.status) {
         return res.status(error.status).json({ message: error.message });
@@ -21,6 +23,7 @@ function handleServiceError(res, next, error) {
     return next(error);
 }
 
+// Returns the data used by filtered users mobile app.
 export async function getFilteredUsersMobileApp(req, res, next) {
     try {
         const result = await getFilteredMobileAppUsers(req.query || {});
@@ -30,6 +33,7 @@ export async function getFilteredUsersMobileApp(req, res, next) {
     }
 }
 
+// Returns the data used by filtered users gestionale.
 export async function getFilteredUsersGestionale(req, res, next) {
     try {
         const result = await getFilteredBackofficeUsers(req.query || {});
@@ -39,6 +43,7 @@ export async function getFilteredUsersGestionale(req, res, next) {
     }
 }
 
+// Helper function used by reset password admin.
 export async function resetPasswordAdmin(req, res, next) {
     try {
         const result = await adminResetPassword({
@@ -51,6 +56,7 @@ export async function resetPasswordAdmin(req, res, next) {
     }
 }
 
+// Helper function used by suspend user.
 export async function suspendUser(req, res, next) {
     try {
         const result = await suspendBackofficeUser({
@@ -63,6 +69,7 @@ export async function suspendUser(req, res, next) {
     }
 }
 
+// Helper function used by unsuspend user.
 export async function unsuspendUser(req, res, next) {
     try {
         const result = await unsuspendBackofficeUser(req.params.id);
@@ -72,6 +79,7 @@ export async function unsuspendUser(req, res, next) {
     }
 }
 
+// Deletes the data for user gestionale.
 export async function deleteUserGestionale(req, res, next) {
     try {
         const result = await deleteGestionaleUser(req.params.id);
@@ -81,6 +89,7 @@ export async function deleteUserGestionale(req, res, next) {
     }
 }
 
+// Deletes the data for user app.
 export async function deleteUserApp(req, res, next) {
     try {
         const result = await deleteMobileAppUser(req.params.id);
@@ -90,6 +99,7 @@ export async function deleteUserApp(req, res, next) {
     }
 }
 
+// Updates the data for user info gestionale.
 export async function updateUserInfoGestionale(req, res, next) {
     try {
         const result = await updateGestionaleUserInfo({
@@ -104,6 +114,7 @@ export async function updateUserInfoGestionale(req, res, next) {
     }
 }
 
+// Updates the data for user info app.
 export async function updateUserInfoApp(req, res, next) {
     try {
         const result = await updateMobileAppUserInfo({
@@ -116,6 +127,7 @@ export async function updateUserInfoApp(req, res, next) {
     }
 }
 
+// Disables the data used by user app.
 export async function disableUserApp(req, res, next) {
     try {
         const result = await disableMobileAppUser(req.params.id);
@@ -125,6 +137,7 @@ export async function disableUserApp(req, res, next) {
     }
 }
 
+// Checks the current value for email.
 export async function checkEmail(req, res, next) {
     try {
         const result = await checkBackofficeEmailAvailability(req.query.email);
@@ -134,6 +147,7 @@ export async function checkEmail(req, res, next) {
     }
 }
 
+// Creates the data for user gestionale.
 export async function createUserGestionale(req, res, next) {
     try {
         const result = await createGestionaleUser(req.body || {});

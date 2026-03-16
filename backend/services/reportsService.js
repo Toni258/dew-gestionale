@@ -1,13 +1,15 @@
-// backend/services/reportsService.js
+// Service layer used for reports.
 import { pool } from '../db/db.js';
 import { HttpError } from '../utils/httpError.js';
 import { logger } from '../utils/logger.js';
 
+// Parses a positive integer from the input value.
 function parsePositiveInt(value) {
     const n = Number(value);
     return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+// Parses the value used by first choice filter.
 function parseFirstChoiceFilter(value) {
     if (value === '' || value === null || value === undefined) return null;
     if (String(value) === '1') return 1;
@@ -15,6 +17,7 @@ function parseFirstChoiceFilter(value) {
     return null;
 }
 
+// Applies the changes used by first choice filter.
 function applyFirstChoiceFilter(filter, firstChoice, mealAlias = 'm') {
     if (firstChoice === null || firstChoice === undefined) {
         return filter;
@@ -26,6 +29,7 @@ function applyFirstChoiceFilter(filter, firstChoice, mealAlias = 'm') {
     };
 }
 
+// Helper function used by latest patient join.
 function latestPatientJoin(alias) {
     return `
         JOIN (
@@ -39,6 +43,7 @@ function latestPatientJoin(alias) {
     `;
 }
 
+// Maps patient rows into select options.
 function mapPatients(rows) {
     return (rows ?? []).map((p) => ({
         value: String(p.id_patient),
@@ -46,6 +51,7 @@ function mapPatients(rows) {
     }));
 }
 
+// Maps floor rows into select options.
 function mapFloors(rows) {
     return (rows ?? []).map((r) => ({
         value: String(r.floor),
@@ -53,6 +59,7 @@ function mapFloors(rows) {
     }));
 }
 
+// Builds the data needed for live survey where.
 function buildLiveSurveyWhere({
     start,
     end,
@@ -94,6 +101,7 @@ function buildLiveSurveyWhere({
     return { where, params };
 }
 
+// Builds the data needed for live choice where.
 function buildLiveChoiceWhere({
     start,
     end,
@@ -135,6 +143,7 @@ function buildLiveChoiceWhere({
     return { where, params };
 }
 
+// Builds the data needed for archive survey where.
 function buildArchiveSurveyWhere({
     start,
     end,
@@ -176,6 +185,7 @@ function buildArchiveSurveyWhere({
     return { where, params };
 }
 
+// Builds the data needed for archive choice where.
 function buildArchiveChoiceWhere({
     start,
     end,
@@ -217,6 +227,7 @@ function buildArchiveChoiceWhere({
     return { where, params };
 }
 
+// Builds the data needed for live comments where.
 function buildLiveCommentsWhere({
     start,
     end,
@@ -252,6 +263,7 @@ function buildLiveCommentsWhere({
     return { where, params };
 }
 
+// Builds the data needed for archive comments where.
 function buildArchiveCommentsWhere({
     start,
     end,
@@ -287,6 +299,7 @@ function buildArchiveCommentsWhere({
     return { where, params };
 }
 
+// Resolves the value used by selected menu.
 async function resolveSelectedMenu(menuKind, menuRef) {
     if (menuKind === 'active' || menuKind === 'ended') {
         const seasonType = String(menuRef || '').trim();
@@ -355,6 +368,7 @@ async function resolveSelectedMenu(menuKind, menuRef) {
     return null;
 }
 
+// Returns the data used by consumi menus data.
 export async function getConsumiMenusData() {
     try {
         const [activeRows] = await pool.query(`
@@ -432,6 +446,7 @@ export async function getConsumiMenusData() {
     }
 }
 
+// Returns the data used by consumi report data.
 export async function getConsumiReportData(query = {}) {
     try {
         const {
@@ -951,11 +966,13 @@ const SCELTE_COURSE_ORDER = [
 
 const SCELTE_CHOOSER_ORDER = ['guest', 'family', 'caregiver'];
 
+// Parses the value used by week filter.
 function parseWeekFilter(value) {
     const n = Number(value);
     return Number.isInteger(n) && n >= 1 && n <= 4 ? n : null;
 }
 
+// Parses the value used by baby food filter.
 function parseBabyFoodFilter(value) {
     if (value === '' || value === null || value === undefined) return null;
     if (String(value) === '1') return 1;
@@ -963,11 +980,13 @@ function parseBabyFoodFilter(value) {
     return null;
 }
 
+// Parses the value used by chooser filter.
 function parseChooserFilter(value) {
     const x = String(value || '').trim();
     return ['guest', 'family', 'caregiver'].includes(x) ? x : '';
 }
 
+// Builds the data needed for patient scope where.
 function buildPatientScopeWhere({ patientId, floor }) {
     let where = ` WHERE 1=1 `;
     const params = [];
@@ -985,6 +1004,7 @@ function buildPatientScopeWhere({ patientId, floor }) {
     return { where, params };
 }
 
+// Builds the data needed for live scelte choice where.
 function buildLiveScelteChoiceWhere({
     start,
     end,
@@ -1046,6 +1066,7 @@ function buildLiveScelteChoiceWhere({
     return { where, params };
 }
 
+// Builds the data needed for archive scelte choice where.
 function buildArchiveScelteChoiceWhere({
     start,
     end,
@@ -1107,6 +1128,7 @@ function buildArchiveScelteChoiceWhere({
     return { where, params };
 }
 
+// Builds the data needed for live scelte availability where.
 function buildLiveScelteAvailabilityWhere({
     start,
     end,
@@ -1145,6 +1167,7 @@ function buildLiveScelteAvailabilityWhere({
     return { where, params };
 }
 
+// Builds the data needed for archive scelte availability where.
 function buildArchiveScelteAvailabilityWhere({
     start,
     end,
@@ -1183,17 +1206,20 @@ function buildArchiveScelteAvailabilityWhere({
     return { where, params };
 }
 
+// Helper function used by capitalize label.
 function capitalizeLabel(value) {
     const x = String(value || '').trim();
     if (!x) return '';
     return x.charAt(0).toUpperCase() + x.slice(1);
 }
 
+// Formats the value used by course label.
 function formatCourseLabel(value) {
     if (value === 'ultimo') return 'Dessert';
     return capitalizeLabel(value);
 }
 
+// Formats the value used by chooser label.
 function formatChooserLabel(value) {
     if (value === 'guest') return 'Ospite';
     if (value === 'family') return 'Famiglia';
@@ -1201,6 +1227,7 @@ function formatChooserLabel(value) {
     return capitalizeLabel(value);
 }
 
+// Builds the data needed for weekly trend rows.
 function buildWeeklyTrendRows(
     availabilityRows,
     choiceRows,
@@ -1241,6 +1268,7 @@ function buildWeeklyTrendRows(
     });
 }
 
+// Builds the data needed for course rows.
 function buildCourseRows(
     availabilityRows,
     choiceRows,
@@ -1281,6 +1309,7 @@ function buildCourseRows(
     });
 }
 
+// Builds the data needed for chooser rows.
 function buildChooserRows(rows, totalChoices, chooser) {
     const counts = new Map(
         (rows ?? []).map((r) => [
@@ -1305,10 +1334,12 @@ function buildChooserRows(rows, totalChoices, chooser) {
     });
 }
 
+// Returns the data used by scelte menus data.
 export async function getScelteMenusData() {
     return getConsumiMenusData();
 }
 
+// Returns the data used by scelte report data.
 export async function getScelteReportData(query = {}) {
     try {
         const {

@@ -1,3 +1,4 @@
+// Table component used for dishes.
 import { memo } from 'react';
 
 import { NavLink } from 'react-router-dom';
@@ -8,6 +9,7 @@ import StatusDot from './StatusDot';
 import PageButton from '../ui/PageButton';
 import Pagination from '../ui/Pagination';
 
+// Table used to show dishes with their main data and available actions.
 export default memo(function DishesTable({
     rows,
     loading,
@@ -24,6 +26,7 @@ export default memo(function DishesTable({
         <div className="bg-white border border-brand-divider rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-sm table-auto">
+                    {/* Table header */}
                     <thead className="bg-brand-primary text-white">
                         <tr>
                             <th className="px-3 py-3 text-center">STATO</th>
@@ -35,6 +38,7 @@ export default memo(function DishesTable({
                             <th className="px-3 py-3 text-left">
                                 <div className="flex items-center gap-2">
                                     <span>ALLERGENI</span>
+                                    {/* Opens the allergens legend modal */}
                                     <button
                                         type="button"
                                         onClick={onShowAllergensInfo}
@@ -52,6 +56,7 @@ export default memo(function DishesTable({
                     </thead>
 
                     <tbody>
+                        {/* Empty state shown when there are no results */}
                         {!loading && rows.length === 0 && (
                             <tr>
                                 <td
@@ -63,37 +68,45 @@ export default memo(function DishesTable({
                             </tr>
                         )}
 
+                        {/* Table rows */}
                         {rows.map((r) => (
                             <tr
                                 key={r.id_food}
                                 className="border-t border-brand-divider"
                             >
+                                {/* Dish status */}
                                 <td className="px-3 py-2.5 text-center">
                                     <StatusDot status={r.status} />
                                 </td>
 
+                                {/* Dish name */}
                                 <td className="px-3 py-2.5">{r.name}</td>
 
+                                {/* Dish type badge */}
                                 <td className="px-3 py-2.5">
                                     <span className="inline-flex rounded-md bg-[rgba(57,142,59,0.10)] px-2.5 py-1 text-xs font-semibold tabular-nums text-brand-primary capitalize">
                                         {capitalize(r.type)}
                                     </span>
                                 </td>
 
+                                {/* Total grammage */}
                                 <td className="px-3 py-2.5">
                                     {formatNumber(r.grammage_tot)}
                                 </td>
 
+                                {/* Total calories */}
                                 <td className="px-3 py-2.5">
                                     {formatNumber(r.kcal_tot)}
                                 </td>
 
+                                {/* Main macronutrients */}
                                 <td className="px-3 py-2.5 whitespace-nowrap">
                                     🥩 {formatNumber(r.proteins)} | 🍞{' '}
                                     {formatNumber(r.carbs)} | 🧈{' '}
                                     {formatNumber(r.fats)}
                                 </td>
 
+                                {/* Allergens shown as emojis */}
                                 <td className="px-3 py-2.5">
                                     <div className="flex gap-2 flex-wrap">
                                         {extractAllergenEmojis(
@@ -110,6 +123,7 @@ export default memo(function DishesTable({
                                     </div>
                                 </td>
 
+                                {/* Row actions */}
                                 <td className="px-3 py-2.5">
                                     <NavLink
                                         to={`/dishes/edit/${r.id_food}`}
@@ -118,6 +132,7 @@ export default memo(function DishesTable({
                                         ✏
                                     </NavLink>
 
+                                    {/* Delete is available only for inactive dishes */}
                                     {r.status === 'non_attivo' && (
                                         <button
                                             className="ml-3 text-red-500"
@@ -133,7 +148,7 @@ export default memo(function DishesTable({
                 </table>
             </div>
 
-            {/* PAGINAZIONE */}
+            {/* Pagination controls */}
             <Pagination
                 total={total}
                 page={page}

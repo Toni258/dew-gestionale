@@ -1,3 +1,4 @@
+// Module used for app.
 function normalizePath(value, fallback) {
     const raw = String(value ?? fallback).trim();
     if (!raw) return fallback;
@@ -6,6 +7,7 @@ function normalizePath(value, fallback) {
     return withLeadingSlash.replace(/\/+$/, '') || fallback;
 }
 
+// Helper function used by client config.
 export const clientConfig = {
     foodImagesPublicPath: normalizePath(
         import.meta.env.VITE_FOOD_IMAGES_PUBLIC_PATH,

@@ -1,7 +1,5 @@
-/**
- * Mobile app user manager page.
- * Shared table and filter helpers keep the page focused on actions and modals.
- */
+// Mobile app user manager page.
+// Shared table and filter helpers keep the page focused on actions and modals.
 import { useState } from 'react';
 
 import AppLayout from '../../components/layout/AppLayout';
@@ -34,6 +32,7 @@ export default function UserManagerMobileApp() {
         useState(false);
     const [showDisableAppUserModal, setShowDisableAppUserModal] =
         useState(false);
+    // Main state used by the page
     const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
     const [userSelected, setUserSelected] = useState(null);
 
@@ -57,6 +56,7 @@ export default function UserManagerMobileApp() {
         fetcher: getMobileAppUsers,
     });
 
+    // Clears the value used by selection.
     function clearSelection() {
         setUserSelected(null);
         setShowModifyUserInfoModal(false);

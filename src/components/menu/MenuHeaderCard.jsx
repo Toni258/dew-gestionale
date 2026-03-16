@@ -1,3 +1,4 @@
+// Card component used for menu header.
 import Card from '../ui/Card';
 import { capitalize } from '../../utils/capitalize';
 

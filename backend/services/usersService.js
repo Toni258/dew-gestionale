@@ -1,3 +1,4 @@
+// Service layer used for users.
 import bcrypt from 'bcrypt';
 import { pool } from '../db/db.js';
 import { HttpError } from '../utils/httpError.js';
@@ -25,6 +26,7 @@ import {
     updateCaregiverInfo,
 } from '../repositories/caregiverRepo.js';
 
+// Helper function used by paginate.
 function paginate({ page, pageSize, total, rows }) {
     const safePage = Math.max(1, Number(page) || 1);
     const safePageSize = Math.min(100, Math.max(1, Number(pageSize) || 30));
@@ -38,6 +40,7 @@ function paginate({ page, pageSize, total, rows }) {
     };
 }
 
+// Normalizes the value used by text.
 function normalizeText(value, label) {
     const normalized = String(value ?? '').trim();
     if (!normalized || normalized.length < 2) {
@@ -47,6 +50,7 @@ function normalizeText(value, label) {
     return normalized;
 }
 
+// Normalizes the value used by email.
 function normalizeEmail(value) {
     const email = String(value ?? '').trim().toLowerCase();
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,6 +62,7 @@ function normalizeEmail(value) {
     return email;
 }
 
+// Returns the data used by filtered mobile app users.
 export async function getFilteredMobileAppUsers(query = {}) {
     const page = Math.max(1, Number(query.page) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(query.pageSize) || 30));
@@ -78,6 +83,7 @@ export async function getFilteredMobileAppUsers(query = {}) {
     return paginate({ page, pageSize, total, rows });
 }
 
+// Returns the data used by filtered backoffice users.
 export async function getFilteredBackofficeUsers(query = {}) {
     const page = Math.max(1, Number(query.page) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(query.pageSize) || 30));
@@ -100,6 +106,7 @@ export async function getFilteredBackofficeUsers(query = {}) {
     return paginate({ page, pageSize, total, rows });
 }
 
+// Helper function used by admin reset password.
 export async function adminResetPassword({ targetUserId, newPassword }) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -125,6 +132,7 @@ export async function adminResetPassword({ targetUserId, newPassword }) {
     return { ok: true };
 }
 
+// Helper function used by suspend backoffice user.
 export async function suspendBackofficeUser({ actingUserId, targetUserId }) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -147,6 +155,7 @@ export async function suspendBackofficeUser({ actingUserId, targetUserId }) {
     return { ok: true };
 }
 
+// Helper function used by unsuspend backoffice user.
 export async function unsuspendBackofficeUser(targetUserId) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -169,6 +178,7 @@ export async function unsuspendBackofficeUser(targetUserId) {
     return { ok: true };
 }
 
+// Deletes the data for gestionale user.
 export async function deleteGestionaleUser(targetUserId) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -183,6 +193,7 @@ export async function deleteGestionaleUser(targetUserId) {
     return { ok: true };
 }
 
+// Deletes the data for mobile app user.
 export async function deleteMobileAppUser(targetUserId) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -202,6 +213,7 @@ export async function deleteMobileAppUser(targetUserId) {
     return { ok: true };
 }
 
+// Updates the data for gestionale user info.
 export async function updateGestionaleUserInfo({ actingUserId, targetUserId, payload, actingUserRole }) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -245,6 +257,7 @@ export async function updateGestionaleUserInfo({ actingUserId, targetUserId, pay
     return { ok: true, user: fresh };
 }
 
+// Updates the data for mobile app user info.
 export async function updateMobileAppUserInfo({ targetUserId, payload }) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -296,6 +309,7 @@ export async function updateMobileAppUserInfo({ targetUserId, payload }) {
     };
 }
 
+// Disables the data used by mobile app user.
 export async function disableMobileAppUser(targetUserId) {
     const numericId = Number(targetUserId);
     if (!numericId) {
@@ -310,6 +324,7 @@ export async function disableMobileAppUser(targetUserId) {
     return { ok: true };
 }
 
+// Checks the current value for backoffice email availability.
 export async function checkBackofficeEmailAvailability(email) {
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     if (!normalizedEmail || normalizedEmail.length < 3) {
@@ -325,6 +340,7 @@ export async function checkBackofficeEmailAvailability(email) {
     return { exists };
 }
 
+// Creates the data for gestionale user.
 export async function createGestionaleUser(payload) {
     const name = normalizeText(payload?.name, 'Nome');
     const surname = normalizeText(payload?.surname, 'Cognome');

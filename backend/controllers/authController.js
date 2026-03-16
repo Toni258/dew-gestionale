@@ -1,3 +1,4 @@
+// Controller handlers for auth.
 import { clearSessionCookie, signSessionCookie } from '../middlewares/auth.js';
 import {
     authenticateBackofficeUser,
@@ -6,6 +7,7 @@ import {
     requestBackofficePasswordReset,
 } from '../services/authService.js';
 
+// Helper function used by login.
 export async function login(req, res, next) {
     try {
         const user = await authenticateBackofficeUser(req.body || {});
@@ -27,15 +29,18 @@ export async function login(req, res, next) {
     }
 }
 
+// Helper function used by logout.
 export function logout(req, res) {
     clearSessionCookie(res);
     res.json({ ok: true });
 }
 
+// Helper function used by me.
 export function me(req, res) {
     res.json({ user: req.user });
 }
 
+// Helper function used by change password.
 export async function changePassword(req, res, next) {
     try {
         const user = await changeAuthenticatedUserPassword({
@@ -55,6 +60,7 @@ export async function changePassword(req, res, next) {
     }
 }
 
+// Helper function used by request password reset.
 export async function requestPasswordReset(req, res, next) {
     try {
         const result = await requestBackofficePasswordReset(req.body?.email);

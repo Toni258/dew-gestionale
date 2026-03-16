@@ -1,3 +1,4 @@
+// Warning note.
 export default function WarningNote({
     children,
     iconSrc = '/warning giallo.png',

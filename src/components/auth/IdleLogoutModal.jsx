@@ -1,3 +1,4 @@
+// Modal used for idle logout.
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 

@@ -1,6 +1,4 @@
-/**
- * Ranking card used by the "Statistiche Scelte" page.
- */
+// Ranking card used by the "Statistiche Scelte" page.
 import Card from '../ui/Card';
 import {
     fmtInt,

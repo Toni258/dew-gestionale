@@ -1,13 +1,16 @@
+// Service layer used for archived menus.
 import { pool } from '../db/db.js';
 import { HttpError } from '../utils/httpError.js';
 import { decodeTrim, parseIntStrict, oneOf } from '../utils/params.js';
 import * as repo from '../repositories/archivedMenusRepo.js';
 import { CHEESE_IDS } from '../../shared/constants.js';
 
+// Returns the data used by menus.
 export async function getMenus() {
     return repo.listMenus(pool);
 }
 
+// Returns the data used by archived menu by id.
 export async function getArchivedMenuByID(id_arch_menu_param) {
     const id_arch_menu = decodeTrim(id_arch_menu_param);
     if (!id_arch_menu) throw new HttpError(400, 'id_arch_menu non valido');
@@ -18,6 +21,7 @@ export async function getArchivedMenuByID(id_arch_menu_param) {
     return menu;
 }
 
+// Returns the data used by archived menu meals status.
 export async function getArchivedMenuMealsStatus(id_arch_menu_param) {
     const idArchMenu = parseIntStrict(id_arch_menu_param, {
         message: 'id_arch_menu non valido',
@@ -26,6 +30,7 @@ export async function getArchivedMenuMealsStatus(id_arch_menu_param) {
     return repo.getArchivedMealsStatus(pool, idArchMenu);
 }
 
+// Returns the data used by archived menu fixed dishes.
 export async function getArchivedMenuFixedDishes(idArchMenuRaw) {
     const idArchMenu = parseIntStrict(idArchMenuRaw, {
         message: 'id_arch_menu non valido',
@@ -35,6 +40,7 @@ export async function getArchivedMenuFixedDishes(idArchMenuRaw) {
     return { data: rows };
 }
 
+// Returns the data used by archived menu fixed cheeses rotation.
 export async function getArchivedMenuFixedCheesesRotation(idArchMenuRaw) {
     const idArchMenu = parseIntStrict(idArchMenuRaw, {
         message: 'id_arch_menu non valido',
@@ -63,6 +69,7 @@ export async function getArchivedMenuFixedCheesesRotation(idArchMenuRaw) {
     return { data: out };
 }
 
+// Returns the data used by archived menu meal composition.
 export async function getArchivedMenuMealComposition({
     id_arch_menu_param,
     day_index_param,

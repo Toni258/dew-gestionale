@@ -1,4 +1,4 @@
-// src/components/loader/LoaderProvider.jsx
+// Provider component used to manage loader.
 import { createContext, useEffect, useMemo, useRef, useState } from 'react';
 import { registerLoader } from '../../services/loader';
 
@@ -15,6 +15,7 @@ export default function LoaderProvider({ children }) {
     const activeCountRef = useRef(0);
     const blockingCountRef = useRef(0);
 
+    // Clears the loader delay timer.
     function clearDelayTimer() {
         if (delayTimerRef.current) {
             clearTimeout(delayTimerRef.current);
@@ -22,14 +23,16 @@ export default function LoaderProvider({ children }) {
         }
     }
 
+    // Schedules the loader to become visible after the delay.
     function scheduleShow() {
-        // evita flicker: compare solo dopo 1s se ancora attivo
+        // Avoids flicker by showing the loader only after 1 second if it is still active.
         clearDelayTimer();
         delayTimerRef.current = setTimeout(() => {
             if (activeCountRef.current > 0) setVisible(true);
         }, SHOW_DELAY_MS);
     }
 
+    // Starts the current flow.
     function start({ message: nextMessage, mode: nextMode } = {}) {
         activeCountRef.current += 1;
 
@@ -42,16 +45,17 @@ export default function LoaderProvider({ children }) {
             setMode('nonBlocking');
         }
 
-        // se già visibile, non serve ritardare
+        // If the loader is already visible, no extra delay is needed.
         if (visible) return;
 
         scheduleShow();
     }
 
+    // Stops the current flow.
     function stop() {
         activeCountRef.current = Math.max(0, activeCountRef.current - 1);
 
-        // se si “chiude” una blocking, scala il contatore
+        // If a blocking request ends, decrease its counter.
         if (blockingCountRef.current > 0) {
             blockingCountRef.current = Math.max(
                 0,
@@ -59,14 +63,14 @@ export default function LoaderProvider({ children }) {
             );
         }
 
-        // se ci sono ancora operazioni attive, resta visibile
+        // If there are still active operations, keep the loader visible.
         if (activeCountRef.current > 0) {
-            // se non ci sono più blocking attive, torna nonBlocking
+            // If there are no blocking operations left, switch back to nonBlocking mode.
             if (blockingCountRef.current === 0) setMode('nonBlocking');
             return;
         }
 
-        // nessuna operazione attiva
+        // No active operation left.
         clearDelayTimer();
         setVisible(false);
         setMode('nonBlocking');

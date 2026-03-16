@@ -1,3 +1,4 @@
+// Backend module for server.
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -54,7 +55,6 @@ app.use(
     storageConfig.foodImagesPublicPath,
     express.static(storageConfig.foodImagesDir),
 );
-
 
 // HEALTHCHECK TECNICO
 app.get('/health', (req, res) => {

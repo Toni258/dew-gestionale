@@ -1,3 +1,4 @@
+// Menu grid.
 import Button from '../ui/Button';
 
 const DAYS_HEADER = [

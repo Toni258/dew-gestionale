@@ -1,7 +1,5 @@
-/**
- * Table used by the backoffice user manager page.
- * Action handlers are passed from the page so the table stays presentational.
- */
+// Table used by the backoffice user manager page.
+// Action handlers are passed from the page so the table stays presentational.
 import Pagination from '../ui/Pagination';
 import { formatDateTime } from '../../utils/formatDateTime';
 import {

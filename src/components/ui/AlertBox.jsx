@@ -1,3 +1,4 @@
+// Reusable alert box.
 const VARIANT_STYLES = {
     info: {
         bg: 'bg-brand-secondary/10',

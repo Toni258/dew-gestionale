@@ -1,3 +1,4 @@
+// Main page for login.
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -39,11 +40,13 @@ export default function Login() {
 
     const navigate = useNavigate();
     const { login } = useAuth();
+    // Main state used by the page
 
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [animateOut, setAnimateOut] = useState(false);
     const [error, setError] = useState('');
 
+    // Helper function used by open forgot password.
     function openForgotPassword() {
         setAnimateOut(true);
         setTimeout(() => {
@@ -52,6 +55,7 @@ export default function Login() {
         }, 100);
     }
 
+    // Helper function used by close forgot password.
     function closeForgotPassword() {
         setAnimateOut(true);
         setTimeout(() => {

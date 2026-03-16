@@ -1,3 +1,4 @@
+// Configuration helpers for app.
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,6 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const backendDir = path.resolve(path.dirname(__filename), '..');
 const projectRoot = path.resolve(backendDir, '..');
 
+// Converts the input value into a boolean.
 function toBool(value, defaultValue = false) {
     if (value == null || value === '') return defaultValue;
     const normalized = String(value).trim().toLowerCase();
@@ -20,11 +22,13 @@ function toBool(value, defaultValue = false) {
     return defaultValue;
 }
 
+// Converts the input value into an integer.
 function toInt(value, defaultValue) {
     const parsed = Number(value);
     return Number.isInteger(parsed) ? parsed : defaultValue;
 }
 
+// Normalizes the value used by mount path.
 function normalizeMountPath(value, fallback) {
     const raw = String(value ?? fallback).trim();
     if (!raw) return fallback;
@@ -33,6 +37,7 @@ function normalizeMountPath(value, fallback) {
     return withLeadingSlash.replace(/\/+$/, '') || '/';
 }
 
+// Parses the value used by cors origins.
 function parseCorsOrigins(value) {
     return String(value ?? '')
         .split(',')
@@ -40,12 +45,14 @@ function parseCorsOrigins(value) {
         .filter(Boolean);
 }
 
+// Resolves the value used by path.
 function resolvePath(baseDir, inputPath, fallbackRelativePath) {
     const raw = String(inputPath ?? '').trim();
     const value = raw || fallbackRelativePath;
     return path.isAbsolute(value) ? value : path.resolve(baseDir, value);
 }
 
+// Checks the request before continuing with string env.
 function requireStringEnv(name, { allowEmpty = false } = {}) {
     const value = process.env[name];
     if (value == null) {
@@ -60,21 +67,19 @@ function requireStringEnv(name, { allowEmpty = false } = {}) {
     return normalized;
 }
 
-const nodeEnv = String(process.env.NODE_ENV ?? 'development').trim() || 'development';
+const nodeEnv =
+    String(process.env.NODE_ENV ?? 'development').trim() || 'development';
 const isProduction = nodeEnv === 'production';
 
 const port = toInt(process.env.PORT, 3001);
 const dbPort = toInt(process.env.DB_PORT, 3306);
 const jwtSecret = requireStringEnv('JWT_SECRET');
-const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN || 'http://localhost:5173');
-const trustProxy = toBool(process.env.TRUST_PROXY, false);
-const sessionCookieSecure = toBool(
-    process.env.COOKIE_SECURE,
-    isProduction,
+const corsOrigins = parseCorsOrigins(
+    process.env.CORS_ORIGIN || 'http://localhost:5173',
 );
-const sessionCookieSameSite = String(
-    process.env.COOKIE_SAME_SITE ?? 'lax',
-)
+const trustProxy = toBool(process.env.TRUST_PROXY, false);
+const sessionCookieSecure = toBool(process.env.COOKIE_SECURE, isProduction);
+const sessionCookieSameSite = String(process.env.COOKIE_SAME_SITE ?? 'lax')
     .trim()
     .toLowerCase();
 const sessionCookieDomain = String(process.env.COOKIE_DOMAIN ?? '').trim();
@@ -89,12 +94,16 @@ const foodImagesPublicPath = normalizeMountPath(
     FOOD_IMAGES_PUBLIC_PATH,
 );
 const logDir = resolvePath(backendDir, process.env.LOG_DIR, '../logs');
-const logLevel = String(process.env.LOG_LEVEL ?? 'info').trim().toLowerCase() || 'info';
+const logLevel =
+    String(process.env.LOG_LEVEL ?? 'info')
+        .trim()
+        .toLowerCase() || 'info';
 const enableSchedulers = toBool(process.env.ENABLE_SCHEDULERS, false);
 const schedulerLockName =
     String(process.env.SCHEDULER_LOCK_NAME ?? '').trim() ||
     'dew:process-expired-dish-suspensions';
 
+// Helper function used by app config.
 export const appConfig = {
     paths: {
         backendDir,

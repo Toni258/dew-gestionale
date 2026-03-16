@@ -1,6 +1,8 @@
+// Table component used for cheese rotation.
 import SearchableSelect from '../../ui/SearchableSelect';
 import { WEEKDAYS } from './constants';
 
+// Component used for cheese rotation table.
 function ReadOnlyPill({ food }) {
     if (!food?.name) {
         return (

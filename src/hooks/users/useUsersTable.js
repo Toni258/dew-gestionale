@@ -1,16 +1,16 @@
-/**
- * Shared list state for user management pages.
- * It centralizes query text, applied filters, pagination and data loading.
- */
+// Shared list state for user management pages.
+// It centralizes query text, applied filters, pagination and data loading.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { withLoader } from '../../services/withLoader';
 
+// Manages the state and side effects for users table.
 export function useUsersTable({
     initialFilters,
     fetcher,
     loaderMessage = 'Caricamento utenti…',
     loadErrorMessage = 'Errore nel caricamento degli utenti.',
 }) {
+    // Main state used by the page
     const [query, setQuery] = useState('');
     const [appliedFilters, setAppliedFilters] = useState(initialFilters);
     const [page, setPage] = useState(1);
@@ -32,6 +32,7 @@ export function useUsersTable({
         }),
         [query, appliedFilters, page, pageSize],
     );
+    // Memoized handler used by the page
 
     const fetchRows = useCallback(async () => {
         setLoading(true);
@@ -51,21 +52,25 @@ export function useUsersTable({
             setLoading(false);
         }
     }, [fetcher, loadErrorMessage, loaderMessage, requestParams]);
+    // Load data when the component opens
 
     useEffect(() => {
         fetchRows();
     }, [fetchRows]);
 
+    // Applies the changes used by filters.
     function applyFilters(nextFilters) {
         setAppliedFilters(nextFilters);
         setPage(1);
     }
 
+    // Updates the search text and resets pagination.
     function handleSearch(nextQuery) {
         setQuery(nextQuery);
         setPage(1);
     }
 
+    // Changes the page size and resets pagination.
     function handlePageSizeChange(event) {
         setPageSize(Number(event.target.value));
         setPage(1);

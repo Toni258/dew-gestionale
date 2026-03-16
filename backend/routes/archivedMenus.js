@@ -1,3 +1,4 @@
+// Express routes for archived menus.
 import { Router } from 'express';
 import {
     getMenus,
@@ -8,6 +9,7 @@ import {
     getArchivedMenuMealComposition,
 } from '../controllers/archivedMenusController.js';
 
+// Route definitions
 const router = Router();
 
 router.get('/', getMenus);

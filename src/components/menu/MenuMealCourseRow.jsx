@@ -1,6 +1,8 @@
+// Menu meal course row.
 import FormGroup from '../ui/FormGroup';
 import SearchableSelect from '../ui/SearchableSelect';
 
+// Component used for menu meal course row.
 function MacroBox({ food }) {
     return (
         <div className="flex-[2] text-md text-brand-textSecondary flex flex-col gap-1 justify-center">
@@ -30,6 +32,7 @@ function MacroBox({ food }) {
     );
 }
 
+// Component used for menu meal course row.
 function ReadOnlyFoodBox({ food, placeholder }) {
     return (
         <div className="input-default w-full flex items-center h-[38px] rounded-textField border border-brand-divider bg-white/60 px-3">

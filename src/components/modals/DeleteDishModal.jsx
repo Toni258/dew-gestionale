@@ -1,3 +1,4 @@
+// Modal used for delete dish.
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 

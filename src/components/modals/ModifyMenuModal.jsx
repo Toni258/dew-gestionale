@@ -1,3 +1,4 @@
+// Modal used for modify menu.
 import Modal from '../ui/Modal';
 import Form from '../ui/Form';
 import FormGroup from '../ui/FormGroup';
@@ -102,6 +103,7 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                                     : 'Intervallo date già in uso',
                             );
 
+                            // Helper function used by fmt.
                             function fmt(d) {
                                 return d.split('-').reverse().join('/');
                             }

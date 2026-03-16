@@ -1,3 +1,4 @@
+// Custom hook used to manage dish.
 // Caricamento dish + mapping in initialValues/originalDish/initialSuspension
 
 import { useEffect, useState } from 'react';
@@ -5,7 +6,9 @@ import { clientConfig } from '../config/appConfig';
 import { buildApiUrl } from '../services/apiClient';
 import { getDishById } from '../services/dishesApi';
 
+// Manages the state and side effects for dish.
 export function useDish(dishId) {
+    // Main state used by the page
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [dish, setDish] = useState(null);
@@ -14,10 +17,12 @@ export function useDish(dishId) {
     const [originalDish, setOriginalDish] = useState(null);
     const [initialSuspension, setInitialSuspension] = useState(null);
     const [existingImageUrl, setExistingImageUrl] = useState('');
+    // Load data when the component opens
 
     useEffect(() => {
         let alive = true;
 
+        // Loads the current data.
         async function load() {
             setLoading(true);
             setError('');

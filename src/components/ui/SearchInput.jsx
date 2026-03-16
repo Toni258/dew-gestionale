@@ -1,3 +1,4 @@
+// Reusable search input.
 import { useState } from 'react';
 
 export default function SearchInput({

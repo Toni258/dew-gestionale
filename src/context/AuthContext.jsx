@@ -1,12 +1,16 @@
+// Context used to manage auth.
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import * as authApi from '../services/authApi';
 
 const AuthContext = createContext(null);
 
+// Helper function used by auth provider.
 export function AuthProvider({ children }) {
+    // Main state used by the page
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Helper function used by refresh me.
     async function refreshMe() {
         try {
             const data = await authApi.me();
@@ -17,10 +21,12 @@ export function AuthProvider({ children }) {
             setLoading(false);
         }
     }
+    // Load data when the component opens
 
     useEffect(() => {
         refreshMe();
     }, []);
+    // Derived data used by the UI
 
     const value = useMemo(() => {
         const isAuthenticated = !!user;
@@ -63,6 +69,7 @@ export function AuthProvider({ children }) {
     );
 }
 
+// Manages the state and side effects for auth.
 export function useAuth() {
     return useContext(AuthContext);
 }

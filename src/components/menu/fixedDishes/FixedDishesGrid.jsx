@@ -1,10 +1,13 @@
+// Fixed dishes grid.
 import { COURSE_ROWS } from './constants';
 import FixedDishesCell from './FixedDishesCell';
 
+// Component used for fixed dishes grid.
 function HDivider() {
     return <div className="col-start-2 col-end-5 h-px w-full bg-black/50" />;
 }
 
+// Component used for fixed dishes grid.
 function VDivider({ isLast = false }) {
     return (
         <div
@@ -15,6 +18,7 @@ function VDivider({ isLast = false }) {
     );
 }
 
+// Component used for fixed dishes grid.
 function SideLabel({ children, isLast = false }) {
     return (
         <div

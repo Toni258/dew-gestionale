@@ -1,3 +1,4 @@
+// Card component used for menu.
 import { useNavigate } from 'react-router-dom';
 import { capitalize } from '../../utils/capitalize';
 

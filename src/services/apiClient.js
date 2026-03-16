@@ -1,3 +1,4 @@
+// Frontend service helpers for api client.
 function normalizeBaseUrl(value) {
     const raw = String(value ?? '').trim();
     return raw.replace(/\/+$/, '');
@@ -5,6 +6,7 @@ function normalizeBaseUrl(value) {
 
 const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
+// Builds the data needed for api url.
 export function buildApiUrl(path) {
     const normalizedPath = String(path ?? '').trim();
     if (!normalizedPath) return normalizedPath;
@@ -18,6 +20,7 @@ export function buildApiUrl(path) {
     return `${API_BASE_URL}${pathWithLeadingSlash}`;
 }
 
+// Helper function used by safe json.
 async function safeJson(res) {
     try {
         return await res.json();
@@ -26,6 +29,7 @@ async function safeJson(res) {
     }
 }
 
+// Helper function used by request.
 async function request(url, { method = 'GET', body, headers, credentials = 'include' } = {}) {
     const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
@@ -58,26 +62,32 @@ async function request(url, { method = 'GET', body, headers, credentials = 'incl
     return data;
 }
 
+// Returns the data used by json.
 export function getJson(url, options) {
     return request(url, { ...(options ?? {}), method: 'GET' });
 }
 
+// Helper function used by post json.
 export function postJson(url, body, options) {
     return request(url, { ...(options ?? {}), method: 'POST', body });
 }
 
+// Helper function used by put json.
 export function putJson(url, body, options) {
     return request(url, { ...(options ?? {}), method: 'PUT', body });
 }
 
+// Helper function used by post form.
 export function postForm(url, formData, options) {
     return request(url, { ...(options ?? {}), method: 'POST', body: formData });
 }
 
+// Helper function used by put form.
 export function putForm(url, formData, options) {
     return request(url, { ...(options ?? {}), method: 'PUT', body: formData });
 }
 
+// Helper function used by del json.
 export function delJson(url, options) {
     return request(url, { ...(options ?? {}), method: 'DELETE' });
 }

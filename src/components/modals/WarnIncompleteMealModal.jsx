@@ -1,3 +1,4 @@
+// Modal used for warn incomplete meal.
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 

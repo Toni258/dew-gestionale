@@ -1,3 +1,4 @@
+// Utility helpers for day index.
 export function dayIndexToWeekDay(dayIndex) {
     const idx = Number(dayIndex ?? 0);
     const settimana = Math.floor(idx / 7) + 1; // 1..4
@@ -5,6 +6,7 @@ export function dayIndexToWeekDay(dayIndex) {
     return { settimana: String(settimana), giorno: String(giorno) };
 }
 
+// Helper function used by week day to day index.
 export function weekDayToDayIndex(settimana, giorno) {
     const w = Number(settimana);
     const d = Number(giorno);

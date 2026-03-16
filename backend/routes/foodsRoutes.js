@@ -1,3 +1,4 @@
+// Express routes for foods.
 import { Router } from 'express';
 import {
     getFoods,
@@ -5,6 +6,7 @@ import {
     getCheeseFoods,
 } from '../controllers/foodsController.js';
 
+// Route definitions
 const router = Router();
 
 router.get('/', getFoods);

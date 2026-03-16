@@ -1,3 +1,4 @@
+// Status dot.
 export default function StatusDot({ status }) {
     const color =
         status === 'attivo'

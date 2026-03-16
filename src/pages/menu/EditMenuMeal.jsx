@@ -1,3 +1,4 @@
+// Main page for edit menu meal.
 import AppLayout from '../../components/layout/AppLayout';
 import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -37,6 +38,7 @@ export default function EditMenuMeal() {
         setSelectedFood,
         save,
     } = useEditMenuMeal({ seasonType, dayIndex, mealType });
+    // Derived data used by the UI
 
     const missingCourses = useMemo(() => {
         return COURSE_TYPES.filter(
@@ -44,6 +46,7 @@ export default function EditMenuMeal() {
         ).map((course) => course.label.toLowerCase());
     }, [COURSE_TYPES, selectedFoods]);
 
+    // Handles the logic for confirm save.
     async function handleConfirmSave() {
         const result = await withLoaderNotify({
             message: 'Salvataggio…',

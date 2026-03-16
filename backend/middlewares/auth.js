@@ -1,6 +1,8 @@
+// Middleware helpers for auth.
 import { getSessionCookieClearOptions, getSessionCookieName, getSessionCookieOptions, signSessionToken, verifySessionToken } from '../config/authConfig.js';
 import { loadAuthenticatedBackofficeUser } from '../services/authService.js';
 
+// Checks the request before continuing with auth.
 export async function requireAuth(req, res, next) {
     const cookieName = getSessionCookieName();
     const token = req.cookies?.[cookieName];
@@ -30,6 +32,7 @@ export async function requireAuth(req, res, next) {
     }
 }
 
+// Checks the request before continuing with role.
 export function requireRole(...roles) {
     return (req, res, next) => {
         if (!req.user) {
@@ -44,6 +47,7 @@ export function requireRole(...roles) {
     };
 }
 
+// Creates the value used by session cookie.
 export function signSessionCookie(res, userPayload) {
     const cookieName = getSessionCookieName();
     const token = signSessionToken(userPayload);
@@ -51,6 +55,7 @@ export function signSessionCookie(res, userPayload) {
     res.cookie(cookieName, token, getSessionCookieOptions());
 }
 
+// Clears the value used by session cookie.
 export function clearSessionCookie(res) {
     res.clearCookie(getSessionCookieName(), getSessionCookieClearOptions());
 }

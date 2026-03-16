@@ -1,3 +1,4 @@
+// Reusable page button.
 import { memo } from 'react';
 
 export default memo(function PageButton({ pageNum, current, onClick }) {

@@ -1,3 +1,4 @@
+// Info macro.
 export default function InfoMacro({ food }) {
     if (!food) {
         return (

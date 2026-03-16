@@ -1,3 +1,4 @@
+// Main page for create menu.
 import AppLayout from '../../components/layout/AppLayout';
 import Card from '../../components/ui/Card';
 import Form, { useFormContext } from '../../components/ui/Form';
@@ -18,6 +19,7 @@ import {
     createMenu,
 } from '../../services/menusApi';
 
+// Page component for create menu.
 function FormGlobalError() {
     const form = useFormContext();
     const err = (form?.errors?.form ?? '').toString().trim();
@@ -34,6 +36,7 @@ function FormGlobalError() {
     );
 }
 
+// Page component for create menu.
 function SubmitButton() {
     const form = useFormContext();
     return (

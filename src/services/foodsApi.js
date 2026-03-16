@@ -1,5 +1,7 @@
+// Frontend service helpers for foods api.
 import { getJson } from './apiClient';
 
+// Returns the data used by available foods for menu.
 export function getAvailableFoodsForMenu({
     type,
     season_type,
@@ -19,6 +21,7 @@ export function getAvailableFoodsForMenu({
     return getJson(`/api/foods/available-for-menu?${qs.toString()}`);
 }
 
+// Returns the data used by cheeses.
 export function getCheeses() {
     return getJson('/api/foods/cheeses');
 }

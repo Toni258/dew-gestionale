@@ -1,7 +1,5 @@
-/**
- * Builds the FormData payload used by dish create/edit pages.
- * The helper keeps the same mapping logic in one place.
- */
+// Builds the FormData payload used by dish create/edit pages.
+// The helper keeps the same mapping logic in one place.
 const SUSPENSION_FORM_FIELDS = new Set([
     'suspension_enabled',
     'suspension_id',
@@ -10,6 +8,7 @@ const SUSPENSION_FORM_FIELDS = new Set([
     'reason',
 ]);
 
+// Builds the data needed for dish form data.
 export function buildDishFormData(
     values,
     { excludeSuspensionFields = false } = {},

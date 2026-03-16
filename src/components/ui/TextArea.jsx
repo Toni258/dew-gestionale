@@ -1,3 +1,4 @@
+// Reusable text area.
 import { useFormContext } from './Form';
 
 export default function TextArea({ name, className = '', rows = 4, ...props }) {

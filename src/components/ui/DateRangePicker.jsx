@@ -1,12 +1,15 @@
+// Reusable date range picker.
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useFormContext } from './Form';
 
+// Converts the input into day start.
 function toDayStart(d) {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
     return x;
 }
 
+// Parses the value used by limit.
 function parseLimit(value) {
     if (!value) return null;
     if (value instanceof Date) return toDayStart(value);

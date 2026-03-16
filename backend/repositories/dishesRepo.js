@@ -1,3 +1,4 @@
+// Database queries used for dishes.
 export async function countFilteredDishes(
     poolOrConn,
     { search = '', status = '', type = '', allergens = [] } = {},
@@ -21,6 +22,7 @@ export async function countFilteredDishes(
     return Number(rows[0]?.total ?? 0);
 }
 
+// Returns the list used by filtered dishes.
 export async function listFilteredDishes(
     poolOrConn,
     { search = '', status = '', type = '', allergens = [], page = 1, pageSize = 30 } = {},
@@ -63,6 +65,7 @@ export async function listFilteredDishes(
     return rows;
 }
 
+// Builds the data needed for dish filters.
 function buildDishFilters({ search = '', status = '', type = '', allergens = [] } = {}) {
     let whereSql = ' WHERE 1=1 ';
     const params = [];
@@ -115,6 +118,7 @@ function buildDishFilters({ search = '', status = '', type = '', allergens = [] 
     return { whereSql, params, baseSql };
 }
 
+// Checks the current value for dish name exists.
 export async function checkDishNameExists(
     poolOrConn,
     normalizedName,
@@ -138,6 +142,7 @@ export async function checkDishNameExists(
     return rows.length > 0;
 }
 
+// Inserts the data for dish.
 export async function insertDish(poolOrConn, payload) {
     const [result] = await poolOrConn.query(
         `
@@ -170,6 +175,7 @@ export async function insertDish(poolOrConn, payload) {
     return result.insertId;
 }
 
+// Finds the data for dish summary by id.
 export async function findDishSummaryById(poolOrConn, dishId) {
     const [rows] = await poolOrConn.query(
         `
@@ -194,6 +200,7 @@ export async function findDishSummaryById(poolOrConn, dishId) {
     return rows[0] ?? null;
 }
 
+// Finds the data for current or future suspension by food id.
 export async function findCurrentOrFutureSuspensionByFoodId(poolOrConn, dishId) {
     const [rows] = await poolOrConn.query(
         `
@@ -216,6 +223,7 @@ export async function findCurrentOrFutureSuspensionByFoodId(poolOrConn, dishId) 
     return rows[0] ?? null;
 }
 
+// Updates the data for dish.
 export async function updateDish(poolOrConn, dishId, payload) {
     const [result] = await poolOrConn.query(
         `
@@ -249,6 +257,7 @@ export async function updateDish(poolOrConn, dishId, payload) {
     return result.affectedRows ?? 0;
 }
 
+// Deletes the data for dish.
 export async function deleteDish(poolOrConn, dishId) {
     const [result] = await poolOrConn.query(
         `DELETE FROM food WHERE id_food = ?`,
@@ -258,6 +267,7 @@ export async function deleteDish(poolOrConn, dishId) {
     return result.affectedRows ?? 0;
 }
 
+// Helper function used by upsert food availability.
 export async function upsertFoodAvailability(
     poolOrConn,
     { existingIdAvail, dishId, validFrom, validTo, reason },
@@ -286,6 +296,7 @@ export async function upsertFoodAvailability(
     return result.insertId;
 }
 
+// Helper function used by restore original dish pairings by range.
 export async function restoreOriginalDishPairingsByRange(
     poolOrConn,
     { dishId, validFrom, validTo },
@@ -306,6 +317,7 @@ export async function restoreOriginalDishPairingsByRange(
     return result.affectedRows ?? 0;
 }
 
+// Returns the list used by dish conflicts for period.
 export async function listDishConflictsForPeriod(
     poolOrConn,
     { dishId, validFrom, validTo },
@@ -348,6 +360,7 @@ export async function listDishConflictsForPeriod(
     return rows;
 }
 
+// Disables the data used by dish pairings by ids.
 export async function disableDishPairingsByIds(
     poolOrConn,
     { dishId, pairingIds },
@@ -368,6 +381,7 @@ export async function disableDishPairingsByIds(
     return result.affectedRows ?? 0;
 }
 
+// Finds the data for pairing info.
 export async function findPairingInfo(poolOrConn, { pairingId, dishId }) {
     const [rows] = await poolOrConn.query(
         `
@@ -390,6 +404,7 @@ export async function findPairingInfo(poolOrConn, { pairingId, dishId }) {
     return rows[0] ?? null;
 }
 
+// Finds the data for food type.
 export async function findFoodType(poolOrConn, dishId) {
     const [rows] = await poolOrConn.query(
         `SELECT id_food, type FROM food WHERE id_food = ? LIMIT 1`,
@@ -399,6 +414,7 @@ export async function findFoodType(poolOrConn, dishId) {
     return rows[0] ?? null;
 }
 
+// Helper function used by is food suspended in range.
 export async function isFoodSuspendedInRange(
     poolOrConn,
     { dishId, validFrom, validTo },
@@ -418,6 +434,7 @@ export async function isFoodSuspendedInRange(
     return rows.length > 0;
 }
 
+// Helper function used by is food fixed in menu.
 export async function isFoodFixedInMenu(
     poolOrConn,
     { dishId, seasonType, mealType },
@@ -440,6 +457,7 @@ export async function isFoodFixedInMenu(
     return rows.length > 0;
 }
 
+// Finds the data for active duplicate pairing.
 export async function findActiveDuplicatePairing(
     poolOrConn,
     { seasonType, idMeal, dishId },
@@ -460,6 +478,7 @@ export async function findActiveDuplicatePairing(
     return rows[0] ?? null;
 }
 
+// Inserts the data for dish pairing.
 export async function insertDishPairing(
     poolOrConn,
     { idMeal, dishId, seasonType, used = 1 },
@@ -475,6 +494,7 @@ export async function insertDishPairing(
     return result.insertId;
 }
 
+// Returns the list used by tracked replacement rows by availability.
 export async function listTrackedReplacementRowsByAvailability(poolOrConn, idAvail) {
     const [rows] = await poolOrConn.query(
         `
@@ -498,6 +518,7 @@ export async function listTrackedReplacementRowsByAvailability(poolOrConn, idAva
     return rows;
 }
 
+// Inserts the data for tracked replacement row.
 export async function insertTrackedReplacementRow(
     poolOrConn,
     {
@@ -536,6 +557,7 @@ export async function insertTrackedReplacementRow(
     );
 }
 
+// Disables the data used by tracked replacement pairings by availability.
 export async function disableTrackedReplacementPairingsByAvailability(
     poolOrConn,
     idAvail,
@@ -566,6 +588,7 @@ export async function disableTrackedReplacementPairingsByAvailability(
     return result.affectedRows ?? 0;
 }
 
+// Helper function used by close food availability.
 export async function closeFoodAvailability(poolOrConn, idAvail) {
     const [result] = await poolOrConn.query(
         `

@@ -1,7 +1,5 @@
-/**
- * Page used to create a new dish.
- * Validation and FormData mapping live in shared helpers so create/edit stay aligned.
- */
+// Page used to create a new dish.
+// Validation and FormData mapping live in shared helpers so create/edit stay aligned.
 import { useNavigate } from 'react-router-dom';
 
 import AppLayout from '../../components/layout/AppLayout';

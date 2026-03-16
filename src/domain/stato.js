@@ -1,3 +1,4 @@
+// Domain constants for stato.
 export const STATO_OPTIONS = [
     { value: '', label: '— Stato —' },
     { value: 'attivo', label: 'Attivo' },

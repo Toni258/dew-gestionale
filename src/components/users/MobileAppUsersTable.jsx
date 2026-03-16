@@ -1,7 +1,5 @@
-/**
- * Table used by the mobile app user manager page.
- * The page owns data loading and modals, while this component only renders rows.
- */
+// Table used by the mobile app user manager page.
+// The page owns data loading and modals, while this component only renders rows.
 import Pagination from '../ui/Pagination';
 import { formatDateTime } from '../../utils/formatDateTime';
 import { MOBILE_ROLE_LABELS } from '../../domain/users';

@@ -1,3 +1,4 @@
+// Layout sidebar item.
 import { NavLink, useLocation } from 'react-router-dom';
 
 export default function SidebarItem({ to, label, end, isActiveOverride }) {

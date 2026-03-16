@@ -1,3 +1,4 @@
+// Middleware helpers for upload food image.
 import multer from 'multer';
 import { HttpError } from '../utils/httpError.js';
 import { storageConfig } from '../config/storageConfig.js';
@@ -28,6 +29,7 @@ const storage = multer.diskStorage({
     },
 });
 
+// Helper function used by upload food image.
 export const uploadFoodImage = multer({
     storage,
     limits: { fileSize: storageConfig.maxFoodImageSizeBytes },

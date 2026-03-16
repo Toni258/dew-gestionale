@@ -1,3 +1,4 @@
+// Utility helpers for diff dish.
 export function hasDishChanged(original, current) {
     if (!original) return true;
 

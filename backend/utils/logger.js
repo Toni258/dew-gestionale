@@ -1,3 +1,4 @@
+// Backend utility helpers for logger.
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
@@ -15,16 +16,19 @@ const logFilePath = path.join(appConfig.logging.logDir, 'backend.log');
 
 let logDirectoryReady = false;
 
+// Helper function used by ensure log directory.
 async function ensureLogDirectory() {
     if (logDirectoryReady) return;
     await fsp.mkdir(appConfig.logging.logDir, { recursive: true });
     logDirectoryReady = true;
 }
 
+// Helper function used by can write.
 function canWrite(level) {
     return (LEVEL_ORDER[level] ?? LEVEL_ORDER.info) >= currentLevel;
 }
 
+// Helper function used by serialize meta.
 function serializeMeta(meta) {
     if (meta == null) return '';
     if (meta instanceof Error) {
@@ -42,12 +46,14 @@ function serializeMeta(meta) {
     }
 }
 
+// Formats the value used by line.
 function formatLine(level, message, meta) {
     const timestamp = new Date().toISOString();
     const suffix = meta == null ? '' : ` ${serializeMeta(meta)}`;
     return `[${timestamp}] [${level.toUpperCase()}] ${message}${suffix}`;
 }
 
+// Helper function used by write.
 function write(level, message, meta) {
     if (!canWrite(level)) return;
 
@@ -66,6 +72,7 @@ function write(level, message, meta) {
         .catch(() => {});
 }
 
+// Helper function used by logger.
 export const logger = {
     debug(message, meta) {
         write('debug', message, meta);
@@ -81,6 +88,7 @@ export const logger = {
     },
 };
 
+// Helper function used by ensure runtime directories.
 export async function ensureRuntimeDirectories() {
     await Promise.all([
         ensureLogDirectory(),
@@ -88,6 +96,7 @@ export async function ensureRuntimeDirectories() {
     ]);
 }
 
+// Helper function used by ensure runtime directories sync.
 export function ensureRuntimeDirectoriesSync() {
     fs.mkdirSync(appConfig.logging.logDir, { recursive: true });
     fs.mkdirSync(appConfig.storage.foodImagesDir, { recursive: true });

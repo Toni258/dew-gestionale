@@ -1,9 +1,11 @@
+// Fixed dishes cell.
 import SearchableSelect from '../../ui/SearchableSelect';
 import InfoMacro from './InfoMacro';
 import CheeseRotationTable from './CheeseRotationTable';
 
 import { notify } from '../../../services/notify';
 
+// Component used for fixed dishes cell.
 function ReadOnlyFoodCard({ food }) {
     if (!food?.name) {
         return (
@@ -34,6 +36,7 @@ function ReadOnlyFoodCard({ food }) {
     );
 }
 
+// Component used for fixed dishes cell.
 function SlotCard({ children }) {
     return (
         <div className="rounded-2xl border border-brand-divider/70 bg-white/90 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
@@ -42,6 +45,7 @@ function SlotCard({ children }) {
     );
 }
 
+// Component used for fixed dishes cell.
 function SlotDivider() {
     return <div className="h-px w-full bg-brand-divider/70" />;
 }

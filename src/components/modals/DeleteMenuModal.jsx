@@ -1,3 +1,4 @@
+// Modal used for delete menu.
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 

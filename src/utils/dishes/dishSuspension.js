@@ -1,7 +1,5 @@
-/**
- * Small helpers for the dish suspension flow.
- * They are shared between the page, the sticky save bar and the suspension hook.
- */
+// Small helpers for the dish suspension flow.
+// They are shared between the page, the sticky save bar and the suspension hook.
 export function hasDishSuspensionChanged(initialSuspension, currentValues) {
     const enabledNow = !!currentValues?.suspension_enabled;
     const enabledBefore = !!initialSuspension?.enabled;
@@ -18,10 +16,12 @@ export function hasDishSuspensionChanged(initialSuspension, currentValues) {
     );
 }
 
+// Builds the data needed for dish suspension menu key.
 export function buildDishSuspensionMenuKey(conflict) {
     return `${conflict.season_type}__${conflict.meal_type}__${conflict.course_type}`;
 }
 
+// Helper function used by group dish conflicts by season.
 export function groupDishConflictsBySeason(conflicts = []) {
     const map = new Map();
 
@@ -53,6 +53,7 @@ export function groupDishConflictsBySeason(conflicts = []) {
     return Array.from(map.values());
 }
 
+// Builds the data needed for dish suspension replacements payload.
 export function buildDishSuspensionReplacementsPayload(replacementByPairing) {
     return Object.entries(replacementByPairing).map(
         ([id_dish_pairing, id_food_new]) => ({

@@ -1,8 +1,6 @@
-/**
- * Page used to edit an existing dish.
- * The page keeps only the high-level workflow, while the suspension preview
- * and form helpers live in dedicated modules.
- */
+// Page used to edit an existing dish.
+// The page keeps only the high-level workflow, while the suspension preview
+// and form helpers live in dedicated modules.
 import { useNavigate, useParams } from 'react-router-dom';
 
 import AppLayout from '../../components/layout/AppLayout';
@@ -60,6 +58,7 @@ export default function EditDish() {
         applySuspension,
     } = useDishSuspensionFlow(dishId);
 
+    // Handles the logic for dish submit.
     async function handleDishSubmit(values) {
         const dishChanged = hasDishChanged(originalDish, values);
         const imageChanged = values.img instanceof File;
@@ -150,6 +149,7 @@ export default function EditDish() {
         navigate('/dishes');
     }
 
+    // Handles the logic for save suspension without replacement.
     async function handleSaveSuspensionWithoutReplacement() {
         const result = await withLoaderNotify({
             message: 'Salvataggio sospensione…',
@@ -174,6 +174,7 @@ export default function EditDish() {
         navigate('/dishes');
     }
 
+    // Handles the logic for save suspension with replacement.
     async function handleSaveSuspensionWithReplacement() {
         const result = await withLoaderNotify({
             message: 'Salvataggio sostituzioni…',

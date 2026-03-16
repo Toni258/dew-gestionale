@@ -1,3 +1,4 @@
+// Disable app user password.
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 

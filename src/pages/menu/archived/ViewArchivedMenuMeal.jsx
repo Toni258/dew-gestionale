@@ -1,3 +1,4 @@
+// Main page for view archived menu meal.
 import AppLayout from '../../../components/layout/AppLayout';
 import { useNavigate, useParams } from 'react-router-dom';
 import { dayIndexToWeekDay } from '../../../utils/dayIndex';

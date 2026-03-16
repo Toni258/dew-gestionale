@@ -1,3 +1,4 @@
+// Reusable form group.
 import { useFormContext } from './Form';
 
 export default function FormGroup({

@@ -1,3 +1,4 @@
+// Custom hook used to manage fixed dishes menu.
 import { CHEESE_IDS } from '../../../shared/constants.js';
 // Contiene tutta la logica: load (options + fixed + cheeses + rotation), regole duplicate, calcoli allFilled, e save().
 import { useEffect, useMemo, useState, useCallback } from 'react';
@@ -18,11 +19,13 @@ import {
     isDuplicateInMeal,
 } from '../../components/menu/fixedDishes/helpers';
 
+// Manages the state and side effects for fixed dishes menu.
 export function useFixedDishesMenu(seasonTypeRaw) {
     const decodedSeasonType = useMemo(
         () => decodeURIComponent(seasonTypeRaw ?? ''),
         [seasonTypeRaw],
     );
+    // Main state used by the page
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -50,6 +53,7 @@ export function useFixedDishesMenu(seasonTypeRaw) {
     const [cheeseRotation, setCheeseRotation] = useState(
         makeEmptyCheeseRotation,
     );
+    // Derived data used by the UI
 
     const cheeseFilled = useMemo(() => {
         const p = cheeseRotation.pranzo.every((x) => x?.id_food);
@@ -100,6 +104,7 @@ export function useFixedDishesMenu(seasonTypeRaw) {
     useEffect(() => {
         let alive = true;
 
+        // Loads the data used by all.
         async function loadAll() {
             setLoading(true);
             try {

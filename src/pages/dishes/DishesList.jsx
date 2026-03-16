@@ -1,3 +1,4 @@
+// Main page for dishes list.
 import AppLayout from '../../components/layout/AppLayout';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -21,6 +22,7 @@ import { TIPOLOGIA_OPTIONS } from '../../domain/tipologia';
 import { STATO_OPTIONS } from '../../domain/stato';
 
 export default function DishesList() {
+    // Main state used by the page
     const [query, setQuery] = useState('');
     const [appliedFilters, setAppliedFilters] = useState({
         stato: '',
@@ -57,6 +59,7 @@ export default function DishesList() {
         }),
         [query, appliedFilters, page, pageSize],
     );
+    // Memoized handler used by the page
 
     const fetchDishes = useCallback(async () => {
         setLoading(true);
@@ -76,6 +79,7 @@ export default function DishesList() {
             setLoading(false);
         }
     }, [requestParams]);
+    // Load data when the component opens
 
     useEffect(() => {
         fetchDishes();

@@ -1,3 +1,4 @@
+// Express routes for users.
 import { Router } from 'express';
 import { requireRole } from '../middlewares/auth.js';
 import {
@@ -15,6 +16,7 @@ import {
     createUserGestionale,
 } from '../controllers/usersController.js';
 
+// Route definitions
 const router = Router();
 
 // Liste: basta essere autenticati

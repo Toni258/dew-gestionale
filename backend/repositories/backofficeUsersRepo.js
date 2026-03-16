@@ -1,3 +1,4 @@
+// Database queries used for backoffice users.
 const BASE_COLUMNS = `
     id,
     role,
@@ -11,6 +12,7 @@ const BASE_COLUMNS = `
     updated_at
 `;
 
+// Builds the data needed for list where.
 function buildListWhere({ search = '', role = '', status = '' } = {}) {
     let where = ' WHERE 1=1 ';
     const params = [];
@@ -34,6 +36,7 @@ function buildListWhere({ search = '', role = '', status = '' } = {}) {
     return { where, params };
 }
 
+// Finds the data for backoffice user by id.
 export async function findBackofficeUserById(poolOrConn, userId) {
     const [rows] = await poolOrConn.query(
         `
@@ -48,6 +51,7 @@ export async function findBackofficeUserById(poolOrConn, userId) {
     return rows[0] ?? null;
 }
 
+// Finds the data for backoffice user by email.
 export async function findBackofficeUserByEmail(poolOrConn, email) {
     const [rows] = await poolOrConn.query(
         `
@@ -62,6 +66,7 @@ export async function findBackofficeUserByEmail(poolOrConn, email) {
     return rows[0] ?? null;
 }
 
+// Updates the data for backoffice user last login at.
 export async function updateBackofficeUserLastLoginAt(poolOrConn, userId) {
     await poolOrConn.query(
         `UPDATE backoffice_users SET last_login_at = NOW() WHERE id = ?`,
@@ -69,6 +74,7 @@ export async function updateBackofficeUserLastLoginAt(poolOrConn, userId) {
     );
 }
 
+// Updates the data for backoffice user password and status.
 export async function updateBackofficeUserPasswordAndStatus(
     poolOrConn,
     { userId, passwordHash, status },
@@ -83,6 +89,7 @@ export async function updateBackofficeUserPasswordAndStatus(
     );
 }
 
+// Helper function used by mark backoffice user password reset requested.
 export async function markBackofficeUserPasswordResetRequested(
     poolOrConn,
     userId,
@@ -97,6 +104,7 @@ export async function markBackofficeUserPasswordResetRequested(
     );
 }
 
+// Returns the list used by backoffice users.
 export async function listBackofficeUsers(
     poolOrConn,
     { search = '', role = '', status = '', page = 1, pageSize = 30 } = {},
@@ -134,6 +142,7 @@ export async function listBackofficeUsers(
     return rows;
 }
 
+// Returns the count for backoffice users.
 export async function countBackofficeUsers(
     poolOrConn,
     { search = '', role = '', status = '' } = {},
@@ -151,6 +160,7 @@ export async function countBackofficeUsers(
     return Number(rows[0]?.total ?? 0);
 }
 
+// Updates the data for backoffice user status.
 export async function updateBackofficeUserStatus(poolOrConn, { userId, status }) {
     const [result] = await poolOrConn.query(
         `
@@ -164,6 +174,7 @@ export async function updateBackofficeUserStatus(poolOrConn, { userId, status })
     return result.affectedRows ?? 0;
 }
 
+// Updates the data for backoffice user info.
 export async function updateBackofficeUserInfo(
     poolOrConn,
     { userId, name, surname, email, role },
@@ -180,6 +191,7 @@ export async function updateBackofficeUserInfo(
     return result.affectedRows ?? 0;
 }
 
+// Deletes the data for backoffice user.
 export async function deleteBackofficeUser(poolOrConn, userId) {
     const [result] = await poolOrConn.query(
         `DELETE FROM backoffice_users WHERE id = ?`,
@@ -189,6 +201,7 @@ export async function deleteBackofficeUser(poolOrConn, userId) {
     return result.affectedRows ?? 0;
 }
 
+// Helper function used by backoffice email exists.
 export async function backofficeEmailExists(
     poolOrConn,
     email,
@@ -208,6 +221,7 @@ export async function backofficeEmailExists(
     return rows.length > 0;
 }
 
+// Creates the data for backoffice user.
 export async function createBackofficeUser(
     poolOrConn,
     { email, passwordHash, name, surname, role },

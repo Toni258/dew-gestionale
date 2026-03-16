@@ -1,3 +1,4 @@
+// Layout sidebar section.
 export default function SidebarSection({ title, children }) {
     return (
         <div>

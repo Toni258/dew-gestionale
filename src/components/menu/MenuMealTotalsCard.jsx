@@ -1,3 +1,4 @@
+// Card component used for menu meal totals.
 import Card from '../ui/Card';
 
 export default function MenuMealTotalsCard({ totals }) {

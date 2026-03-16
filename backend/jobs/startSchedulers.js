@@ -1,7 +1,5 @@
-/**
- * Registers backend cron jobs.
- * Jobs are guarded by a named MySQL lock so they do not overlap across processes.
- */
+// Registers backend cron jobs.
+// Jobs are guarded by a named MySQL lock so they do not overlap across processes.
 import cron from 'node-cron';
 import { appConfig } from '../config/appConfig.js';
 import { processExpiredDishSuspensions } from './processExpiredDishSuspensions.js';

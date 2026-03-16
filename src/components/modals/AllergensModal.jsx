@@ -1,3 +1,4 @@
+// Modal used for allergens.
 import Modal from '../ui/Modal';
 import { ALLERGENS } from '../../domain/allergens';
 
@@ -7,7 +8,7 @@ export default function AllergensModal({ open, onClose }) {
     return (
         <Modal onClose={onClose}>
             <div className="bg-white rounded-xl p-8 w-[420px]">
-                {/* Header */}
+                {/* Header section */}
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-brand-text text-xl font-bold">
                         Legenda allergeni

@@ -1,3 +1,4 @@
+// Layout sidebar.
 import SidebarItem from './SidebarItem';
 import SidebarSection from './SidebarSection';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,6 +10,7 @@ export default function Sidebar() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Handles the logic for logout.
     async function handleLogout() {
         try {
             await withLoaderNotify({
@@ -22,7 +24,7 @@ export default function Sidebar() {
                 },
             });
         } finally {
-            // replace per non tornare indietro con back su pagine protette
+            // Use replace so the browser back button cannot return to protected pages.
             navigate('/login', {
                 replace: true,
                 state: { from: location.pathname },
@@ -34,7 +36,6 @@ export default function Sidebar() {
         <aside className="fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-[310px] p-5">
             <div className="h-full rounded-2xl border border-black/10 bg-white/55 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.14)]">
                 <div className="flex h-full flex-col gap-6 p-5">
-                    {' '}
                     {/* SEZIONE DASHBOARD */}
                     <SidebarSection title="Dashboard">
                         <SidebarItem to="/dashboard" label="Homepage" />

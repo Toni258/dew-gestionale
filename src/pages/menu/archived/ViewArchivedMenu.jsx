@@ -1,3 +1,4 @@
+// Main page for view archived menu.
 import AppLayout from '../../../components/layout/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';

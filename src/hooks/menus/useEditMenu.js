@@ -1,3 +1,4 @@
+// Custom hook used to manage edit menu.
 import { useEffect, useMemo, useState } from 'react';
 import {
     getMenuBySeasonType,
@@ -6,15 +7,19 @@ import {
     getArchivedMenuMealsStatus,
 } from '../../services/menusApi';
 
+// Manages the state and side effects for edit menu.
 export function useEditMenu(decodedSeasonType) {
+    // Main state used by the page
     const [menu, setMenu] = useState(null);
     const [meals, setMeals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // Load data when the component opens
 
     useEffect(() => {
         let alive = true;
 
+        // Loads the current data.
         async function load() {
             setLoading(true);
             setError(null);
@@ -43,6 +48,7 @@ export function useEditMenu(decodedSeasonType) {
             alive = false;
         };
     }, [decodedSeasonType]);
+    // Derived data used by the UI
 
     const mealsByDay = useMemo(() => {
         const map = {};
@@ -57,6 +63,7 @@ export function useEditMenu(decodedSeasonType) {
     return { menu, meals, mealsByDay, loading, error, setMenu };
 }
 
+// Manages the state and side effects for view archived menu.
 export function useViewArchivedMenu(decoded_id_arch_menu) {
     const [menu, setMenu] = useState(null);
     const [meals, setMeals] = useState([]);
@@ -66,6 +73,7 @@ export function useViewArchivedMenu(decoded_id_arch_menu) {
     useEffect(() => {
         let alive = true;
 
+        // Loads the current data.
         async function load() {
             setLoading(true);
             setError(null);

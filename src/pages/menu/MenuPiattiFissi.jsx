@@ -1,3 +1,4 @@
+// Main page for menu piatti fissi.
 import AppLayout from '../../components/layout/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -31,6 +32,7 @@ export default function MenuPiattiFissi() {
         save,
     } = useFixedDishesMenu(seasonType);
 
+    // Handles the logic for save.
     async function handleSave() {
         const res = await withLoaderNotify({
             message: 'Salvataggio piatti fissi…',

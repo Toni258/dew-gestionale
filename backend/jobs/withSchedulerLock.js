@@ -1,10 +1,9 @@
-/**
- * Runs a scheduler task under a MySQL named lock.
- * This keeps cron jobs safe even if more than one backend process is running.
- */
+// Runs a scheduler task under a MySQL named lock.
+// This keeps cron jobs safe even if more than one backend process is running.
 import { pool } from '../db/db.js';
 import { logger } from '../utils/logger.js';
 
+// Helper function used by with scheduler lock.
 export async function withSchedulerLock(lockName, work) {
     const connection = await pool.getConnection();
     let lockAcquired = false;

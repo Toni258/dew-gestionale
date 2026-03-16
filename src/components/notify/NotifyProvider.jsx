@@ -1,4 +1,4 @@
-// src/components/notify/NotifyProvider.jsx
+// Provider component used to manage notify.
 import { createContext, useEffect, useMemo, useRef, useState } from 'react';
 import { registerNotify } from '../../services/notify';
 import Button from '../ui/Button';
@@ -46,6 +46,7 @@ export default function NotifyProvider({ children }) {
         toastClosingRef.current = toastClosing;
     }, [toastClosing]);
 
+    // Clears the value used by toast timers.
     function clearToastTimers() {
         if (timersRef.current.toast) {
             clearTimeout(timersRef.current.toast);
@@ -57,6 +58,7 @@ export default function NotifyProvider({ children }) {
         }
     }
 
+    // Helper function used by close toast by id.
     function closeToastById(id) {
         if (!id || toastIdRef.current !== id) return;
         if (toastClosingRef.current) return;
@@ -72,6 +74,7 @@ export default function NotifyProvider({ children }) {
         }, TOAST_EXIT_MS);
     }
 
+    // Helper function used by show toast.
     function showToast(variant, { title, message }) {
         clearToastTimers();
 
@@ -91,18 +94,22 @@ export default function NotifyProvider({ children }) {
         }, TOAST_DURATION);
     }
 
+    // Helper function used by show success.
     function showSuccess(payload) {
         showToast('success', payload);
     }
 
+    // Helper function used by show info.
     function showInfo(payload) {
         showToast('info', payload);
     }
 
+    // Helper function used by show warning.
     function showWarning(payload) {
         showToast('warning', payload);
     }
 
+    // Helper function used by show error.
     function showError({ title, message }) {
         clearToastTimers();
         setToast(null);
@@ -113,6 +120,7 @@ export default function NotifyProvider({ children }) {
         });
     }
 
+    // Helper function used by close modal.
     function closeModal() {
         setModal(null);
     }

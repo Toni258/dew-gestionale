@@ -1,3 +1,4 @@
+// Express routes for auth.
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
 import {
@@ -8,6 +9,7 @@ import {
     requestPasswordReset,
 } from '../controllers/authController.js';
 
+// Route definitions
 const router = Router();
 
 router.post('/login', login);

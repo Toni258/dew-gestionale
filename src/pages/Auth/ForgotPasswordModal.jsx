@@ -1,3 +1,4 @@
+// Main page for forgot password modal.
 import { useState } from 'react';
 
 import Input from '../../components/ui/Input';
@@ -10,6 +11,7 @@ import FormGroup from '../../components/ui/FormGroup';
 import { requestPasswordReset } from '../../services/authApi';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
 
+// Page component for forgot password modal.
 function SubmitButton({ requestLocked }) {
     const form = useFormContext();
     const email = String(form?.values?.email ?? '').trim();
@@ -28,6 +30,7 @@ function SubmitButton({ requestLocked }) {
 }
 
 export default function ForgotPasswordModal({ onClose }) {
+    // Main state used by the page
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [requestLocked, setRequestLocked] = useState(false);

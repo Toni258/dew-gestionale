@@ -1,3 +1,4 @@
+// Context used to manage idle logout.
 import {
     createContext,
     useContext,
@@ -16,6 +17,7 @@ const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minuti
 const WARNING_DURATION_MS = 60 * 1000; // ultimo minuto
 const WARNING_START_MS = IDLE_TIMEOUT_MS - WARNING_DURATION_MS;
 
+// Helper function used by idle logout provider.
 export function IdleLogoutProvider({ children }) {
     const { isAuthenticated, loading, logout } = useAuth();
     const navigate = useNavigate();
@@ -24,10 +26,12 @@ export function IdleLogoutProvider({ children }) {
     const warningTimeoutRef = useRef(null);
     const logoutTimeoutRef = useRef(null);
     const countdownIntervalRef = useRef(null);
+    // Main state used by the page
 
     const [warningOpen, setWarningOpen] = useState(false);
     const [secondsLeft, setSecondsLeft] = useState(60);
 
+    // Clears the value used by timers.
     function clearTimers() {
         if (warningTimeoutRef.current) {
             clearTimeout(warningTimeoutRef.current);
@@ -45,6 +49,7 @@ export function IdleLogoutProvider({ children }) {
         }
     }
 
+    // Helper function used by close warning.
     function closeWarning() {
         setWarningOpen(false);
         setSecondsLeft(60);
@@ -55,6 +60,7 @@ export function IdleLogoutProvider({ children }) {
         }
     }
 
+    // Handles the logic for forced logout.
     async function handleForcedLogout() {
         clearTimers();
         closeWarning();
@@ -72,6 +78,7 @@ export function IdleLogoutProvider({ children }) {
         }
     }
 
+    // Helper function used by open warning.
     function openWarning() {
         setWarningOpen(true);
         setSecondsLeft(60);
@@ -94,6 +101,7 @@ export function IdleLogoutProvider({ children }) {
         }, 250);
     }
 
+    // Helper function used by arm timers.
     function armTimers() {
         clearTimers();
 
@@ -108,12 +116,14 @@ export function IdleLogoutProvider({ children }) {
         }, IDLE_TIMEOUT_MS);
     }
 
+    // Helper function used by register activity.
     function registerActivity() {
         if (!isAuthenticated || loading) return;
 
         closeWarning();
         armTimers();
     }
+    // Load data when the component opens
 
     useEffect(() => {
         if (!isAuthenticated || loading) {
@@ -149,6 +159,7 @@ export function IdleLogoutProvider({ children }) {
         if (!isAuthenticated || loading) return;
         registerActivity();
     }, [location.pathname]);
+    // Derived data used by the UI
 
     const value = useMemo(() => {
         return {
@@ -171,6 +182,7 @@ export function IdleLogoutProvider({ children }) {
     );
 }
 
+// Manages the state and side effects for idle logout.
 export function useIdleLogout() {
     return useContext(IdleLogoutContext);
 }

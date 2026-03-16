@@ -1,3 +1,4 @@
+// Reusable card component used for card.
 export default function Card({ children, className = '' }) {
     return (
         <div
