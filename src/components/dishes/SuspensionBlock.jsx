@@ -58,7 +58,7 @@ export default function SuspensionBlock({ initialSuspension }) {
                     <div className="absolute inset-0 z-10 bg-gray-200/70 rounded-xl" />
                 )}
 
-                <div className="relative z-20 flex flex-col gap-6 lg:flex-row">
+                <div className="relative z-5 flex flex-col gap-6 lg:flex-row">
                     <div className="flex w-full flex-col gap-4 lg:w-1/4 xl:w-1/6">
                         <FormGroup label="Data inizio" required={enabled}>
                             <DatePicker name="start_date" disabled={!enabled} />

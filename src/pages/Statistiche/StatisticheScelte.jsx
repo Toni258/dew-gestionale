@@ -457,7 +457,7 @@ export default function StatisticheScelte() {
                             />
 
                             <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-                                <div className="flex w-full flex-col gap-4 xl:max-w-[320px] xl:flex-[1]">
+                                <div className="flex w-full flex-col gap-4 xl:max-w-[440px] xl:flex-[1]">
                                     <FormGroup name="menuValue">
                                         <SearchableSelect
                                             name="menuValue"
@@ -467,10 +467,7 @@ export default function StatisticheScelte() {
                                         />
                                     </FormGroup>
 
-                                    <FormGroup
-                                        name="start"
-                                        className="w-full"
-                                    >
+                                    <FormGroup name="start" className="w-full">
                                         <DateRangePicker
                                             startName="start"
                                             endName="end"
@@ -759,7 +756,9 @@ export default function StatisticheScelte() {
 
                             <button
                                 type="button"
-                                onClick={() => setActiveInfoModal('aggregatedDishes')}
+                                onClick={() =>
+                                    setActiveInfoModal('aggregatedDishes')
+                                }
                                 aria-label="Informazioni sulla tabella aggregata piatti"
                                 className="inline-flex items-center justify-center hover:opacity-80 transition"
                             >
