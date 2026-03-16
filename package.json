@@ -14,7 +14,6 @@
         "export-changed": "node scripts/export-context.mjs changed"
     },
     "dependencies": {
-        "bcryptjs": "^3.0.3",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-router-dom": "^7.9.6"

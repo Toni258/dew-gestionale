@@ -23,6 +23,7 @@ import {
 import {
     fmtDec,
     fmtInt,
+    formatCourseLabel,
     formatDateTime,
 } from '../../utils/statistics/reportFormatters';
 
@@ -55,6 +56,98 @@ const FIRST_CHOICE_OPTIONS = [
     { value: '0', label: 'Solo piatti del giorno' },
     { value: '1', label: 'Solo piatti fissi' },
 ];
+
+function ConsumiRankCard({
+    title,
+    iconSrc,
+    iconAlt = '',
+    rows,
+    mode = 'good',
+}) {
+    const rowBgClass =
+        mode === 'good'
+            ? 'bg-[rgba(57,142,59,0.07)] border-[rgba(57,142,59,0.10)]'
+            : 'bg-[rgba(224,72,72,0.07)] border-[rgba(224,72,72,0.10)]';
+
+    const badgeBg =
+        mode === 'good'
+            ? 'bg-[rgba(57,142,59,0.6)]'
+            : 'bg-[rgba(224,72,72,0.6)]';
+
+    const valueTextClass =
+        mode === 'good' ? 'text-brand-primary' : 'text-brand-error';
+
+    return (
+        <Card className="rounded-[24px] border border-white/60 bg-white/85 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+            <div className="mb-5 flex items-center gap-2.5">
+                {iconSrc ? (
+                    <img
+                        src={iconSrc}
+                        alt={iconAlt || title}
+                        className="h-5 w-5 shrink-0 object-contain"
+                    />
+                ) : null}
+
+                <div className="text-[15px] font-semibold text-brand-text">
+                    {title}
+                </div>
+            </div>
+
+            {!rows || rows.length === 0 ? (
+                <div className="italic text-brand-textSecondary">
+                    Nessun dato nel periodo selezionato.
+                </div>
+            ) : (
+                <div className="flex flex-col gap-3.5">
+                    {rows.map((row, index) => {
+                        const avg = Number(row.avg_portion || 0);
+                        const proxyPct = Math.max(0, Math.min(1, avg)) * 100;
+
+                        return (
+                            <div
+                                key={`${row.id_food}-${index}`}
+                                className={`flex items-center justify-between gap-4 rounded-[20px] border px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)] ${rowBgClass}`}
+                            >
+                                <div className="flex min-w-0 items-center gap-3.5">
+                                    <div
+                                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-black/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_rgba(15,23,42,0.06)] ${badgeBg}`}
+                                    >
+                                        <span className="text-md font-semibold leading-none text-brand-text">
+                                            {index + 1}
+                                        </span>
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <div className="truncate text-[15px] font-semibold leading-5 text-brand-text">
+                                            {row.name}
+                                        </div>
+                                        <div className="mt-0.5 text-[12px] leading-4 text-brand-textSecondary">
+                                            {formatCourseLabel(row.type)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="shrink-0 text-right">
+                                    <div
+                                        className={`text-[19px] font-semibold leading-none tracking-[-0.02em] ${valueTextClass}`}
+                                    >
+                                        {fmtPct(proxyPct)}
+                                    </div>
+                                    <div className="mt-1 text-[12px] leading-4 text-brand-textSecondary">
+                                        Consumo medio
+                                    </div>
+                                    <div className="mt-1 text-[11px] leading-4 text-brand-textSecondary/80">
+                                        {fmtInt(row.n)} questionari
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </Card>
+    );
+}
 
 export default function StatisticheConsumi() {
     const [menus, setMenus] = useState([]);
@@ -252,7 +345,16 @@ export default function StatisticheConsumi() {
                 setDetails(
                     json.details || { data: [], total: 0, totalPages: 1 },
                 );
-                setComments(json.comments || []);
+                setComments(
+                    json.comments || {
+                        data: [],
+                        total: 0,
+                        totalPages: 1,
+                        page: 1,
+                        pageSize: commentsPageSize,
+                        hasOnlyEmptyComments: false,
+                    },
+                );
                 setOptions(json.options || { patients: [], floors: [] });
             });
         } catch (e) {
@@ -279,7 +381,7 @@ export default function StatisticheConsumi() {
         } finally {
             setLoading(false);
         }
-    }, [requestParams]);
+    }, [requestParams, commentsPageSize]);
 
     useEffect(() => {
         fetchReport();
@@ -321,69 +423,15 @@ export default function StatisticheConsumi() {
         setCommentsPage(1);
     };
 
-    const renderRankList = (rows, mode) => {
-        const badgeBg = mode === 'good' ? 'bg-brand-primary' : 'bg-red-600';
-        const pctText = mode === 'good' ? 'text-brand-primary' : 'text-red-600';
-
-        if (!rows || rows.length === 0) {
-            return (
-                <div className="text-brand-textSecondary italic">
-                    Nessun dato nel periodo selezionato.
-                </div>
-            );
-        }
-
-        return (
-            <div className="flex flex-col gap-3">
-                {rows.map((r, idx) => {
-                    const avg = Number(r.avg_portion || 0);
-                    const proxyPct = Math.max(0, Math.min(1, avg)) * 100;
-
-                    return (
-                        <div
-                            key={`${r.id_food}-${idx}`}
-                            className="bg-brand-sidebar rounded-xl px-4 py-3 flex items-center justify-between"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className={`w-8 h-8 rounded-full text-white flex items-center justify-center font-bold ${badgeBg}`}
-                                >
-                                    {idx + 1}
-                                </div>
-                                <div>
-                                    <div className="font-semibold text-brand-text">
-                                        {r.name}
-                                    </div>
-                                    <div className="text-xs text-brand-textSecondary">
-                                        {r.type}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="text-right">
-                                <div className={`font-bold ${pctText}`}>
-                                    {`${fmtInt(proxyPct)}%`}
-                                </div>
-                                <div className="text-xs text-brand-textSecondary">
-                                    Consumo
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
-
     return (
         <AppLayout title="REPORT CONSUMI">
             <h1 className="text-3xl font-semibold">
                 Statistiche e analisi consumi
             </h1>
 
-            <div className="mt-4">
-                <Card className="">
-                    {selectedMenu && !menusLoading && (
+            <div className="relative z-20 mt-4">
+                <Card className="relative z-20 overflow-visible rounded-[24px] border border-black/5 bg-white/85 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+                    {selectedMenu && !menusLoading ? (
                         <Form
                             key={formKey}
                             initialValues={formInitialValues}
@@ -435,13 +483,12 @@ export default function StatisticheConsumi() {
                         >
                             <MenuSelectionSync
                                 menuRows={menus}
-                                selectedMenu={selectedMenu}
                                 setSelectedMenu={setSelectedMenu}
                                 setFormVersion={setFormVersion}
                             />
 
                             <div className="flex justify-between gap-4 flex-wrap">
-                                <div className="flex flex-col gap-4 flex-[1]">
+                                <div className="flex flex-col gap-4 flex-[1] min-w-[280px]">
                                     <FormGroup name="menuValue">
                                         <SearchableSelect
                                             name="menuValue"
@@ -472,12 +519,11 @@ export default function StatisticheConsumi() {
 
                                 <div className="w-px w-full bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
 
-                                {/* Filters */}
-                                <div className="flex flex-col flex-[2] gap-4">
-                                    <div className="flex gap-4">
+                                <div className="flex flex-col flex-[2] gap-4 min-w-[620px]">
+                                    <div className="flex gap-4 flex-wrap">
                                         <FormGroup
                                             name="meal"
-                                            className="flex-[0.8]"
+                                            className="max-w-[150px] flex-1"
                                         >
                                             <CustomSelect
                                                 name="meal"
@@ -489,7 +535,7 @@ export default function StatisticheConsumi() {
 
                                         <FormGroup
                                             name="course"
-                                            className="flex-[1.1]"
+                                            className="min-w-[170px] flex-1"
                                         >
                                             <CustomSelect
                                                 name="course"
@@ -501,7 +547,7 @@ export default function StatisticheConsumi() {
 
                                         <FormGroup
                                             name="firstChoice"
-                                            className="flex-[1.2]"
+                                            className="min-w-[210px] flex-1"
                                         >
                                             <CustomSelect
                                                 name="firstChoice"
@@ -515,7 +561,7 @@ export default function StatisticheConsumi() {
                                     <div className="flex gap-4 flex-wrap items-end">
                                         <FormGroup
                                             name="patientId"
-                                            className="flex-[1.8]"
+                                            className="min-w-[320px] flex-[2]"
                                         >
                                             <SearchableSelect
                                                 name="patientId"
@@ -534,7 +580,7 @@ export default function StatisticheConsumi() {
 
                                         <FormGroup
                                             name="floor"
-                                            className="flex-[0.7]"
+                                            className="min-w-[160px] flex-1"
                                         >
                                             <CustomSelect
                                                 name="floor"
@@ -548,7 +594,7 @@ export default function StatisticheConsumi() {
                                             type="submit"
                                             variant="primary"
                                             size="md"
-                                            className="mx-auto mx-12 px-6 py-2 rounded-md"
+                                            className="px-6 py-2 rounded-md"
                                             disabled={loading || menusLoading}
                                         >
                                             Applica filtri
@@ -557,6 +603,10 @@ export default function StatisticheConsumi() {
                                 </div>
                             </div>
                         </Form>
+                    ) : (
+                        <div className="p-5 text-brand-textSecondary italic">
+                            Nessun menù disponibile.
+                        </div>
                     )}
                 </Card>
             </div>
@@ -564,7 +614,7 @@ export default function StatisticheConsumi() {
             <div className="mt-6 grid grid-cols-5 gap-5">
                 <KpiCard
                     iconSrc="/warning giallo.png"
-                    iconAlt="Avviso"
+                    iconAlt="Spreco totale"
                     iconBg="bg-yellow-100"
                     value={`${fmtDec(kpi.waste_kg, 2)} kg`}
                     label="Spreco totale stimato"
@@ -572,7 +622,7 @@ export default function StatisticheConsumi() {
                 />
                 <KpiCard
                     iconSrc="/fire red.png"
-                    iconAlt="Fuoco"
+                    iconAlt="Kcal sprecate"
                     iconBg="bg-red-100"
                     value={fmtInt(kpi.kcal_wasted)}
                     label="Kcal sprecate"
@@ -580,7 +630,7 @@ export default function StatisticheConsumi() {
                 />
                 <KpiCard
                     iconSrc="/pie chart blue.png"
-                    iconAlt="Grafico a torta"
+                    iconAlt="Consumo medio"
                     iconBg="bg-blue-100"
                     value={fmtDec(kpi.avg_consumption, 2)}
                     label="Consumo medio"
@@ -605,76 +655,63 @@ export default function StatisticheConsumi() {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-6">
-                <Card>
-                    <div className="flex items-center gap-2 mb-4">
-                        <span className="text-green-600 text-lg">
-                            <img
-                                src="/star primary.png"
-                                alt="Top graditi"
-                                className="h-5 w-5 object-contain"
-                            />
-                        </span>
-                        <div className="font-semibold text-brand-text">
-                            Piatti più graditi
-                        </div>
-                    </div>
-                    {renderRankList(topLiked, 'good')}
-                </Card>
+                <ConsumiRankCard
+                    title="Piatti più graditi"
+                    iconSrc="/star primary.png"
+                    iconAlt="Piatti più graditi"
+                    rows={topLiked}
+                    mode="good"
+                />
 
-                <Card>
-                    <div className="flex items-center gap-2 mb-4">
-                        <span className="text-red-600 text-lg">
-                            <img
-                                src="/down trend red.png"
-                                alt="Worst graditi"
-                                className="h-5 w-5 object-contain"
-                            />
-                        </span>
-                        <div className="font-semibold text-brand-text">
-                            Piatti meno graditi
-                        </div>
-                    </div>
-                    {renderRankList(topDisliked, 'bad')}
-                </Card>
+                <ConsumiRankCard
+                    title="Piatti meno graditi"
+                    iconSrc="/down trend red.png"
+                    iconAlt="Piatti meno graditi"
+                    rows={topDisliked}
+                    mode="bad"
+                />
             </div>
 
             <div className="mt-8">
-                <Card className="p-0 overflow-hidden">
-                    <div className="px-6 py-4">
+                <Card className="overflow-hidden rounded-[24px] border border-white/60 bg-white/85  shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+                    <div className="border-b border-black/5 px-3 pb-4 pt-1">
                         <div className="font-semibold text-brand-text">
                             Dettagli questionari
                         </div>
+                        <div className="mt-1 text-sm text-brand-textSecondary">
+                            Tracciato completo dei questionari compilati
+                        </div>
                     </div>
 
-                    <div className="px-6 pb-4 overflow-x-auto">
-                        <table className="w-full text-sm">
+                    <div className="px-4 pb-5 pt-4 overflow-x-auto">
+                        <table className="w-full min-w-[1200px] border-separate border-spacing-0 text-sm">
                             <thead>
-                                <tr className="text-brand-textSecondary border-b border-brand-divider">
-                                    <th className="text-left py-2 pr-4">
+                                <tr className="text-xs uppercase tracking-[0.08em] text-brand-textSecondary">
+                                    <th className="rounded-l-2xl bg-black/[0.03] px-4 py-3 text-left font-semibold">
                                         Data
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Paziente
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Locazione
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Pasto
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Portata
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Piatto
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Porzione
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Spreco
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="rounded-r-2xl bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Caregiver
                                     </th>
                                 </tr>
@@ -685,7 +722,7 @@ export default function StatisticheConsumi() {
                                     <tr>
                                         <td
                                             colSpan={9}
-                                            className="py-6 text-brand-textSecondary italic"
+                                            className="px-4 py-8 text-center italic text-brand-textSecondary"
                                         >
                                             Nessun questionario trovato.
                                         </td>
@@ -694,34 +731,51 @@ export default function StatisticheConsumi() {
                                     details.data.map((r, idx) => (
                                         <tr
                                             key={`${r.date}-${idx}`}
-                                            className="border-b border-brand-divider/70"
+                                            className="group"
                                         >
-                                            <td className="py-2 pr-4">
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap tabular-nums text-brand-text transition-colors group-hover:bg-black/[0.015]">
                                                 {formatDateTime(r.date)}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 font-medium text-brand-text transition-colors group-hover:bg-black/[0.015]">
                                                 {r.patient_surname}{' '}
                                                 {r.patient_name}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                Piano {r.floor} Stanza {r.room}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                Piano {r.floor} · Stanza{' '}
+                                                {r.room}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {r.meal_type}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(74,144,226,0.10)] px-2.5 py-1 text-xs font-medium capitalize text-brand-secondary">
+                                                    {r.meal_type}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {r.course_type}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(245,197,66,0.16)] px-2.5 py-1 text-xs font-medium text-[#A06A00]">
+                                                    {formatCourseLabel(
+                                                        r.course_type,
+                                                    )}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 font-medium text-brand-text transition-colors group-hover:bg-black/[0.015]">
                                                 {r.dish_name}
                                             </td>
-                                            <td className="py-2 pr-4">
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 text-right tabular-nums font-medium text-brand-text transition-colors group-hover:bg-black/[0.015]">
                                                 {fmtDec(r.portion, 2)}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {fmtInt(r.waste_g)} g
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 text-right transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(224,72,72,0.10)] px-2.5 py-1 text-xs font-semibold tabular-nums text-brand-error">
+                                                    {fmtInt(r.waste_g)} g
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
                                                 {r.caregiver_name}{' '}
                                                 {r.caregiver_surname}
                                             </td>
@@ -732,56 +786,61 @@ export default function StatisticheConsumi() {
                         </table>
                     </div>
 
-                    <Pagination
-                        total={details.total || 0}
-                        page={page}
-                        totalPages={details.totalPages || 1}
-                        pageSize={pageSize}
-                        loading={loading}
-                        onPageChange={setPage}
-                        onPageSizeChange={handlePageSizeChange}
-                    />
+                    <div className="border-t border-black/5">
+                        <Pagination
+                            total={details.total || 0}
+                            page={page}
+                            totalPages={details.totalPages || 1}
+                            pageSize={pageSize}
+                            loading={loading}
+                            onPageChange={setPage}
+                            onPageSizeChange={handlePageSizeChange}
+                        />
+                    </div>
                 </Card>
             </div>
 
             <div className="mt-8">
-                <Card className="p-0 overflow-hidden">
-                    <div className="px-6 py-4">
+                <Card className="overflow-hidden rounded-[24px] border border-white/60 bg-white/85 p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+                    <div className="border-b border-black/5 px-3 pb-4 pt-1">
                         <div className="font-semibold text-brand-text">
                             Questionari commenti
                         </div>
+                        <div className="mt-1 text-sm text-brand-textSecondary">
+                            Commenti testuali registrati nei questionari
+                        </div>
                     </div>
 
-                    <div className="px-6 pb-4 overflow-x-auto">
+                    <div className="px-4 pb-3 pt-4 overflow-x-auto">
                         {(comments.data || []).length === 0 ? (
-                            <div className="py-6 text-brand-textSecondary italic">
+                            <div className="px-4 py-8 text-center italic text-brand-textSecondary">
                                 {comments.total > 0
                                     ? 'Esistono record dei questionari commenti, ma in questa pagina nessuno contiene un commento testuale valorizzato.'
                                     : 'Non ci sono questionari commenti.'}
                             </div>
                         ) : (
-                            <table className="w-full text-sm">
+                            <table className="w-full min-w-[1100px] border-separate border-spacing-0 text-sm">
                                 <thead>
-                                    <tr className="text-brand-textSecondary border-b border-brand-divider">
-                                        <th className="text-left py-2 pr-4">
+                                    <tr className="text-xs uppercase tracking-[0.08em] text-brand-textSecondary">
+                                        <th className="rounded-l-2xl bg-black/[0.03] px-4 py-3 text-left font-semibold">
                                             Data
                                         </th>
-                                        <th className="text-left py-2 pr-4">
+                                        <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                             Paziente
                                         </th>
-                                        <th className="text-left py-2 pr-4">
+                                        <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                             Locazione
                                         </th>
-                                        <th className="text-left py-2 pr-4">
+                                        <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                             Giorno
                                         </th>
-                                        <th className="text-left py-2 pr-4">
+                                        <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                             Pasto
                                         </th>
-                                        <th className="text-left py-2 pr-4">
+                                        <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                             Commento
                                         </th>
-                                        <th className="text-left py-2 pr-4">
+                                        <th className="rounded-r-2xl bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                             Caregiver
                                         </th>
                                     </tr>
@@ -791,30 +850,39 @@ export default function StatisticheConsumi() {
                                     {comments.data.map((r, idx) => (
                                         <tr
                                             key={`${r.date}-${r.patient_name}-${r.patient_surname}-${r.day_number}-${r.meal_type}-${idx}`}
-                                            className="border-b border-brand-divider/70"
+                                            className="group"
                                         >
-                                            <td className="py-2 pr-4">
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap tabular-nums text-brand-text transition-colors group-hover:bg-black/[0.015]">
                                                 {formatDateTime(r.date)}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 font-medium text-brand-text transition-colors group-hover:bg-black/[0.015]">
                                                 {r.patient_surname}{' '}
                                                 {r.patient_name}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                Piano {r.floor} Stanza {r.room}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                Piano {r.floor} · Stanza{' '}
+                                                {r.room}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {r.day_number}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 text-right tabular-nums text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(r.day_number)}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {r.meal_type}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(74,144,226,0.10)] px-2.5 py-1 text-xs font-medium capitalize text-brand-secondary">
+                                                    {r.meal_type}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4 whitespace-pre-wrap">
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
                                                 {String(
                                                     r.comments ?? '',
                                                 ).trim() || '—'}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
                                                 {r.caregiver_name}{' '}
                                                 {r.caregiver_surname}
                                             </td>
@@ -825,19 +893,21 @@ export default function StatisticheConsumi() {
                         )}
                     </div>
 
-                    <Pagination
-                        total={comments.total || 0}
-                        page={commentsPage}
-                        totalPages={comments.totalPages || 1}
-                        pageSize={commentsPageSize}
-                        loading={loading}
-                        onPageChange={setCommentsPage}
-                        onPageSizeChange={handleCommentsPageSizeChange}
-                    />
+                    <div className="border-t border-black/5">
+                        <Pagination
+                            total={comments.total || 0}
+                            page={commentsPage}
+                            totalPages={comments.totalPages || 1}
+                            pageSize={commentsPageSize}
+                            loading={loading}
+                            onPageChange={setCommentsPage}
+                            onPageSizeChange={handleCommentsPageSizeChange}
+                        />
+                    </div>
                 </Card>
             </div>
 
-            {error && <div className="text-brand-error mt-3">{error}</div>}
+            {error && <div className="mt-3 text-brand-error">{error}</div>}
         </AppLayout>
     );
 }

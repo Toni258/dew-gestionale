@@ -63,8 +63,8 @@ export default function ImageUploader({ name, disabled = false }) {
     const borderClass = disabled
         ? 'border-brand-divider opacity-60 cursor-not-allowed'
         : isDragOver
-        ? 'border-brand-primary'
-        : 'border-black hover:border-brand-primary';
+          ? 'border-brand-primary'
+          : 'border-black hover:border-brand-primary';
 
     return (
         <div
@@ -75,7 +75,7 @@ export default function ImageUploader({ name, disabled = false }) {
             className="relative w-full max-w-[318px] aspect-[318/206] cursor-pointer"
         >
             {/* 1️⃣ BACKGROUND + SHADOW */}
-            <div className="absolute inset-0 rounded-md bg-white shadow-[0_0_30px_rgba(0,0,0,0.25)]" />
+            <div className="absolute inset-0 rounded-md bg-white shadow-textField" />
 
             {/* SVG BORDER */}
             <svg
@@ -95,8 +95,8 @@ export default function ImageUploader({ name, disabled = false }) {
                         disabled
                             ? 'var(--brand-divider)'
                             : isDragOver
-                            ? '#22c55e' // verde (tailwind green-500)
-                            : 'black'
+                              ? '#22c55e' // verde (tailwind green-500)
+                              : 'black'
                     }
                     vectorEffect="non-scaling-stroke"
                     strokeWidth={isDragOver ? 2 : 1}

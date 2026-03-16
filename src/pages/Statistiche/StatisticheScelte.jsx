@@ -18,10 +18,7 @@ import StatsMenuSelectionSync from '../../components/statistics/StatsMenuSelecti
 import StatsKpiCard from '../../components/statistics/StatsKpiCard';
 import StatsRankCard from '../../components/statistics/StatsRankCard';
 import StatsBarsCard from '../../components/statistics/StatsBarsCard';
-import {
-    buildMenuValue,
-    parseMenuValue,
-} from '../../utils/statistics/menuValue';
+import { buildMenuValue } from '../../utils/statistics/menuValue';
 import {
     fmtInt,
     fmtPct,
@@ -29,11 +26,6 @@ import {
     formatCourseLabel,
     formatDate,
 } from '../../utils/statistics/reportFormatters';
-
-const MenuSelectionSync = StatsMenuSelectionSync;
-const KpiCard = StatsKpiCard;
-const RankCard = StatsRankCard;
-const BarsCard = StatsBarsCard;
 
 const MEAL_OPTIONS = [
     { value: '', label: 'Tutti i pasti' },
@@ -77,6 +69,120 @@ const BABY_FOOD_OPTIONS = [
     { value: '1', label: 'Solo baby food' },
     { value: '0', label: 'Escludi baby food' },
 ];
+
+const EMPTY_KPI = {
+    total_choices: 0,
+    distinct_dishes_chosen: 0,
+    overall_choice_rate_pct: 0,
+    never_chosen_count: 0,
+    top_category_label: '—',
+    caregiver_share_pct: 0,
+    baby_food_share_pct: 0,
+    patient_scope_count: 0,
+    total_availability_occurrences: 0,
+};
+
+const EMPTY_RANKINGS = {
+    topChosen: [],
+    bottomChosen: [],
+    neverChosen: [],
+};
+
+const EMPTY_CHARTS = {
+    weeklyTrend: [],
+    byCourse: [],
+    byChooser: [],
+};
+
+const EMPTY_DISHES = {
+    data: [],
+    total: 0,
+    totalPages: 1,
+    page: 1,
+    pageSize: 10,
+};
+
+const EMPTY_DETAILS = {
+    data: [],
+    total: 0,
+    totalPages: 1,
+    page: 1,
+    pageSize: 10,
+};
+
+const EMPTY_OPTIONS = {
+    patients: [],
+    floors: [],
+};
+
+const EMPTY_FORM_VALUES = {
+    menuValue: '',
+    start: '',
+    end: '',
+    meal: '',
+    patientId: '',
+    floor: '',
+    course: '',
+    firstChoice: '',
+    week: '',
+    chooser: '',
+    babyFood: '',
+};
+
+function buildAppliedFilters(menu, values = {}) {
+    return {
+        menuKind: menu?.kind ?? '',
+        menuRef: menu?.ref ?? '',
+        start: values.start ?? menu?.start_date ?? '',
+        end: values.end ?? menu?.end_date ?? '',
+        meal: values.meal ?? '',
+        patientId: values.patientId ?? '',
+        floor: values.floor ?? '',
+        course: values.course ?? '',
+        firstChoice: values.firstChoice ?? '',
+        week: values.week ?? '',
+        chooser: values.chooser ?? '',
+        babyFood: values.babyFood ?? '',
+    };
+}
+
+function validateScelteFilters(values, menus) {
+    const errs = {};
+
+    if (!values.menuValue) {
+        errs.menuValue = 'Seleziona un menù';
+    }
+
+    if (!values.start) {
+        errs.start = 'Seleziona una data di inizio';
+    }
+
+    if (!values.end) {
+        errs.end = 'Seleziona una data di fine';
+    }
+
+    if (values.start && values.end && values.end < values.start) {
+        errs.end = 'La data di fine deve essere >= data inizio';
+    }
+
+    const currentSelected = (menus || []).find(
+        (menu) => buildMenuValue(menu) === values.menuValue,
+    );
+
+    if (currentSelected) {
+        if (values.start && values.start < currentSelected.start_date) {
+            errs.start =
+                'La data di inizio deve rientrare nel menù selezionato';
+        }
+
+        if (values.end && values.end > currentSelected.end_date) {
+            errs.end = 'La data di fine deve rientrare nel menù selezionato';
+        }
+    }
+
+    return errs;
+}
+
 export default function StatisticheScelte() {
     const [menus, setMenus] = useState([]);
     const [menusLoading, setMenusLoading] = useState(true);
@@ -94,50 +200,12 @@ export default function StatisticheScelte() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const [kpi, setKpi] = useState({
-        total_choices: 0,
-        distinct_dishes_chosen: 0,
-        overall_choice_rate_pct: 0,
-        never_chosen_count: 0,
-        top_category_label: '—',
-        caregiver_share_pct: 0,
-        baby_food_share_pct: 0,
-        patient_scope_count: 0,
-        total_availability_occurrences: 0,
-    });
-
-    const [rankings, setRankings] = useState({
-        topChosen: [],
-        bottomChosen: [],
-        neverChosen: [],
-    });
-
-    const [charts, setCharts] = useState({
-        weeklyTrend: [],
-        byCourse: [],
-        byChooser: [],
-    });
-
-    const [dishes, setDishes] = useState({
-        data: [],
-        total: 0,
-        totalPages: 1,
-        page: 1,
-        pageSize: 10,
-    });
-
-    const [details, setDetails] = useState({
-        data: [],
-        total: 0,
-        totalPages: 1,
-        page: 1,
-        pageSize: 10,
-    });
-
-    const [options, setOptions] = useState({
-        patients: [],
-        floors: [],
-    });
+    const [kpi, setKpi] = useState(EMPTY_KPI);
+    const [rankings, setRankings] = useState(EMPTY_RANKINGS);
+    const [charts, setCharts] = useState(EMPTY_CHARTS);
+    const [dishes, setDishes] = useState(EMPTY_DISHES);
+    const [details, setDetails] = useState(EMPTY_DETAILS);
+    const [options, setOptions] = useState(EMPTY_OPTIONS);
 
     useEffect(() => {
         let cancelled = false;
@@ -158,20 +226,7 @@ export default function StatisticheScelte() {
                 setSelectedMenu(firstMenu);
 
                 if (firstMenu) {
-                    setApplied({
-                        menuKind: firstMenu.kind,
-                        menuRef: firstMenu.ref,
-                        start: firstMenu.start_date,
-                        end: firstMenu.end_date,
-                        meal: '',
-                        patientId: '',
-                        floor: '',
-                        course: '',
-                        firstChoice: '',
-                        week: '',
-                        chooser: '',
-                        babyFood: '',
-                    });
+                    setApplied(buildAppliedFilters(firstMenu));
                 }
             } catch (e) {
                 console.error(e);
@@ -194,19 +249,7 @@ export default function StatisticheScelte() {
 
     const formInitialValues = useMemo(() => {
         if (!selectedMenu) {
-            return {
-                menuValue: '',
-                start: '',
-                end: '',
-                meal: '',
-                patientId: '',
-                floor: '',
-                course: '',
-                firstChoice: '',
-                week: '',
-                chooser: '',
-                babyFood: '',
-            };
+            return EMPTY_FORM_VALUES;
         }
 
         const menuValue = buildMenuValue(selectedMenu);
@@ -216,28 +259,22 @@ export default function StatisticheScelte() {
             applied.menuKind === selectedMenu.kind &&
             applied.menuRef === selectedMenu.ref;
 
+        const currentValues = appliedMatchesSelectedMenu
+            ? applied
+            : buildAppliedFilters(selectedMenu);
+
         return {
             menuValue,
-            start: appliedMatchesSelectedMenu
-                ? (applied?.start ?? selectedMenu.start_date)
-                : selectedMenu.start_date,
-            end: appliedMatchesSelectedMenu
-                ? (applied?.end ?? selectedMenu.end_date)
-                : selectedMenu.end_date,
-            meal: appliedMatchesSelectedMenu ? (applied?.meal ?? '') : '',
-            patientId: appliedMatchesSelectedMenu
-                ? (applied?.patientId ?? '')
-                : '',
-            floor: appliedMatchesSelectedMenu ? (applied?.floor ?? '') : '',
-            course: appliedMatchesSelectedMenu ? (applied?.course ?? '') : '',
-            firstChoice: appliedMatchesSelectedMenu
-                ? (applied?.firstChoice ?? '')
-                : '',
-            week: appliedMatchesSelectedMenu ? (applied?.week ?? '') : '',
-            chooser: appliedMatchesSelectedMenu ? (applied?.chooser ?? '') : '',
-            babyFood: appliedMatchesSelectedMenu
-                ? (applied?.babyFood ?? '')
-                : '',
+            start: currentValues.start,
+            end: currentValues.end,
+            meal: currentValues.meal,
+            patientId: currentValues.patientId,
+            floor: currentValues.floor,
+            course: currentValues.course,
+            firstChoice: currentValues.firstChoice,
+            week: currentValues.week,
+            chooser: currentValues.chooser,
+            babyFood: currentValues.babyFood,
         };
     }, [selectedMenu, applied]);
 
@@ -246,9 +283,9 @@ export default function StatisticheScelte() {
     }, [selectedMenu, formVersion]);
 
     const menuOptions = useMemo(() => {
-        return (menus || []).map((m) => ({
-            value: buildMenuValue(m),
-            label: m.label,
+        return (menus || []).map((menu) => ({
+            value: buildMenuValue(menu),
+            label: menu.label,
         }));
     }, [menus]);
 
@@ -261,6 +298,7 @@ export default function StatisticheScelte() {
 
     const requestParams = useMemo(() => {
         if (!applied) return null;
+
         return {
             ...applied,
             page,
@@ -297,53 +335,22 @@ export default function StatisticheScelte() {
                     detailsPageSize: requestParams.detailsPageSize,
                 });
 
-                setKpi(json.kpi || {});
-                setRankings(
-                    json.rankings || {
-                        topChosen: [],
-                        bottomChosen: [],
-                        neverChosen: [],
-                    },
-                );
-                setCharts(
-                    json.charts || {
-                        weeklyTrend: [],
-                        byCourse: [],
-                        byChooser: [],
-                    },
-                );
-                setDishes(json.dishes || { data: [], total: 0, totalPages: 1 });
-                setDetails(
-                    json.details || { data: [], total: 0, totalPages: 1 },
-                );
-                setOptions(json.options || { patients: [], floors: [] });
+                setKpi(json.kpi || EMPTY_KPI);
+                setRankings(json.rankings || EMPTY_RANKINGS);
+                setCharts(json.charts || EMPTY_CHARTS);
+                setDishes(json.dishes || EMPTY_DISHES);
+                setDetails(json.details || EMPTY_DETAILS);
+                setOptions(json.options || EMPTY_OPTIONS);
             });
         } catch (e) {
             console.error(e);
             setError('Errore nel caricamento del report scelte.');
-            setKpi({
-                total_choices: 0,
-                distinct_dishes_chosen: 0,
-                overall_choice_rate_pct: 0,
-                never_chosen_count: 0,
-                top_category_label: '—',
-                caregiver_share_pct: 0,
-                baby_food_share_pct: 0,
-                patient_scope_count: 0,
-                total_availability_occurrences: 0,
-            });
-            setRankings({
-                topChosen: [],
-                bottomChosen: [],
-                neverChosen: [],
-            });
-            setCharts({
-                weeklyTrend: [],
-                byCourse: [],
-                byChooser: [],
-            });
-            setDishes({ data: [], total: 0, totalPages: 1 });
-            setDetails({ data: [], total: 0, totalPages: 1 });
+            setKpi(EMPTY_KPI);
+            setRankings(EMPTY_RANKINGS);
+            setCharts(EMPTY_CHARTS);
+            setDishes(EMPTY_DISHES);
+            setDetails(EMPTY_DETAILS);
+            setOptions(EMPTY_OPTIONS);
         } finally {
             setLoading(false);
         }
@@ -364,30 +371,14 @@ export default function StatisticheScelte() {
     };
 
     const handleApplyFilters = (values) => {
-        const parsed = parseMenuValue(values.menuValue);
         const menu = (menus || []).find(
-            (m) => buildMenuValue(m) === values.menuValue,
+            (menuRow) => buildMenuValue(menuRow) === values.menuValue,
         );
 
         if (!menu) return;
 
         setSelectedMenu(menu);
-
-        setApplied({
-            menuKind: parsed.menuKind,
-            menuRef: parsed.menuRef,
-            start: values.start,
-            end: values.end,
-            meal: values.meal || '',
-            patientId: values.patientId || '',
-            floor: values.floor || '',
-            course: values.course || '',
-            firstChoice: values.firstChoice || '',
-            week: values.week || '',
-            chooser: values.chooser || '',
-            babyFood: values.babyFood ?? '',
-        });
-
+        setApplied(buildAppliedFilters(menu, values));
         setPage(1);
         setDetailsPage(1);
     };
@@ -429,59 +420,18 @@ export default function StatisticheScelte() {
                 Statistiche e analisi scelte piatti
             </h1>
 
-            <div className="mt-4">
-                <Card>
+            <div className="relative z-20 mt-4">
+                <Card className="relative z-20 overflow-visible rounded-[24px] border border-black/5 bg-white/85 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
                     {selectedMenu && !menusLoading ? (
                         <Form
                             key={formKey}
                             initialValues={formInitialValues}
-                            validateForm={(v) => {
-                                const errs = {};
-
-                                if (!v.menuValue) {
-                                    errs.menuValue = 'Seleziona un menù';
-                                }
-
-                                if (!v.start) {
-                                    errs.start = 'Seleziona una data di inizio';
-                                }
-
-                                if (!v.end) {
-                                    errs.end = 'Seleziona una data di fine';
-                                }
-
-                                if (v.start && v.end && v.end < v.start) {
-                                    errs.end =
-                                        'La data di fine deve essere >= data inizio';
-                                }
-
-                                const currentSelected = (menus || []).find(
-                                    (m) => buildMenuValue(m) === v.menuValue,
-                                );
-
-                                if (currentSelected) {
-                                    if (
-                                        v.start &&
-                                        v.start < currentSelected.start_date
-                                    ) {
-                                        errs.start =
-                                            'La data di inizio deve rientrare nel menù selezionato';
-                                    }
-
-                                    if (
-                                        v.end &&
-                                        v.end > currentSelected.end_date
-                                    ) {
-                                        errs.end =
-                                            'La data di fine deve rientrare nel menù selezionato';
-                                    }
-                                }
-
-                                return errs;
-                            }}
+                            validateForm={(values) =>
+                                validateScelteFilters(values, menus)
+                            }
                             onSubmit={handleApplyFilters}
                         >
-                            <MenuSelectionSync
+                            <StatsMenuSelectionSync
                                 menuRows={menus}
                                 setSelectedMenu={setSelectedMenu}
                                 setFormVersion={setFormVersion}
@@ -519,7 +469,6 @@ export default function StatisticheScelte() {
 
                                 <div className="w-px w-full bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
 
-                                {/* Filters */}
                                 <div className="flex flex-col flex-[2] gap-4 min-w-[620px]">
                                     <div className="flex gap-4 flex-wrap">
                                         <FormGroup
@@ -595,6 +544,7 @@ export default function StatisticheScelte() {
                                                 className="w-full"
                                             />
                                         </FormGroup>
+
                                         <FormGroup
                                             name="patientId"
                                             className="min-w-[320px] flex-[2]"
@@ -648,7 +598,7 @@ export default function StatisticheScelte() {
             </div>
 
             <div className="mt-6 grid grid-cols-6 gap-5">
-                <KpiCard
+                <StatsKpiCard
                     iconSrc="/checklist-secondary.png"
                     iconAlt="Scelte totali"
                     iconBg="bg-blue-100"
@@ -656,7 +606,7 @@ export default function StatisticheScelte() {
                     label="Scelte totali"
                     sub="Record di scelta nel periodo"
                 />
-                <KpiCard
+                <StatsKpiCard
                     iconSrc="/dish-primary.png"
                     iconAlt="Piatti distinti scelti"
                     iconBg="bg-green-100"
@@ -664,7 +614,7 @@ export default function StatisticheScelte() {
                     label="Piatti distinti scelti"
                     sub="Varietà reale delle preferenze"
                 />
-                <KpiCard
+                <StatsKpiCard
                     iconSrc="/percentage-chart-secondary.png"
                     iconAlt="Tasso di scelta"
                     iconBg="bg-purple-100"
@@ -672,7 +622,7 @@ export default function StatisticheScelte() {
                     label="Tasso medio stimato"
                     sub="Scelte registrate / opportunità stimate"
                 />
-                <KpiCard
+                <StatsKpiCard
                     iconSrc="/empty-plate-error.png"
                     iconAlt=""
                     iconBg="bg-red-100"
@@ -680,7 +630,7 @@ export default function StatisticheScelte() {
                     label="Piatti mai scelti"
                     sub="Disponibili ma mai richiesti"
                 />
-                <KpiCard
+                <StatsKpiCard
                     iconSrc="/tag-warning.png"
                     iconAlt="Categoria più richiesta"
                     iconBg="bg-yellow-100"
@@ -688,7 +638,7 @@ export default function StatisticheScelte() {
                     label="Categoria più richiesta"
                     sub="Basata sulle scelte registrate"
                 />
-                <KpiCard
+                <StatsKpiCard
                     iconSrc="/baby-food-primary.png"
                     iconAlt="Scelte baby food"
                     iconBg="bg-green-100"
@@ -706,7 +656,7 @@ export default function StatisticheScelte() {
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-6">
-                <RankCard
+                <StatsRankCard
                     title="Piatti più richiesti"
                     iconSrc="/star primary.png"
                     iconAlt="Piatti più richiesti"
@@ -714,7 +664,7 @@ export default function StatisticheScelte() {
                     mode="top"
                 />
 
-                <RankCard
+                <StatsRankCard
                     title="Piatti meno richiesti"
                     iconSrc="/down trend red.png"
                     iconAlt="Piatti meno richiesti"
@@ -722,7 +672,7 @@ export default function StatisticheScelte() {
                     mode="bottom"
                 />
 
-                <RankCard
+                <StatsRankCard
                     title="Piatti mai scelti"
                     iconSrc="/no-food-text-secondary.png"
                     iconAlt="Piatti mai scelti"
@@ -732,7 +682,7 @@ export default function StatisticheScelte() {
             </div>
 
             <div className="mt-8 grid grid-cols-2 gap-6">
-                <BarsCard
+                <StatsBarsCard
                     title="Trend di scelta per settimana"
                     sub="Scelte registrate / opportunità stimate nel perimetro filtrato"
                     iconSrc="/calendar-primary.png"
@@ -746,7 +696,7 @@ export default function StatisticheScelte() {
                     }
                 />
 
-                <BarsCard
+                <StatsBarsCard
                     title="Tasso di scelta per portata"
                     sub="Scelte registrate / opportunità stimate nel perimetro filtrato"
                     iconSrc="/category-primary.png"
@@ -762,7 +712,7 @@ export default function StatisticheScelte() {
             </div>
 
             <div className="mt-6">
-                <BarsCard
+                <StatsBarsCard
                     title="Distribuzione per compilatore"
                     iconSrc="/group-users-secondary.png"
                     iconAlt="Distribuzione per compilatore"
@@ -773,59 +723,52 @@ export default function StatisticheScelte() {
             </div>
 
             <div className="mt-8">
-                <Card className="p-0 overflow-hidden">
-                    <div className="px-6 py-4 flex items-center justify-between gap-4">
-                        <div>
-                            <div className="font-semibold text-brand-text">
-                                Tabella aggregata piatti
-                            </div>
-                            <div className="text-sm text-brand-textSecondary">
-                                Apparizioni nel menù, opportunità stimate e
-                                tasso di scelta per piatto
-                            </div>
+                <Card className="overflow-hidden rounded-[24px] border border-white/60 bg-white/85 p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+                    <div className="border-b border-black/5 px-3 pb-4 pt-1">
+                        <div className="font-semibold text-brand-text">
+                            Tabella aggregata piatti
+                        </div>
+                        <div className="mt-1 text-sm text-brand-textSecondary">
+                            Apparizioni nel menù, opportunità stimate e tasso di
+                            scelta per piatto
                         </div>
                     </div>
 
-                    <div className="px-6 pb-4 overflow-x-auto">
-                        <table className="w-full text-sm min-w-[1250px]">
+                    <div className="px-4 pb-5 pt-4 overflow-x-auto">
+                        <table className="w-full min-w-[1250px] border-separate border-spacing-0 text-sm">
                             <thead>
-                                <tr className="text-brand-textSecondary border-b border-brand-divider">
-                                    <th className="text-left py-2 pr-4">
+                                <tr className="text-xs uppercase tracking-[0.08em] text-brand-textSecondary">
+                                    <th className="rounded-l-2xl bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Piatto
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Portata
                                     </th>
-                                    <th className="text-right py-2 pr-4">
-                                        {' '}
-                                        Apparizioni menù{' '}
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
+                                        Apparizioni
                                     </th>
-                                    <th className="text-right py-2 pr-4">
-                                        {' '}
-                                        Pazienti{' '}
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
+                                        Pazienti
                                     </th>
-                                    <th className="text-right py-2 pr-4">
-                                        {' '}
-                                        Opportunità stimate{' '}
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
+                                        Opportunità
                                     </th>
-                                    <th className="text-right py-2 pr-4">
-                                        {' '}
-                                        Scelte{' '}
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
+                                        Scelte
                                     </th>
-                                    <th className="text-right py-2 pr-4">
-                                        {' '}
-                                        Tasso stimato{' '}
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
+                                        Tasso
                                     </th>
-                                    <th className="text-right py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Ospite
                                     </th>
-                                    <th className="text-right py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Famiglia
                                     </th>
-                                    <th className="text-right py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Caregiver
                                     </th>
-                                    <th className="text-right py-2">
+                                    <th className="rounded-r-2xl bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Baby food
                                     </th>
                                 </tr>
@@ -835,54 +778,72 @@ export default function StatisticheScelte() {
                                 {(dishes.data || []).length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={12}
-                                            className="py-6 text-brand-textSecondary italic"
+                                            colSpan={11}
+                                            className="px-4 py-8 text-center italic text-brand-textSecondary"
                                         >
                                             Nessun dato disponibile nel periodo
                                             selezionato.
                                         </td>
                                     </tr>
                                 ) : (
-                                    dishes.data.map((r, idx) => (
+                                    dishes.data.map((row, idx) => (
                                         <tr
-                                            key={`${r.food_id}-${idx}`}
-                                            className="border-b border-brand-divider/70"
+                                            key={`${row.food_id}-${idx}`}
+                                            className="group"
                                         >
-                                            <td className="py-2 pr-4 font-medium text-brand-text">
-                                                {r.name}
+                                            <td className="border-b border-black/[0.05] px-3 py-2 font-semibold text-brand-text transition-colors group-hover:bg-black/[0.015]">
+                                                {row.name}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {formatCourseLabel(r.type)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(74,144,226,0.10)] px-2.5 py-1 text-xs font-medium text-brand-secondary">
+                                                    {formatCourseLabel(
+                                                        row.type,
+                                                    )}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4 text-right">
-                                                {fmtInt(r.availability_count)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right tabular-nums transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.availability_count)}
                                             </td>
-                                            <td className="py-2 pr-4 text-right">
-                                                {fmtInt(r.patient_scope_count)}
-                                            </td>
-                                            <td className="py-2 pr-4 text-right">
-                                                {fmtInt(r.opportunity_count)}
-                                            </td>
-                                            <td className="py-2 pr-4 text-right font-semibold text-brand-text">
-                                                {fmtInt(r.chosen_count)}
-                                            </td>
-                                            <td className="py-2 pr-4 text-right font-semibold text-brand-primary">
-                                                {fmtPct(
-                                                    r.selection_rate_pct,
-                                                    1,
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right tabular-nums transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(
+                                                    row.patient_scope_count,
                                                 )}
                                             </td>
-                                            <td className="py-2 pr-4 text-right">
-                                                {fmtInt(r.guest_count)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right tabular-nums transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.opportunity_count)}
                                             </td>
-                                            <td className="py-2 pr-4 text-right">
-                                                {fmtInt(r.family_count)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right font-semibold tabular-nums text-brand-text transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.chosen_count)}
                                             </td>
-                                            <td className="py-2 pr-4 text-right">
-                                                {fmtInt(r.caregiver_count)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(57,142,59,0.10)] px-2.5 py-1 text-xs font-semibold tabular-nums text-brand-primary">
+                                                    {fmtPct(
+                                                        row.selection_rate_pct,
+                                                        1,
+                                                    )}
+                                                </span>
                                             </td>
-                                            <td className="py-2 text-right">
-                                                {fmtInt(r.baby_food_count)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right tabular-nums text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.guest_count)}
+                                            </td>
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right tabular-nums text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.family_count)}
+                                            </td>
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2 text-right tabular-nums text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.caregiver_count)}
+                                            </td>
+
+                                            <td className="border-b border-black/[0.05] px-4 py-2 text-right tabular-nums text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.baby_food_count)}
                                             </td>
                                         </tr>
                                     ))
@@ -891,69 +852,69 @@ export default function StatisticheScelte() {
                         </table>
                     </div>
 
-                    <Pagination
-                        total={dishes.total || 0}
-                        page={page}
-                        totalPages={dishes.totalPages || 1}
-                        pageSize={pageSize}
-                        loading={loading}
-                        onPageChange={setPage}
-                        onPageSizeChange={handlePageSizeChange}
-                    />
+                    <div className="border-t border-black/5">
+                        <Pagination
+                            total={dishes.total || 0}
+                            page={page}
+                            totalPages={dishes.totalPages || 1}
+                            pageSize={pageSize}
+                            loading={loading}
+                            onPageChange={setPage}
+                            onPageSizeChange={handlePageSizeChange}
+                        />
+                    </div>
                 </Card>
             </div>
 
             <div className="mt-8">
-                <Card className="p-0 overflow-hidden">
-                    <div className="px-6 py-4 flex items-center justify-between gap-4">
-                        <div>
-                            <div className="font-semibold text-brand-text">
-                                Dettaglio singole scelte
-                            </div>
-                            <div className="text-sm text-brand-textSecondary">
-                                Tracciato completo delle scelte effettuate
-                            </div>
+                <Card className="overflow-hidden rounded-[24px] border border-white/60 bg-white/85 p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+                    <div className="border-b border-black/5 px-3 pb-4 pt-1">
+                        <div className="font-semibold text-brand-text">
+                            Dettaglio singole scelte
+                        </div>
+                        <div className="mt-1 text-sm text-brand-textSecondary">
+                            Tracciato completo delle scelte effettuate
                         </div>
                     </div>
 
-                    <div className="px-6 pb-4 overflow-x-auto">
-                        <table className="w-full text-sm min-w-[1200px]">
+                    <div className="px-4 pb-5 pt-4 overflow-x-auto">
+                        <table className="w-full min-w-[1200px] border-separate border-spacing-0 text-sm">
                             <thead>
-                                <tr className="text-brand-textSecondary border-b border-brand-divider">
-                                    <th className="text-left py-2 pr-4">
+                                <tr className="text-xs uppercase tracking-[0.08em] text-brand-textSecondary">
+                                    <th className="rounded-l-2xl bg-black/[0.03] px-4 py-3 text-left font-semibold">
                                         Data
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Paziente
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Locazione
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Giorno
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Settimana
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Pasto
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Tipo piatto
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Portata
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Piatto
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Scelta da
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Baby food
                                     </th>
-                                    <th className="text-left py-2 pr-4">
+                                    <th className="rounded-r-2xl bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Caregiver
                                     </th>
                                 </tr>
@@ -964,63 +925,102 @@ export default function StatisticheScelte() {
                                     <tr>
                                         <td
                                             colSpan={12}
-                                            className="py-6 text-brand-textSecondary italic"
+                                            className="px-4 py-8 text-center italic text-brand-textSecondary"
                                         >
                                             Nessuna scelta trovata.
                                         </td>
                                     </tr>
                                 ) : (
-                                    details.data.map((r, idx) => (
+                                    details.data.map((row, idx) => (
                                         <tr
-                                            key={`${r.date}-${r.patient_name}-${r.dish_name}-${idx}`}
-                                            className="border-b border-brand-divider/70"
+                                            key={`${row.date}-${row.patient_name}-${row.dish_name}-${idx}`}
+                                            className="group"
                                         >
-                                            <td className="py-2 pr-4">
-                                                {formatDate(r.date)}
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap tabular-nums text-brand-text transition-colors group-hover:bg-black/[0.015]">
+                                                {formatDate(row.date)}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {r.patient_surname}{' '}
-                                                {r.patient_name}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 font-medium text-brand-text transition-colors group-hover:bg-black/[0.015]">
+                                                {row.patient_surname}{' '}
+                                                {row.patient_name}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                Piano {r.floor} Stanza {r.room}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                Piano {row.floor} · Stanza{' '}
+                                                {row.room}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {fmtInt(r.day_number)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 tabular-nums text-right text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.day_number)}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {' '}
-                                                {fmtInt(r.week_number)}{' '}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 tabular-nums text-right text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(row.week_number)}
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {' '}
-                                                {r.meal_type}{' '}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(74,144,226,0.10)] px-2.5 py-1 text-xs font-medium capitalize text-brand-secondary">
+                                                    {row.meal_type}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {Number(r.first_choice) === 1
-                                                    ? 'Fisso'
-                                                    : 'Del giorno'}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span
+                                                    className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${
+                                                        Number(
+                                                            row.first_choice,
+                                                        ) === 1
+                                                            ? 'bg-[rgba(57,142,59,0.10)] text-brand-primary'
+                                                            : 'bg-black/[0.05] text-brand-textSecondary'
+                                                    }`}
+                                                >
+                                                    {Number(
+                                                        row.first_choice,
+                                                    ) === 1
+                                                        ? 'Fisso'
+                                                        : 'Del giorno'}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {formatCourseLabel(
-                                                    r.course_type,
-                                                )}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-[rgba(245,197,66,0.16)] px-2.5 py-1 text-xs font-medium text-[#A06A00]">
+                                                    {formatCourseLabel(
+                                                        row.course_type,
+                                                    )}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {' '}
-                                                {r.dish_name}{' '}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 font-medium text-brand-text transition-colors group-hover:bg-black/[0.015]">
+                                                {row.dish_name}
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {formatChooserLabel(r.chooser)}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span className="inline-flex rounded-md bg-black/[0.05] px-2.5 py-1 text-xs font-medium text-brand-textSecondary">
+                                                    {formatChooserLabel(
+                                                        row.chooser,
+                                                    )}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4">
-                                                {Number(r.baby_food) === 1
-                                                    ? 'Sì'
-                                                    : 'No'}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
+                                                <span
+                                                    className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${
+                                                        Number(
+                                                            row.baby_food,
+                                                        ) === 1
+                                                            ? 'bg-[rgba(245,197,66,0.16)] text-[#A06A00]'
+                                                            : 'bg-black/[0.05] text-brand-textSecondary'
+                                                    }`}
+                                                >
+                                                    {Number(row.baby_food) === 1
+                                                        ? 'Sì'
+                                                        : 'No'}
+                                                </span>
                                             </td>
-                                            <td className="py-2 pr-4 capitalize">
-                                                {r.caregiver_name}{' '}
-                                                {r.caregiver_surname}
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 whitespace-nowrap text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {row.caregiver_name}{' '}
+                                                {row.caregiver_surname}
                                             </td>
                                         </tr>
                                     ))
@@ -1029,15 +1029,17 @@ export default function StatisticheScelte() {
                         </table>
                     </div>
 
-                    <Pagination
-                        total={details.total || 0}
-                        page={detailsPage}
-                        totalPages={details.totalPages || 1}
-                        pageSize={detailsPageSize}
-                        loading={loading}
-                        onPageChange={setDetailsPage}
-                        onPageSizeChange={handleDetailsPageSizeChange}
-                    />
+                    <div className="border-t border-black/5">
+                        <Pagination
+                            total={details.total || 0}
+                            page={detailsPage}
+                            totalPages={details.totalPages || 1}
+                            pageSize={detailsPageSize}
+                            loading={loading}
+                            onPageChange={setDetailsPage}
+                            onPageSizeChange={handleDetailsPageSizeChange}
+                        />
+                    </div>
                 </Card>
             </div>
 

@@ -26,13 +26,13 @@ export default memo(function DishesTable({
                 <table className="w-full text-sm table-auto">
                     <thead className="bg-brand-primary text-white">
                         <tr>
-                            <th className="px-4 py-3 text-center">STATO</th>
-                            <th className="px-4 py-3 text-left">NOME</th>
-                            <th className="px-4 py-3 text-left">TIPO</th>
-                            <th className="px-4 py-3 text-left">PESO (G)</th>
-                            <th className="px-4 py-3 text-left">KCAL</th>
-                            <th className="px-4 py-3 text-left">MACRO (G)</th>
-                            <th className="px-4 py-3 text-left">
+                            <th className="px-3 py-3 text-center">STATO</th>
+                            <th className="px-3 py-3 text-left">NOME</th>
+                            <th className="px-3 py-3 text-left">TIPO</th>
+                            <th className="px-3 py-3 text-left">PESO (G)</th>
+                            <th className="px-3 py-3 text-left">KCAL</th>
+                            <th className="px-3 py-3 text-left">MACRO (G)</th>
+                            <th className="px-3 py-3 text-left">
                                 <div className="flex items-center gap-2">
                                     <span>ALLERGENI</span>
                                     <button
@@ -47,7 +47,7 @@ export default memo(function DishesTable({
                                     </button>
                                 </div>
                             </th>
-                            <th className="px-4 py-3 text-left">AZIONI</th>
+                            <th className="px-3 py-3 text-left">AZIONI</th>
                         </tr>
                     </thead>
 
@@ -68,33 +68,33 @@ export default memo(function DishesTable({
                                 key={r.id_food}
                                 className="border-t border-brand-divider"
                             >
-                                <td className="px-4 py-3 text-center">
+                                <td className="px-3 py-2.5 text-center">
                                     <StatusDot status={r.status} />
                                 </td>
 
-                                <td className="px-4 py-3">{r.name}</td>
+                                <td className="px-3 py-2.5">{r.name}</td>
 
-                                <td className="px-4 py-3">
-                                    <span className="bg-brand-primary/50 px-3 py-1 rounded-full">
+                                <td className="px-3 py-2.5">
+                                    <span className="inline-flex rounded-md bg-[rgba(57,142,59,0.10)] px-2.5 py-1 text-xs font-semibold tabular-nums text-brand-primary capitalize">
                                         {capitalize(r.type)}
                                     </span>
                                 </td>
 
-                                <td className="px-4 py-3">
+                                <td className="px-3 py-2.5">
                                     {formatNumber(r.grammage_tot)}
                                 </td>
 
-                                <td className="px-4 py-3">
+                                <td className="px-3 py-2.5">
                                     {formatNumber(r.kcal_tot)}
                                 </td>
 
-                                <td className="px-4 py-3 whitespace-nowrap">
+                                <td className="px-3 py-2.5 whitespace-nowrap">
                                     🥩 {formatNumber(r.proteins)} | 🍞{' '}
                                     {formatNumber(r.carbs)} | 🧈{' '}
                                     {formatNumber(r.fats)}
                                 </td>
 
-                                <td className="px-4 py-3">
+                                <td className="px-3 py-2.5">
                                     <div className="flex gap-2 flex-wrap">
                                         {extractAllergenEmojis(
                                             r.allergy_notes,
@@ -110,7 +110,7 @@ export default memo(function DishesTable({
                                     </div>
                                 </td>
 
-                                <td className="px-4 py-3">
+                                <td className="px-3 py-2.5">
                                     <NavLink
                                         to={`/dishes/edit/${r.id_food}`}
                                         className="text-brand-primary font-semibold"
