@@ -8,7 +8,14 @@ import {
     formatCourseLabel,
 } from '../../utils/statistics/reportFormatters';
 
-export default function StatsRankCard({ title, icon, rows, mode = 'top' }) {
+export default function StatsRankCard({
+    title,
+    icon,
+    iconSrc,
+    iconAlt = '',
+    rows,
+    mode = 'top',
+}) {
     const badgeBg =
         mode === 'top'
             ? 'bg-brand-primary'
@@ -26,7 +33,16 @@ export default function StatsRankCard({ title, icon, rows, mode = 'top' }) {
     return (
         <Card>
             <div className="mb-4 flex items-center gap-2">
-                <span className="text-lg">{icon}</span>
+                {iconSrc ? (
+                    <img
+                        src={iconSrc}
+                        alt={iconAlt || title}
+                        className="h-5 w-5 object-contain shrink-0"
+                    />
+                ) : (
+                    <span className="text-lg">{icon}</span>
+                )}
+
                 <div className="font-semibold text-brand-text">{title}</div>
             </div>
 
@@ -67,8 +83,14 @@ export default function StatsRankCard({ title, icon, rows, mode = 'top' }) {
                                             0 scelte
                                         </div>
                                         <div className="text-xs text-brand-textSecondary">
+                                            {fmtInt(row.opportunity_count)}{' '}
+                                            opportunità
+                                        </div>
+                                        <div className="text-[11px] text-brand-textSecondary/80">
                                             {fmtInt(row.availability_count)}{' '}
-                                            disponibilità
+                                            apparizioni nel menù ·{' '}
+                                            {fmtInt(row.patient_scope_count)}{' '}
+                                            pazienti
                                         </div>
                                     </>
                                 ) : (
@@ -80,8 +102,14 @@ export default function StatsRankCard({ title, icon, rows, mode = 'top' }) {
                                         </div>
                                         <div className="text-xs text-brand-textSecondary">
                                             {fmtInt(row.chosen_count)} scelte ·{' '}
+                                            {fmtInt(row.opportunity_count)}{' '}
+                                            opportunità
+                                        </div>
+                                        <div className="text-[11px] text-brand-textSecondary/80">
                                             {fmtInt(row.availability_count)}{' '}
-                                            disponibilità
+                                            apparizioni nel menù ·{' '}
+                                            {fmtInt(row.patient_scope_count)}{' '}
+                                            pazienti
                                         </div>
                                     </>
                                 )}

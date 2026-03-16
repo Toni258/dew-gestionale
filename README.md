@@ -1,92 +1,123 @@
 # DEW Gestionale RSA
 
-Applicazione full stack per la gestione dei menù, dei piatti, degli utenti backoffice e della reportistica di una RSA.
+This project is a full-stack web application developed for a residential care facility (RSA) during my bachelor's internship/thesis work.
 
-Il progetto è stato pensato per lavorare **sullo stesso database dell'app mobile** già esistente. Per questo motivo il codice evita modifiche incompatibili allo schema condiviso e introduce le estensioni necessarie del gestionale solo tramite tabelle aggiuntive compatibili.
+The application was created to support the internal management of menus, dishes, users, dish suspensions, and food-related reports.
 
-## Stack
+## Project goal
 
-- Frontend: React + Vite
-- Backend: Node.js + Express
-- Database: MySQL
-- Auth backoffice: cookie HTTP-only + JWT firmato lato backend
+The main goal of the project was to create a web management platform for the staff, connected to an existing database already used by a separate mobile application.
 
-## Struttura principale
+Because of this, the project had to support new web features while remaining compatible with the shared database structure.
 
-```text
-backend/
-  config/
-  controllers/
-  db/
-  jobs/
-  middlewares/
-  repositories/
-  routes/
-  services/
-src/
-  components/
-  config/
-  context/
-  hooks/
-  pages/
-  services/
-  utils/
-shared/
-  constants.js
-sql/
-  20260314_add_food_availability_pairing_replacements.sql
+## Main functionalities
+
+### Authentication and access control
+
+- Login and logout for backoffice users
+- Protected routes
+- Role-based access control
+- Password reset request flow
+- Forced password change flow
+
+### Dish management
+
+- Create, edit, and delete dishes
+- Upload dish images
+- Manage nutritional values and allergens
+- Suspend dishes for a selected date range
+- Preview conflicts before applying a suspension
+- Replace suspended dishes inside menus
+
+### Menu management
+
+- Create and edit menus
+- Manage daily meal composition
+- Manage fixed dishes
+- Manage cheese rotation
+- Archive completed menus
+- View archived menus in a read-only section
+
+### User management
+
+- Manage backoffice users
+- Manage users linked to the mobile application
+- Suspend, reactivate, and remove users
+
+### Dashboard and reports
+
+- Dashboard with alerts and operational information
+- Overview of active dish suspensions
+- Menu-related checks
+- Reports and statistics about consumption and user choices
+
+## Technologies used
+
+### Frontend
+
+- React
+- React Router
+- Vite
+- Tailwind CSS
+
+### Backend
+
+- Node.js
+- Express
+- MySQL
+- JWT
+- Multer
+
+## Project structure
+
+### Backend
+
+- `routes`
+- `controllers`
+- `services`
+- `repositories`
+- `db`
+- `middlewares`
+- `config`
+- `utils`
+
+### Frontend
+
+- `pages`
+- `components`
+- `hooks`
+- `services`
+- `context`
+- `utils`
+
+## Technical notes
+
+Some relevant implementation details:
+
+- backoffice authentication uses an HTTP-only cookie
+- JWTs are signed on the backend
+- protected requests reload the current user from the database
+- image uploads are validated and stored through configurable paths
+- static file paths are managed through environment variables
+- background scheduler execution is protected with a MySQL named lock
+
+## Database constraint
+
+One important constraint of the project is that part of the database is shared with a separate mobile application.
+
+For this reason, I could not redesign shared tables freely.  
+The implementation had to remain compatible with the existing schema while adding the new web management logic.
+
+## Local setup
+
+### Frontend
+
+```bash
+npm install
+npm run dev
 ```
 
-## Cosa è stato sistemato nel refactor
-
-- configurazione backend centralizzata e letta da `.env`
-- sessione backoffice più sicura: ad ogni richiesta l'utente viene riletto dal database
-- eliminato il fallback insicuro del secret JWT
-- upload immagini piatti reso più sicuro e configurabile
-- cartella immagini separata dal path pubblico e pilotabile via variabili d'ambiente
-- ripristino sospensioni piatti corretto senza toccare tabelle condivise con la mobile app
-- dashboard sospensioni ottimizzata, senza query N+1 per i sostituti
-- route archivio ripulite: rimangono solo endpoint di lettura
-- eliminati endpoint e pagine di test/debug
-- frontend allineato a un layer API centralizzato (`src/services/*Api.js`)
-- reportistica spostata fuori dal controller in un service dedicato
-- introdotti file di deploy minimi (`DEPLOY.md`, config PM2, config Nginx)
-
-## Variabili d'ambiente principali
-
-### Backend (`backend/.env`)
-
-- `NODE_ENV`
-- `PORT`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_NAME`
-- `DB_CONNECTION_LIMIT`
-- `CORS_ORIGIN`
-- `TRUST_PROXY`
-- `JWT_SECRET`
-- `SESSION_DURATION_HOURS`
-- `COOKIE_SECURE`
-- `COOKIE_SAME_SITE`
-- `COOKIE_DOMAIN`
-- `FOOD_IMAGES_DIR`
-- `FOOD_IMAGES_PUBLIC_PATH`
-- `LOG_DIR`
-- `LOG_LEVEL`
-- `ENABLE_SCHEDULERS`
-- `SCHEDULER_LOCK_NAME`
-
-### Frontend (`.env`)
-
-- `VITE_API_BASE_URL`
-- `VITE_API_PROXY_TARGET`
-- `VITE_FOOD_IMAGES_PUBLIC_PATH`
-
-## Avvio locale
-
-### 1. Backend
+### Backend
 
 ```bash
 cd backend
@@ -94,52 +125,29 @@ npm install
 npm run dev
 ```
 
-### 2. Frontend
+## Environment variables
 
-```bash
-npm install
-npm run dev
-```
+The project uses environment variables for:
 
-## Database
+- API configuration
+- database connection
+- authentication
+- static file storage
+- scheduler behavior
 
-Per una base nuova dopo il dump:
+Example values are provided in:
 
-1. importa `Dump_dell_app_mobile.sql`
-2. esegui `patch_after_dump.sql`
-3. se il database era già stato portato avanti in precedenza, esegui anche la migration incrementale:
+- `.env.example`
+- `backend/.env.example`
 
-```bash
-sql/20260314_add_food_availability_pairing_replacements.sql
-```
+## Deploy notes
 
-## Nota importante sulle sospensioni piatti
+The backend exposes:
 
-Per rendere il ripristino sicuro, il gestionale ora traccia i pairing sostitutivi creati durante una sospensione nella tabella:
+- `GET /health`
 
-- `food_availability_pairing_replacements`
+The repository also includes:
 
-In questo modo, quando la sospensione termina, vengono spenti **solo** i pairing sostitutivi realmente creati dal gestionale per quella sospensione, senza toccare pairing legittimi del menù.
-
-## Cartelle runtime
-
-In locale il progetto usa già queste cartelle:
-
-- `storage/food-images/`
-- `logs/`
-
-In produzione puoi spostarle fuori dal repository semplicemente cambiando `.env`.
-
-## Healthcheck
-
-Il backend espone:
-
-```text
-GET /health
-```
-
-Risponde con un JSON semplice utile per controllo processo / reverse proxy.
-
-## Deploy
-
-Per una guida più pratica e concreta guarda `DEPLOY.md`.
+- `DEPLOY.md`
+- PM2 configuration
+- Nginx configuration

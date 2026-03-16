@@ -49,6 +49,13 @@ const COURSE_OPTIONS = [
     { value: 'coperto', label: 'Coperto' },
     { value: 'speciale', label: 'Speciale' },
 ];
+
+const FIRST_CHOICE_OPTIONS = [
+    { value: '', label: 'Tutti i tipi piatto' },
+    { value: '0', label: 'Solo piatti del giorno' },
+    { value: '1', label: 'Solo piatti fissi' },
+];
+
 export default function StatisticheConsumi() {
     const [menus, setMenus] = useState([]);
     const [menusLoading, setMenusLoading] = useState(true);
@@ -123,6 +130,7 @@ export default function StatisticheConsumi() {
                         patientId: '',
                         floor: '',
                         course: '',
+                        firstChoice: '',
                     });
                 }
             } catch (e) {
@@ -154,6 +162,7 @@ export default function StatisticheConsumi() {
                 patientId: '',
                 floor: '',
                 course: '',
+                firstChoice: '',
             };
         }
 
@@ -178,6 +187,9 @@ export default function StatisticheConsumi() {
                 : '',
             floor: appliedMatchesSelectedMenu ? (applied?.floor ?? '') : '',
             course: appliedMatchesSelectedMenu ? (applied?.course ?? '') : '',
+            firstChoice: appliedMatchesSelectedMenu
+                ? (applied?.firstChoice ?? '')
+                : '',
         };
     }, [selectedMenu, applied]);
 
@@ -208,7 +220,7 @@ export default function StatisticheConsumi() {
             commentsPage,
             commentsPageSize,
         };
-    }, [applied, page, pageSize]);
+    }, [applied, page, pageSize, commentsPage, commentsPageSize]);
 
     const fetchReport = useCallback(async () => {
         if (!requestParams) return;
@@ -227,6 +239,7 @@ export default function StatisticheConsumi() {
                     patientId: requestParams.patientId,
                     floor: requestParams.floor,
                     course: requestParams.course,
+                    firstChoice: requestParams.firstChoice,
                     page: requestParams.page,
                     pageSize: requestParams.pageSize,
                     commentsPage: requestParams.commentsPage,
@@ -301,12 +314,12 @@ export default function StatisticheConsumi() {
             patientId: values.patientId || '',
             floor: values.floor || '',
             course: values.course || '',
+            firstChoice: values.firstChoice || '',
         });
 
         setPage(1);
         setCommentsPage(1);
     };
-
 
     const renderRankList = (rows, mode) => {
         const badgeBg = mode === 'good' ? 'bg-brand-primary' : 'bg-red-600';
@@ -459,6 +472,7 @@ export default function StatisticheConsumi() {
 
                                 <div className="w-px w-full bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
 
+                                {/* Filters */}
                                 <div className="flex flex-col flex-[2] gap-4">
                                     <div className="flex gap-4">
                                         <FormGroup
@@ -485,6 +499,20 @@ export default function StatisticheConsumi() {
                                             />
                                         </FormGroup>
 
+                                        <FormGroup
+                                            name="firstChoice"
+                                            className="flex-[1.2]"
+                                        >
+                                            <CustomSelect
+                                                name="firstChoice"
+                                                options={FIRST_CHOICE_OPTIONS}
+                                                placeholder="Tutti i tipi piatto"
+                                                className="w-full"
+                                            />
+                                        </FormGroup>
+                                    </div>
+
+                                    <div className="flex gap-4 flex-wrap items-end">
                                         <FormGroup
                                             name="patientId"
                                             className="flex-[1.8]"
@@ -515,17 +543,17 @@ export default function StatisticheConsumi() {
                                                 className="w-full"
                                             />
                                         </FormGroup>
-                                    </div>
 
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="md"
-                                        className="mx-auto mx-12 px-6 py-2 rounded-md"
-                                        disabled={loading || menusLoading}
-                                    >
-                                        Applica filtri
-                                    </Button>
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            size="md"
+                                            className="mx-auto mx-12 px-6 py-2 rounded-md"
+                                            disabled={loading || menusLoading}
+                                        >
+                                            Applica filtri
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </Form>
@@ -535,35 +563,40 @@ export default function StatisticheConsumi() {
 
             <div className="mt-6 grid grid-cols-5 gap-5">
                 <KpiCard
-                    icon="⚠️"
+                    iconSrc="/warning giallo.png"
+                    iconAlt="Avviso"
                     iconBg="bg-yellow-100"
                     value={`${fmtDec(kpi.waste_kg, 2)} kg`}
                     label="Spreco totale stimato"
                     sub="Periodo selezionato"
                 />
                 <KpiCard
-                    icon="🔥"
+                    iconSrc="/fire red.png"
+                    iconAlt="Fuoco"
                     iconBg="bg-red-100"
                     value={fmtInt(kpi.kcal_wasted)}
                     label="Kcal sprecate"
                     sub="Energia non consumata"
                 />
                 <KpiCard
-                    icon="🍽️"
+                    iconSrc="/pie chart blue.png"
+                    iconAlt="Grafico a torta"
                     iconBg="bg-blue-100"
                     value={fmtDec(kpi.avg_consumption, 2)}
                     label="Consumo medio"
                     sub="Porzione media consumata"
                 />
                 <KpiCard
-                    icon="👍"
+                    iconSrc="/like primary.png"
+                    iconAlt="Gradimento"
                     iconBg="bg-green-100"
                     value={fmtPct(kpi.gradimento_pct)}
                     label="Gradimento"
                     sub="Pasti consumati completamente"
                 />
                 <KpiCard
-                    icon="📋"
+                    iconSrc="/clipboard check primary.png"
+                    iconAlt="Copertura questionario"
                     iconBg="bg-green-100"
                     value={fmtPct(kpi.coverage_pct)}
                     label="Copertura questionario"
@@ -574,7 +607,13 @@ export default function StatisticheConsumi() {
             <div className="mt-6 grid grid-cols-2 gap-6">
                 <Card>
                     <div className="flex items-center gap-2 mb-4">
-                        <span className="text-green-600 text-lg">★</span>
+                        <span className="text-green-600 text-lg">
+                            <img
+                                src="/star primary.png"
+                                alt="Top graditi"
+                                className="h-5 w-5 object-contain"
+                            />
+                        </span>
                         <div className="font-semibold text-brand-text">
                             Piatti più graditi
                         </div>
@@ -584,7 +623,13 @@ export default function StatisticheConsumi() {
 
                 <Card>
                     <div className="flex items-center gap-2 mb-4">
-                        <span className="text-red-600 text-lg">↘</span>
+                        <span className="text-red-600 text-lg">
+                            <img
+                                src="/down trend red.png"
+                                alt="Worst graditi"
+                                className="h-5 w-5 object-contain"
+                            />
+                        </span>
                         <div className="font-semibold text-brand-text">
                             Piatti meno graditi
                         </div>

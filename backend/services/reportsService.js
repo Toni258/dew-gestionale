@@ -8,6 +8,24 @@ function parsePositiveInt(value) {
     return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+function parseFirstChoiceFilter(value) {
+    if (value === '' || value === null || value === undefined) return null;
+    if (String(value) === '1') return 1;
+    if (String(value) === '0') return 0;
+    return null;
+}
+
+function applyFirstChoiceFilter(filter, firstChoice, mealAlias = 'm') {
+    if (firstChoice === null || firstChoice === undefined) {
+        return filter;
+    }
+
+    return {
+        where: `${filter.where} AND ${mealAlias}.first_choice = ? `,
+        params: [...(filter.params || []), Number(firstChoice)],
+    };
+}
+
 function latestPatientJoin(alias) {
     return `
         JOIN (
@@ -425,21 +443,33 @@ export async function getConsumiReportData(query = {}) {
             patientId = '',
             floor = '',
             course = '',
+            firstChoice = '',
             page = '1',
             pageSize = '10',
         } = query;
 
         if (!menuKind || !menuRef) {
-            throw new HttpError(400, 'Parametri obbligatori: menuKind, menuRef');
+            throw new HttpError(
+                400,
+                'Parametri obbligatori: menuKind, menuRef',
+            );
         }
 
         if (!start || !end) {
-            throw new HttpError(400, 'Parametri obbligatori: start, end (YYYY-MM-DD)');
+            throw new HttpError(
+                400,
+                'Parametri obbligatori: start, end (YYYY-MM-DD)',
+            );
         }
 
         if (end < start) {
-            throw new HttpError(400, 'La data di fine deve essere >= data inizio');
+            throw new HttpError(
+                400,
+                'La data di fine deve essere >= data inizio',
+            );
         }
+
+        const firstChoiceFilter = parseFirstChoiceFilter(firstChoice);
 
         const selectedMenu = await resolveSelectedMenu(menuKind, menuRef);
         if (!selectedMenu) {
@@ -447,7 +477,10 @@ export async function getConsumiReportData(query = {}) {
         }
 
         if (start < selectedMenu.start_date || end > selectedMenu.end_date) {
-            throw new HttpError(400, 'L’intervallo selezionato deve rientrare nel range del menù scelto');
+            throw new HttpError(
+                400,
+                'L’intervallo selezionato deve rientrare nel range del menù scelto',
+            );
         }
 
         const pageNum = Math.max(1, parseInt(page, 10) || 1);
@@ -514,34 +547,43 @@ export async function getConsumiReportData(query = {}) {
                 JOIN caregiver cg ON cg.id_caregiver = sx.id_caregiver
             `;
 
-            const surveyWhere = buildLiveSurveyWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                course,
-                seasonType: selectedMenu.season_type,
-            });
+            const surveyWhere = applyFirstChoiceFilter(
+                buildLiveSurveyWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    course,
+                    seasonType: selectedMenu.season_type,
+                }),
+                firstChoiceFilter,
+            );
 
-            const choiceWhere = buildLiveChoiceWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                course,
-                seasonType: selectedMenu.season_type,
-            });
+            const choiceWhere = applyFirstChoiceFilter(
+                buildLiveChoiceWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    course,
+                    seasonType: selectedMenu.season_type,
+                }),
+                firstChoiceFilter,
+            );
 
-            const extraWhere = buildLiveCommentsWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                seasonType: selectedMenu.season_type,
-            });
+            const extraWhere = applyFirstChoiceFilter(
+                buildLiveCommentsWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    seasonType: selectedMenu.season_type,
+                }),
+                firstChoiceFilter,
+            );
 
             where = surveyWhere.where;
             params = surveyWhere.params;
@@ -586,34 +628,43 @@ export async function getConsumiReportData(query = {}) {
                 JOIN caregiver cg ON cg.id_caregiver = sx.id_caregiver
             `;
 
-            const surveyWhere = buildArchiveSurveyWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                course,
-                idArchMenu: selectedMenu.id_arch_menu,
-            });
+            const surveyWhere = applyFirstChoiceFilter(
+                buildArchiveSurveyWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    course,
+                    idArchMenu: selectedMenu.id_arch_menu,
+                }),
+                firstChoiceFilter,
+            );
 
-            const choiceWhere = buildArchiveChoiceWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                course,
-                idArchMenu: selectedMenu.id_arch_menu,
-            });
+            const choiceWhere = applyFirstChoiceFilter(
+                buildArchiveChoiceWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    course,
+                    idArchMenu: selectedMenu.id_arch_menu,
+                }),
+                firstChoiceFilter,
+            );
 
-            const extraWhere = buildArchiveCommentsWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                idArchMenu: selectedMenu.id_arch_menu,
-            });
+            const extraWhere = applyFirstChoiceFilter(
+                buildArchiveCommentsWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    idArchMenu: selectedMenu.id_arch_menu,
+                }),
+                firstChoiceFilter,
+            );
 
             where = surveyWhere.where;
             params = surveyWhere.params;
@@ -831,6 +882,11 @@ export async function getConsumiReportData(query = {}) {
                 patientId: patientId || '',
                 floor: floor || '',
                 course: course || '',
+                firstChoice:
+                    firstChoiceFilter === null ||
+                    firstChoiceFilter === undefined
+                        ? ''
+                        : String(firstChoiceFilter),
                 page: pageNum,
                 pageSize: sizeNum,
             },
@@ -1264,6 +1320,7 @@ export async function getScelteReportData(query = {}) {
             patientId = '',
             floor = '',
             course = '',
+            firstChoice = '',
             week = '',
             chooser = '',
             babyFood = '',
@@ -1274,15 +1331,24 @@ export async function getScelteReportData(query = {}) {
         } = query;
 
         if (!menuKind || !menuRef) {
-            throw new HttpError(400, 'Parametri obbligatori: menuKind, menuRef');
+            throw new HttpError(
+                400,
+                'Parametri obbligatori: menuKind, menuRef',
+            );
         }
 
         if (!start || !end) {
-            throw new HttpError(400, 'Parametri obbligatori: start, end (YYYY-MM-DD)');
+            throw new HttpError(
+                400,
+                'Parametri obbligatori: start, end (YYYY-MM-DD)',
+            );
         }
 
         if (end < start) {
-            throw new HttpError(400, 'La data di fine deve essere >= data inizio');
+            throw new HttpError(
+                400,
+                'La data di fine deve essere >= data inizio',
+            );
         }
 
         const selectedMenu = await resolveSelectedMenu(menuKind, menuRef);
@@ -1291,12 +1357,16 @@ export async function getScelteReportData(query = {}) {
         }
 
         if (start < selectedMenu.start_date || end > selectedMenu.end_date) {
-            throw new HttpError(400, 'L’intervallo selezionato deve rientrare nel range del menù scelto');
+            throw new HttpError(
+                400,
+                'L’intervallo selezionato deve rientrare nel range del menù scelto',
+            );
         }
 
         const weekNum = parseWeekFilter(week);
         const chooserFilter = parseChooserFilter(chooser);
         const babyFoodFilter = parseBabyFoodFilter(babyFood);
+        const firstChoiceFilter = parseFirstChoiceFilter(firstChoice);
 
         const pageNum = Math.max(1, parseInt(page, 10) || 1);
         const sizeNum = Math.min(
@@ -1340,28 +1410,34 @@ export async function getScelteReportData(query = {}) {
                 JOIN caregiver cg ON cg.id_caregiver = c.id_caregiver
             `;
 
-            const availabilityFilter = buildLiveScelteAvailabilityWhere({
-                start,
-                end,
-                meal,
-                course,
-                week: weekNum,
-                seasonType: selectedMenu.season_type,
-                menuStartDate: selectedMenu.start_date,
-            });
+            const availabilityFilter = applyFirstChoiceFilter(
+                buildLiveScelteAvailabilityWhere({
+                    start,
+                    end,
+                    meal,
+                    course,
+                    week: weekNum,
+                    seasonType: selectedMenu.season_type,
+                    menuStartDate: selectedMenu.start_date,
+                }),
+                firstChoiceFilter,
+            );
 
-            const choiceFilter = buildLiveScelteChoiceWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                course,
-                week: weekNum,
-                chooser: chooserFilter,
-                babyFood: babyFoodFilter,
-                seasonType: selectedMenu.season_type,
-            });
+            const choiceFilter = applyFirstChoiceFilter(
+                buildLiveScelteChoiceWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    course,
+                    week: weekNum,
+                    chooser: chooserFilter,
+                    babyFood: babyFoodFilter,
+                    seasonType: selectedMenu.season_type,
+                }),
+                firstChoiceFilter,
+            );
 
             availabilityWhere = availabilityFilter.where;
             availabilityParams = availabilityFilter.params;
@@ -1395,28 +1471,34 @@ export async function getScelteReportData(query = {}) {
                 JOIN caregiver cg ON cg.id_caregiver = c.id_caregiver
             `;
 
-            const availabilityFilter = buildArchiveScelteAvailabilityWhere({
-                start,
-                end,
-                meal,
-                course,
-                week: weekNum,
-                idArchMenu: selectedMenu.id_arch_menu,
-                menuStartDate: selectedMenu.start_date,
-            });
+            const availabilityFilter = applyFirstChoiceFilter(
+                buildArchiveScelteAvailabilityWhere({
+                    start,
+                    end,
+                    meal,
+                    course,
+                    week: weekNum,
+                    idArchMenu: selectedMenu.id_arch_menu,
+                    menuStartDate: selectedMenu.start_date,
+                }),
+                firstChoiceFilter,
+            );
 
-            const choiceFilter = buildArchiveScelteChoiceWhere({
-                start,
-                end,
-                meal,
-                patientId,
-                floor,
-                course,
-                week: weekNum,
-                chooser: chooserFilter,
-                babyFood: babyFoodFilter,
-                idArchMenu: selectedMenu.id_arch_menu,
-            });
+            const choiceFilter = applyFirstChoiceFilter(
+                buildArchiveScelteChoiceWhere({
+                    start,
+                    end,
+                    meal,
+                    patientId,
+                    floor,
+                    course,
+                    week: weekNum,
+                    chooser: chooserFilter,
+                    babyFood: babyFoodFilter,
+                    idArchMenu: selectedMenu.id_arch_menu,
+                }),
+                firstChoiceFilter,
+            );
 
             availabilityWhere = availabilityFilter.where;
             availabilityParams = availabilityFilter.params;
@@ -1690,6 +1772,7 @@ export async function getScelteReportData(query = {}) {
                 (m.day_index + 1) AS day_number,
                 FLOOR(m.day_index / 7) + 1 AS week_number,
                 m.type AS meal_type,
+                m.first_choice,
                 f.type AS course_type,
                 f.name AS dish_name,
                 c.chooser,
@@ -1856,6 +1939,11 @@ export async function getScelteReportData(query = {}) {
                 patientId: patientId || '',
                 floor: floor || '',
                 course: course || '',
+                firstChoice:
+                    firstChoiceFilter === null ||
+                    firstChoiceFilter === undefined
+                        ? ''
+                        : String(firstChoiceFilter),
                 week: weekNum ? String(weekNum) : '',
                 chooser: chooserFilter || '',
                 babyFood:

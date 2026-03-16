@@ -51,6 +51,12 @@ const COURSE_OPTIONS = [
     { value: 'speciale', label: 'Speciale' },
 ];
 
+const FIRST_CHOICE_OPTIONS = [
+    { value: '', label: 'Tutti i tipi piatto' },
+    { value: '0', label: 'Solo piatti del giorno' },
+    { value: '1', label: 'Solo piatti fissi' },
+];
+
 const WEEK_OPTIONS = [
     { value: '', label: 'Tutte le settimane' },
     { value: '1', label: 'Settimana 1' },
@@ -161,6 +167,7 @@ export default function StatisticheScelte() {
                         patientId: '',
                         floor: '',
                         course: '',
+                        firstChoice: '',
                         week: '',
                         chooser: '',
                         babyFood: '',
@@ -195,6 +202,7 @@ export default function StatisticheScelte() {
                 patientId: '',
                 floor: '',
                 course: '',
+                firstChoice: '',
                 week: '',
                 chooser: '',
                 babyFood: '',
@@ -222,6 +230,9 @@ export default function StatisticheScelte() {
                 : '',
             floor: appliedMatchesSelectedMenu ? (applied?.floor ?? '') : '',
             course: appliedMatchesSelectedMenu ? (applied?.course ?? '') : '',
+            firstChoice: appliedMatchesSelectedMenu
+                ? (applied?.firstChoice ?? '')
+                : '',
             week: appliedMatchesSelectedMenu ? (applied?.week ?? '') : '',
             chooser: appliedMatchesSelectedMenu ? (applied?.chooser ?? '') : '',
             babyFood: appliedMatchesSelectedMenu
@@ -276,6 +287,7 @@ export default function StatisticheScelte() {
                     patientId: requestParams.patientId,
                     floor: requestParams.floor,
                     course: requestParams.course,
+                    firstChoice: requestParams.firstChoice,
                     week: requestParams.week,
                     chooser: requestParams.chooser,
                     babyFood: requestParams.babyFood,
@@ -370,6 +382,7 @@ export default function StatisticheScelte() {
             patientId: values.patientId || '',
             floor: values.floor || '',
             course: values.course || '',
+            firstChoice: values.firstChoice || '',
             week: values.week || '',
             chooser: values.chooser || '',
             babyFood: values.babyFood ?? '',
@@ -386,6 +399,7 @@ export default function StatisticheScelte() {
             valueLabel: fmtPct(row.selection_rate_pct, 1),
             chosen_count: Number(row.chosen_count || 0),
             opportunity_count: Number(row.opportunity_count || 0),
+            availability_count: Number(row.availability_count || 0),
         }));
     }, [charts.weeklyTrend]);
 
@@ -396,6 +410,7 @@ export default function StatisticheScelte() {
             valueLabel: fmtPct(row.selection_rate_pct, 1),
             chosen_count: Number(row.chosen_count || 0),
             opportunity_count: Number(row.opportunity_count || 0),
+            availability_count: Number(row.availability_count || 0),
         }));
     }, [charts.byCourse]);
 
@@ -504,11 +519,12 @@ export default function StatisticheScelte() {
 
                                 <div className="w-px w-full bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
 
+                                {/* Filters */}
                                 <div className="flex flex-col flex-[2] gap-4 min-w-[620px]">
                                     <div className="flex gap-4 flex-wrap">
                                         <FormGroup
                                             name="meal"
-                                            className="min-w-[150px] flex-1"
+                                            className="max-w-[150px] flex-1"
                                         >
                                             <CustomSelect
                                                 name="meal"
@@ -526,6 +542,18 @@ export default function StatisticheScelte() {
                                                 name="course"
                                                 options={COURSE_OPTIONS}
                                                 placeholder="Tutte le portate"
+                                                className="w-full"
+                                            />
+                                        </FormGroup>
+
+                                        <FormGroup
+                                            name="firstChoice"
+                                            className="min-w-[210px] flex-1"
+                                        >
+                                            <CustomSelect
+                                                name="firstChoice"
+                                                options={FIRST_CHOICE_OPTIONS}
+                                                placeholder="Tutti i tipi piatto"
                                                 className="w-full"
                                             />
                                         </FormGroup>
@@ -553,7 +581,9 @@ export default function StatisticheScelte() {
                                                 className="w-full"
                                             />
                                         </FormGroup>
+                                    </div>
 
+                                    <div className="flex gap-4 flex-wrap items-end">
                                         <FormGroup
                                             name="babyFood"
                                             className="min-w-[180px] flex-1"
@@ -565,9 +595,6 @@ export default function StatisticheScelte() {
                                                 className="w-full"
                                             />
                                         </FormGroup>
-                                    </div>
-
-                                    <div className="flex gap-4 flex-wrap items-end">
                                         <FormGroup
                                             name="patientId"
                                             className="min-w-[320px] flex-[2]"
@@ -622,43 +649,49 @@ export default function StatisticheScelte() {
 
             <div className="mt-6 grid grid-cols-6 gap-5">
                 <KpiCard
-                    icon="📦"
+                    iconSrc="/checklist-secondary.png"
+                    iconAlt="Scelte totali"
                     iconBg="bg-blue-100"
                     value={fmtInt(kpi.total_choices)}
                     label="Scelte totali"
                     sub="Record di scelta nel periodo"
                 />
                 <KpiCard
-                    icon="🍽️"
+                    iconSrc="/dish-primary.png"
+                    iconAlt="Piatti distinti scelti"
                     iconBg="bg-green-100"
                     value={fmtInt(kpi.distinct_dishes_chosen)}
                     label="Piatti distinti scelti"
                     sub="Varietà reale delle preferenze"
                 />
                 <KpiCard
-                    icon="📈"
+                    iconSrc="/percentage-chart-secondary.png"
+                    iconAlt="Tasso di scelta"
                     iconBg="bg-purple-100"
                     value={fmtPct(kpi.overall_choice_rate_pct, 1)}
-                    label="Tasso medio di scelta"
-                    sub="Scelte / opportunità stimate"
+                    label="Tasso medio stimato"
+                    sub="Scelte registrate / opportunità stimate"
                 />
                 <KpiCard
-                    icon="🚫"
+                    iconSrc="/empty-plate-error.png"
+                    iconAlt=""
                     iconBg="bg-red-100"
                     value={fmtInt(kpi.never_chosen_count)}
                     label="Piatti mai scelti"
                     sub="Disponibili ma mai richiesti"
                 />
                 <KpiCard
-                    icon="🏷️"
+                    iconSrc="/tag-warning.png"
+                    iconAlt="Categoria più richiesta"
                     iconBg="bg-yellow-100"
                     value={kpi.top_category_label || '—'}
                     label="Categoria più richiesta"
                     sub="Basata sulle scelte registrate"
                 />
                 <KpiCard
-                    icon="🥣"
-                    iconBg="bg-orange-100"
+                    iconSrc="/baby-food-primary.png"
+                    iconAlt="Scelte baby food"
+                    iconBg="bg-green-100"
                     value={fmtPct(kpi.baby_food_share_pct, 1)}
                     label="Scelte baby food"
                     sub="Quota sul totale delle scelte"
@@ -667,29 +700,32 @@ export default function StatisticheScelte() {
 
             <div className="mt-4 text-sm text-brand-textSecondary">
                 Tasso di scelta = scelte registrate / opportunità stimate. Le
-                opportunità stimate sono calcolate come disponibilità del piatto
-                × pazienti nel perimetro filtrato (
+                opportunità stimate sono calcolate come apparizioni del piatto
+                nel menù × pazienti nel perimetro filtrato (
                 {fmtInt(kpi.patient_scope_count)}).
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-6">
                 <RankCard
                     title="Piatti più richiesti"
-                    icon="⭐"
+                    iconSrc="/star primary.png"
+                    iconAlt="Piatti più richiesti"
                     rows={rankings.topChosen}
                     mode="top"
                 />
 
                 <RankCard
                     title="Piatti meno richiesti"
-                    icon="↘"
+                    iconSrc="/down trend red.png"
+                    iconAlt="Piatti meno richiesti"
                     rows={rankings.bottomChosen}
                     mode="bottom"
                 />
 
                 <RankCard
                     title="Piatti mai scelti"
-                    icon="🕳️"
+                    iconSrc="/no-food-text-secondary.png"
+                    iconAlt="Piatti mai scelti"
                     rows={rankings.neverChosen}
                     mode="never"
                 />
@@ -698,25 +734,29 @@ export default function StatisticheScelte() {
             <div className="mt-8 grid grid-cols-2 gap-6">
                 <BarsCard
                     title="Trend di scelta per settimana"
-                    icon="📆"
+                    sub="Scelte registrate / opportunità stimate nel perimetro filtrato"
+                    iconSrc="/calendar-primary.png"
+                    iconAlt="Trend settimanale"
                     rows={weeklyChartRows}
                     barMode="percent"
                     metaRenderer={(row) =>
                         `${fmtInt(row.chosen_count)} scelte · ${fmtInt(
                             row.opportunity_count,
-                        )} opportunità`
+                        )} opportunità · ${fmtInt(row.availability_count)} apparizioni`
                     }
                 />
 
                 <BarsCard
                     title="Tasso di scelta per portata"
-                    icon="🧩"
+                    sub="Scelte registrate / opportunità stimate nel perimetro filtrato"
+                    iconSrc="/category-primary.png"
+                    iconAlt="Tasso di scelta per portata"
                     rows={byCourseChartRows}
                     barMode="percent"
                     metaRenderer={(row) =>
                         `${fmtInt(row.chosen_count)} scelte · ${fmtInt(
                             row.opportunity_count,
-                        )} opportunità`
+                        )} opportunità · ${fmtInt(row.availability_count)} apparizioni`
                     }
                 />
             </div>
@@ -724,7 +764,8 @@ export default function StatisticheScelte() {
             <div className="mt-6">
                 <BarsCard
                     title="Distribuzione per compilatore"
-                    icon="👥"
+                    iconSrc="/group-users-secondary.png"
+                    iconAlt="Distribuzione per compilatore"
                     rows={byChooserChartRows}
                     barMode="percent"
                     metaRenderer={(row) => `${fmtInt(row.chosen_count)} scelte`}
@@ -739,8 +780,8 @@ export default function StatisticheScelte() {
                                 Tabella aggregata piatti
                             </div>
                             <div className="text-sm text-brand-textSecondary">
-                                Disponibilità, opportunità e tasso di scelta per
-                                piatto
+                                Apparizioni nel menù, opportunità stimate e
+                                tasso di scelta per piatto
                             </div>
                         </div>
                     </div>
@@ -756,19 +797,24 @@ export default function StatisticheScelte() {
                                         Portata
                                     </th>
                                     <th className="text-right py-2 pr-4">
-                                        Disponibilità
+                                        {' '}
+                                        Apparizioni menù{' '}
                                     </th>
                                     <th className="text-right py-2 pr-4">
-                                        Pazienti
+                                        {' '}
+                                        Pazienti{' '}
                                     </th>
                                     <th className="text-right py-2 pr-4">
-                                        Opportunità
+                                        {' '}
+                                        Opportunità stimate{' '}
                                     </th>
                                     <th className="text-right py-2 pr-4">
-                                        Scelte
+                                        {' '}
+                                        Scelte{' '}
                                     </th>
                                     <th className="text-right py-2 pr-4">
-                                        Tasso
+                                        {' '}
+                                        Tasso stimato{' '}
                                     </th>
                                     <th className="text-right py-2 pr-4">
                                         Ospite
@@ -893,6 +939,9 @@ export default function StatisticheScelte() {
                                         Pasto
                                     </th>
                                     <th className="text-left py-2 pr-4">
+                                        Tipo piatto
+                                    </th>
+                                    <th className="text-left py-2 pr-4">
                                         Portata
                                     </th>
                                     <th className="text-left py-2 pr-4">
@@ -914,7 +963,7 @@ export default function StatisticheScelte() {
                                 {(details.data || []).length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={11}
+                                            colSpan={12}
                                             className="py-6 text-brand-textSecondary italic"
                                         >
                                             Nessuna scelta trovata.
@@ -940,10 +989,17 @@ export default function StatisticheScelte() {
                                                 {fmtInt(r.day_number)}
                                             </td>
                                             <td className="py-2 pr-4">
-                                                {fmtInt(r.week_number)}
+                                                {' '}
+                                                {fmtInt(r.week_number)}{' '}
                                             </td>
                                             <td className="py-2 pr-4 capitalize">
-                                                {r.meal_type}
+                                                {' '}
+                                                {r.meal_type}{' '}
+                                            </td>
+                                            <td className="py-2 pr-4">
+                                                {Number(r.first_choice) === 1
+                                                    ? 'Fisso'
+                                                    : 'Del giorno'}
                                             </td>
                                             <td className="py-2 pr-4 capitalize">
                                                 {formatCourseLabel(
@@ -951,7 +1007,8 @@ export default function StatisticheScelte() {
                                                 )}
                                             </td>
                                             <td className="py-2 pr-4">
-                                                {r.dish_name}
+                                                {' '}
+                                                {r.dish_name}{' '}
                                             </td>
                                             <td className="py-2 pr-4">
                                                 {formatChooserLabel(r.chooser)}

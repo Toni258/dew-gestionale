@@ -124,14 +124,14 @@ export default function DatePicker({
         setCurrent((p) =>
             p.month === 11
                 ? { year: p.year + 1, month: 0 }
-                : { ...p, month: p.month + 1 }
+                : { ...p, month: p.month + 1 },
         );
 
     const prevMonth = () =>
         setCurrent((p) =>
             p.month === 0
                 ? { year: p.year - 1, month: 11 }
-                : { ...p, month: p.month - 1 }
+                : { ...p, month: p.month - 1 },
         );
 
     // ========== Formatta data (evita bug UTC) ==========
@@ -297,8 +297,8 @@ export default function DatePicker({
                                             selected
                                                 ? 'bg-brand-primary text-white font-semibold'
                                                 : todayCell
-                                                ? 'text-brand-primary font-bold'
-                                                : 'hover:bg-brand-primary/10 hover:scale-[1.05]'
+                                                  ? 'text-brand-primary font-bold bg-brand-primary/10'
+                                                  : 'hover:bg-brand-primary/10 hover:scale-[1.05]'
                                         }
                                     `}
                                 >
