@@ -20,7 +20,8 @@ export default function MobileAppUsersTable({
 }) {
     return (
         <div className="overflow-hidden rounded-xl border border-brand-divider bg-white">
-            <table className="w-full table-auto text-sm">
+            <div className="overflow-x-auto">
+                <table className="min-w-[980px] w-full table-auto text-sm">
                 <thead className="bg-brand-primary text-white">
                     <tr>
                         <th className="px-4 py-3 text-left">STATO</th>
@@ -96,6 +97,7 @@ export default function MobileAppUsersTable({
                     ))}
                 </tbody>
             </table>
+            </div>
 
             <Pagination
                 total={total}

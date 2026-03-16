@@ -34,16 +34,16 @@ export default memo(function Pagination({
 
     return (
         <div
-            className={`px-4 py-3 border-t border-brand-divider grid grid-cols-3 items-center ${className}`}
+            className={`grid gap-3 border-t border-brand-divider px-4 py-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-center ${className}`}
         >
             {/* RISULTATI */}
-            <div className="text-sm text-brand-textSecondary">
+            <div className="text-sm text-brand-textSecondary lg:justify-self-start">
                 Risultati:{' '}
                 <span className="font-semibold text-brand-text">{total}</span>
             </div>
 
             {/* CAROSELLO PAGINE */}
-            <div className="flex justify-center items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-self-center">
                 {/* PREV */}
                 <button
                     type="button"
@@ -122,7 +122,7 @@ export default memo(function Pagination({
             </div>
 
             {/* PAGE SIZE */}
-            <div className="flex justify-end items-center gap-2 text-sm">
+            <div className="flex items-center justify-start gap-2 text-sm sm:justify-end lg:justify-self-end">
                 <span className="text-brand-textSecondary">Mostra</span>
 
                 <select

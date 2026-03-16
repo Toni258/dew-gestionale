@@ -266,9 +266,17 @@
 
     /* Effetto hover per i menù card */
     .menu-card {
-        @apply bg-brand-card rounded-xl shadow-card px-2 py-6 flex
+        @apply flex flex-col gap-5 rounded-xl bg-brand-card px-4 py-5 shadow-card
            transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
-           hover:shadow-cardHover hover:scale-[1.01];
+           hover:shadow-cardHover hover:scale-[1.01] sm:px-6;
+    }
+
+    .menu-card__divider {
+        display: none;
+        width: 1px;
+        align-self: stretch;
+        margin-inline: 0.75rem;
+        background: theme('colors.brand.divider');
     }
 
     .menu-card:active {
@@ -457,6 +465,39 @@
         border-radius: 50%;
         border: 1px solid rgba(57, 142, 59, 0.4);
         animation: activeDotRing 2.4s ease-out infinite;
+    }
+
+
+    @media (min-width: 1024px) {
+        .menu-card {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            gap: 0;
+            padding-inline: 0.5rem;
+            padding-block: 1.5rem;
+        }
+
+        .menu-card__divider {
+            display: block;
+        }
+    }
+
+    @media (max-width: 1279px) {
+        .menu-grid {
+            --cell-size: 160px;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .menu-grid {
+            --header-size: 32px;
+            --cell-size: 150px;
+        }
+
+        .menu-grid__cell {
+            gap: 14px;
+        }
     }
 
     /* Pallino attivo: pulse lento + ring morbido */

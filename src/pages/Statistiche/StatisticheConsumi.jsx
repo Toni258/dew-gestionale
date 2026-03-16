@@ -516,8 +516,8 @@ export default function StatisticheConsumi() {
                                 setFormVersion={setFormVersion}
                             />
 
-                            <div className="flex justify-between gap-4 flex-wrap">
-                                <div className="flex flex-col gap-4 flex-[1] min-w-[280px]">
+                            <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+                                <div className="flex w-full flex-col gap-4 xl:max-w-[320px] xl:flex-[1]">
                                     <FormGroup name="menuValue">
                                         <SearchableSelect
                                             name="menuValue"
@@ -529,7 +529,7 @@ export default function StatisticheConsumi() {
 
                                     <FormGroup
                                         name="start"
-                                        className="min-w-[240px]"
+                                        className="w-full"
                                     >
                                         <DateRangePicker
                                             startName="start"
@@ -546,13 +546,13 @@ export default function StatisticheConsumi() {
                                     </FormGroup>
                                 </div>
 
-                                <div className="w-px w-full bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)]" />
+                                <div className="hidden self-stretch bg-[repeating-linear-gradient(to_bottom,#C6C6C6_0,#C6C6C6_6px,transparent_6px,transparent_12px)] xl:block xl:w-px" />
 
-                                <div className="flex flex-col flex-[2] gap-4 min-w-[620px]">
-                                    <div className="flex gap-4 flex-wrap">
+                                <div className="flex w-full flex-col gap-4 xl:flex-[2]">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
                                         <FormGroup
                                             name="meal"
-                                            className="max-w-[150px] flex-1"
+                                            className="w-full sm:min-w-[150px] sm:flex-1"
                                         >
                                             <CustomSelect
                                                 name="meal"
@@ -564,7 +564,7 @@ export default function StatisticheConsumi() {
 
                                         <FormGroup
                                             name="course"
-                                            className="min-w-[170px] flex-1"
+                                            className="w-full sm:min-w-[170px] sm:flex-1"
                                         >
                                             <CustomSelect
                                                 name="course"
@@ -576,7 +576,7 @@ export default function StatisticheConsumi() {
 
                                         <FormGroup
                                             name="firstChoice"
-                                            className="min-w-[210px] flex-1"
+                                            className="w-full sm:min-w-[210px] sm:flex-1"
                                         >
                                             <CustomSelect
                                                 name="firstChoice"
@@ -587,10 +587,10 @@ export default function StatisticheConsumi() {
                                         </FormGroup>
                                     </div>
 
-                                    <div className="flex gap-4 flex-wrap items-end">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
                                         <FormGroup
                                             name="patientId"
-                                            className="min-w-[320px] flex-[2]"
+                                            className="w-full sm:min-w-[320px] sm:flex-[2]"
                                         >
                                             <SearchableSelect
                                                 name="patientId"
@@ -609,7 +609,7 @@ export default function StatisticheConsumi() {
 
                                         <FormGroup
                                             name="floor"
-                                            className="min-w-[160px] flex-1"
+                                            className="w-full sm:min-w-[160px] sm:flex-1"
                                         >
                                             <CustomSelect
                                                 name="floor"
@@ -640,7 +640,7 @@ export default function StatisticheConsumi() {
                 </Card>
             </div>
 
-            <div className="mt-6 grid grid-cols-5 gap-5">
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                 <KpiCard
                     iconSrc="/icons/warning giallo.png"
                     iconAlt="Spreco totale"
@@ -687,7 +687,7 @@ export default function StatisticheConsumi() {
                 />
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-6">
+            <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
                 <ConsumiRankCard
                     title="Piatti più graditi"
                     iconSrc="/icons/star primary.png"

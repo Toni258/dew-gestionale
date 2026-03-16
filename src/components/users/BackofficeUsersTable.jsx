@@ -26,7 +26,8 @@ export default function BackofficeUsersTable({
 }) {
     return (
         <div className="overflow-hidden rounded-xl border border-brand-divider bg-white">
-            <table className="w-full table-auto text-sm">
+            <div className="overflow-x-auto">
+                <table className="min-w-[1180px] w-full table-auto text-sm">
                 <thead className="bg-brand-primary text-white">
                     <tr>
                         <th className="px-4 py-3 text-left">RUOLO</th>
@@ -154,6 +155,7 @@ export default function BackofficeUsersTable({
                     })}
                 </tbody>
             </table>
+            </div>
 
             <Pagination
                 total={total}

@@ -13,15 +13,15 @@ export default function UsersFiltersBar({
     children,
 }) {
     return (
-        <div className="mt-1 mb-3 flex h-[60px] items-center justify-between">
+        <div className="mb-4 mt-2 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <SearchInput
                 placeholder={searchPlaceholder}
                 onSearch={onSearch}
-                className="w-[400px] [&>input]:rounded-full"
+                className="w-full xl:w-[400px] [&>input]:rounded-full"
             />
 
             <Form key={formKey} initialValues={initialValues} onSubmit={onSubmit}>
-                <div className="flex items-center gap-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
                     {children}
 
                     <Button

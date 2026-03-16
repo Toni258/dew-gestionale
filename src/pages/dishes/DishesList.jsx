@@ -98,14 +98,14 @@ export default function DishesList() {
         <AppLayout title="GESTIONE PIATTI">
             <h1 className="text-3xl font-semibold">Elenco piatti</h1>
 
-            <div className="mt-1 mb-3 h-[60px] flex justify-between items-center">
+            <div className="mb-4 mt-2 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <SearchInput
                     placeholder="Cerca un piatto per nome..."
                     onSearch={(q) => {
                         setQuery(q);
                         setPage(1);
                     }}
-                    className="w-[400px] [&>input]:rounded-full"
+                    className="w-full xl:w-[400px] [&>input]:rounded-full"
                 />
 
                 <Form
@@ -116,8 +116,8 @@ export default function DishesList() {
                     }}
                     onSubmit={handleFilters}
                 >
-                    <div className="flex items-center gap-5">
-                        <FormGroup name="stato" className="w-[145px]">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+                        <FormGroup name="stato" className="w-full sm:w-[145px]">
                             <CustomSelect
                                 name="stato"
                                 placeholder="Stato piatto"
@@ -127,7 +127,7 @@ export default function DishesList() {
                             />
                         </FormGroup>
 
-                        <FormGroup name="allergeni" className="w-[180px]">
+                        <FormGroup name="allergeni" className="w-full sm:w-[180px]">
                             <MultiSelectCheckbox
                                 name="allergeni"
                                 placeholder="Allergeni esclusi"
@@ -137,7 +137,7 @@ export default function DishesList() {
                             />
                         </FormGroup>
 
-                        <FormGroup name="tipologia" className="w-[145px]">
+                        <FormGroup name="tipologia" className="w-full sm:w-[145px]">
                             <CustomSelect
                                 name="tipologia"
                                 placeholder="Tutti i tipi"

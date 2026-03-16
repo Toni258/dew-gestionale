@@ -13,7 +13,7 @@ export default function SuspensionBlock({ initialSuspension }) {
 
     return (
         <>
-            <div className="mt-8 flex items-center gap-6">
+            <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-6">
                 <h2 className="text-3xl font-semibold">Sospensione piatto</h2>
 
                 <button
@@ -58,8 +58,8 @@ export default function SuspensionBlock({ initialSuspension }) {
                     <div className="absolute inset-0 z-10 bg-gray-200/70 rounded-xl" />
                 )}
 
-                <div className="flex gap-6 relative z-20">
-                    <div className="w-1/6 flex flex-col gap-4">
+                <div className="relative z-20 flex flex-col gap-6 lg:flex-row">
+                    <div className="flex w-full flex-col gap-4 lg:w-1/4 xl:w-1/6">
                         <FormGroup label="Data inizio" required={enabled}>
                             <DatePicker name="start_date" disabled={!enabled} />
                         </FormGroup>
@@ -68,7 +68,7 @@ export default function SuspensionBlock({ initialSuspension }) {
                         </FormGroup>
                     </div>
 
-                    <div className="w-5/6">
+                    <div className="w-full lg:w-3/4 xl:w-5/6">
                         <FormGroup label="Motivo">
                             <TextArea
                                 name="reason"

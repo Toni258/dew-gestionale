@@ -56,7 +56,7 @@ export default function MenuPiattiFissi() {
         return (
             <AppLayout title="GESTIONE MENÙ">
                 <h1 className="text-3xl font-semibold">Scelta piatti fissi</h1>
-                <div className="mx-4 my-6">Caricamento…</div>
+                <div className="mx-0 my-6 overflow-x-auto">Caricamento…</div>
             </AppLayout>
         );
     }
@@ -64,7 +64,7 @@ export default function MenuPiattiFissi() {
     return (
         <AppLayout title="GESTIONE MENÙ">
             <div className="w-full max-w-7xl mx-auto">
-                <h1 className="text-3xl font-semibold pl-16">
+                <h1 className="text-3xl font-semibold">
                     Scelta piatti fissi
                 </h1>
 
@@ -81,11 +81,11 @@ export default function MenuPiattiFissi() {
                     />
                 </div>
 
-                <div className="flex justify-center mx-4 mt-2 mb-10 gap-8">
+                <div className="mx-0 mb-10 mt-2 flex flex-col justify-center gap-4 sm:flex-row sm:gap-8">
                     <Button
                         variant="secondary"
                         size="lg"
-                        className="w-[240px]"
+                        className="w-full sm:w-[240px]"
                         onClick={() =>
                             navigate(`/menu/edit/${decodedSeasonType}`)
                         }

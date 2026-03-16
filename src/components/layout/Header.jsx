@@ -1,53 +1,75 @@
 // Layout header.
 import { useAuth } from '../../context/AuthContext';
 
-export default function Header({ title }) {
+export default function Header({ title, sidebarOpen, onToggleSidebar }) {
     const { user } = useAuth();
 
     const username = user ? `${user.name} ${user.surname}` : '';
 
     return (
-        <header
-            className="
-                w-full h-16 bg-brand-primary shadow flex items-center justify-between 
-                px-10 fixed top-0 left-0 z-50 border-b border-[#A4A4A4]
-            "
-        >
-            {/* Left: Logo + App Name */}
-            <div className="flex items-center select-none">
-                <img
-                    src="/icons/Do Eat Well Logo Bianco.png"
-                    alt="logo"
-                    className="w-[55px] h-[55px]"
-                    draggable={false}
-                />
+        <header className="fixed left-0 top-0 z-50 flex h-16 w-full items-center justify-between border-b border-[#A4A4A4] bg-brand-primary px-4 shadow sm:px-6 lg:px-8 xl:px-10">
+            <div className="flex min-w-0 items-center gap-3">
+                <button
+                    type="button"
+                    onClick={onToggleSidebar}
+                    aria-label={sidebarOpen ? 'Chiudi menu laterale' : 'Apri menu laterale'}
+                    aria-expanded={sidebarOpen}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 xl:hidden"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5"
+                        aria-hidden="true"
+                    >
+                        {sidebarOpen ? (
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        ) : (
+                            <>
+                                <path d="M3 6h18" />
+                                <path d="M3 12h18" />
+                                <path d="M3 18h18" />
+                            </>
+                        )}
+                    </svg>
+                </button>
 
-                <span className="font-semibold text-xl text-white ml-2">
-                    DEW Manager
-                </span>
+                <div className="flex min-w-0 items-center select-none">
+                    <img
+                        src="/icons/Do Eat Well Logo Bianco.png"
+                        alt="logo"
+                        className="h-11 w-11 shrink-0 sm:h-[55px] sm:w-[55px]"
+                        draggable={false}
+                    />
+
+                    <span className="ml-2 hidden truncate text-lg font-semibold text-white sm:block xl:text-xl">
+                        DEW Manager
+                    </span>
+                </div>
             </div>
 
-            {/* Center: Page Title */}
-            <div className="text-2xl font-bold text-white">{title}</div>
+            <div className="hidden min-w-0 flex-1 px-6 text-center md:block">
+                <div className="truncate text-lg font-bold text-white lg:text-2xl">
+                    {title}
+                </div>
+            </div>
 
-            {/* Right: User Info */}
             <div className="flex items-center gap-3">
-                <div
-                    className="
-                        flex items-center gap-2 px-3 py-1.5 rounded-xl
-                        bg-white/15 backdrop-blur
-                        border border-white/20
-                    "
-                >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-inner">
+                <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/15 px-2 py-1.5 backdrop-blur sm:px-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-inner">
                         <img
                             src="/icons/user icon verde.png"
-                            className="w-5 h-5 object-contain"
+                            className="h-5 w-5 object-contain"
                             draggable={false}
+                            alt="Utente autenticato"
                         />
                     </div>
 
-                    <span className="text-white text-md font-semibold tracking-wide">
+                    <span className="hidden max-w-[180px] truncate text-sm font-semibold tracking-wide text-white lg:block">
                         {username}
                     </span>
                 </div>

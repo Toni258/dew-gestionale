@@ -46,7 +46,7 @@ function SubmitButton() {
             type="submit"
             size="md"
             variant="primary"
-            className="w-[240px] text-lg rounded-lg"
+            className="w-full sm:w-[240px] text-lg rounded-lg"
             disabled={form?.submitting}
         >
             {form?.submitting ? 'Creazione in corso…' : 'Crea utente'}
@@ -249,7 +249,7 @@ export default function CreateUserGestionale() {
                         <FormGlobalError />
 
                         {/* GRID PRINCIPALE */}
-                        <div className="grid grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                             <FormGroup label="Nome" name="name" required>
                                 <Input name="name" type="text" />
                             </FormGroup>
@@ -279,7 +279,7 @@ export default function CreateUserGestionale() {
                                 />
                             </FormGroup>
 
-                            <div className="col-span-3">
+                            <div className="md:col-span-2 xl:col-span-3">
                                 <FormGroup label="Email" name="email" required>
                                     <Input
                                         name="email"
@@ -313,7 +313,7 @@ export default function CreateUserGestionale() {
                         {/* Separazione + area informativa (riempie lo spazio sotto in modo utile) */}
                         <DashedDivider className="my-6" />
 
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             <RoleHint />
 
                             <AlertBox
@@ -330,8 +330,8 @@ export default function CreateUserGestionale() {
                         <DashedDivider className="my-6" />
 
                         {/* Azioni */}
-                        <div className="flex items-star justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                                 <SubmitButton />
                                 <Button
                                     type="button"

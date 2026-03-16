@@ -4,8 +4,8 @@ import { capitalize } from '../../utils/capitalize';
 
 export default function ArchivedMenuHeaderCard({ menu, onClickFixedDishes }) {
     return (
-        <Card className="flex mt-6 !pl-10">
-            <div className="flex flex-[5] flex-col gap-2 justify-center">
+        <Card className="mt-6 flex flex-col gap-6 !p-6 xl:flex-row xl:items-stretch">
+            <div className="flex flex-[5] flex-col gap-3 justify-center">
                 <div className="flex text-lg text-brand-text gap-2">
                     <span>Nome:</span>
                     <span className="text-brand-primary font-semibold">
@@ -13,15 +13,15 @@ export default function ArchivedMenuHeaderCard({ menu, onClickFixedDishes }) {
                     </span>
                 </div>
 
-                <div className="flex text-lg text-brand-text gap-2">
-                    <div className="flex flex-[1] gap-1">
+                <div className="flex flex-col gap-2 text-lg text-brand-text lg:flex-row lg:gap-4">
+                    <div className="flex flex-1 flex-col gap-1 sm:flex-row">
                         <span>Data inizio:</span>
                         <span className="text-brand-primary font-semibold">
                             {menu.start_date}
                         </span>
                     </div>
 
-                    <div className="flex flex-[1] gap-1">
+                    <div className="flex flex-1 flex-col gap-1 sm:flex-row">
                         <span>Data fine:</span>
                         <span className="text-brand-primary font-semibold">
                             {menu.end_date}
@@ -30,9 +30,9 @@ export default function ArchivedMenuHeaderCard({ menu, onClickFixedDishes }) {
                 </div>
             </div>
 
-            <div className="w-[1px] bg-brand-divider ml-2 mr-6" />
+            <div className="hidden w-px bg-brand-divider xl:block" />
 
-            <div className="flex flex-[1] flex-col justify-center items-center gap-2 text-lg font-semibold">
+            <div className="flex flex-[1] flex-col items-start justify-center gap-2 text-lg font-semibold sm:items-center">
                 <span>Piatti fissi</span>
                 <button
                     type="button"

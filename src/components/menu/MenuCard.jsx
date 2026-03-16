@@ -52,7 +52,7 @@ export default function MenuCard({ menu, onArchive }) {
             </div>
 
             {/* Divider */}
-            <div className="w-[1px] bg-brand-divider ml-2 mr-6" />
+            <div className="menu-card__divider" />
 
             {/* CONTENUTO */}
             <div className="flex-[4]">
@@ -61,7 +61,7 @@ export default function MenuCard({ menu, onArchive }) {
                         {capitalize(season_type)}
                     </span>
 
-                    <div className="flex">
+                    <div className="flex flex-col gap-2 lg:flex-row">
                         <span className="flex flex-[1] text-lg text-brand-text gap-2">
                             Giorno del pasto:
                             <span className="text-brand-primary font-semibold">
@@ -77,7 +77,7 @@ export default function MenuCard({ menu, onArchive }) {
                         </span>
                     </div>
 
-                    <div className="flex mt-1">
+                    <div className="mt-1 flex flex-col gap-2 lg:flex-row">
                         <span className="flex flex-[1] text-lg text-brand-text gap-2">
                             Anno:
                             <span className="text-brand-primary font-semibold">
@@ -98,7 +98,7 @@ export default function MenuCard({ menu, onArchive }) {
             </div>
 
             {/* AZIONI / CHEVRON */}
-            <div className="flex flex-[1] items-center justify-center">
+            <div className="flex flex-[1] items-center justify-start lg:justify-center">
                 {is_ended ? (
                     <button
                         type="button"
@@ -110,11 +110,7 @@ export default function MenuCard({ menu, onArchive }) {
                         onKeyDown={(e) => {
                             e.stopPropagation();
                         }}
-                        className="
-                            px-6 py-4 rounded-lg font-semibold
-                            bg-brand-primary text-white
-                            hover:opacity-90 transition
-                        "
+                        className="rounded-lg bg-brand-primary px-6 py-4 font-semibold text-white transition hover:opacity-90"
                     >
                         Archivia
                     </button>

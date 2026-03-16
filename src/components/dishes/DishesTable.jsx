@@ -25,7 +25,7 @@ export default memo(function DishesTable({
     return (
         <div className="bg-white border border-brand-divider rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="w-full text-sm table-auto">
+                <table className="min-w-[980px] w-full table-auto text-sm">
                     {/* Table header */}
                     <thead className="bg-brand-primary text-white">
                         <tr>
