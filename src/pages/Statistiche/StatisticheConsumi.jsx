@@ -10,6 +10,8 @@ import DateRangePicker from '../../components/ui/DateRangePicker';
 import CustomSelect from '../../components/ui/CustomSelect';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import Pagination from '../../components/ui/Pagination';
+import PortionLegendModal from '../../components/modals/PortionLegendModal';
+import StatisticsInfoModal from '../../components/modals/StatisticsInfoModal';
 import { withLoader } from '../../services/withLoader';
 import { getConsumiMenus, getConsumiReport } from '../../services/reportsApi';
 import StatsMenuSelectionSync from '../../components/statistics/StatsMenuSelectionSync';
@@ -64,6 +66,8 @@ function ConsumiRankCard({
     iconAlt = '',
     rows,
     mode = 'good',
+    onInfoClick,
+    infoLabel = `Informazioni su ${title}`,
 }) {
     const rowBgClass =
         mode === 'good'
@@ -92,6 +96,22 @@ function ConsumiRankCard({
                 <div className="text-[15px] font-semibold text-brand-text">
                     {title}
                 </div>
+
+                {onInfoClick && (
+                    <button
+                        type="button"
+                        onClick={onInfoClick}
+                        aria-label={infoLabel}
+                        className="inline-flex items-center justify-center hover:opacity-80 transition"
+                    >
+                        <img
+                            src="/icons/information blue.png"
+                            alt={infoLabel}
+                            className="h-4 w-4"
+                            draggable={false}
+                        />
+                    </button>
+                )}
             </div>
 
             {!rows || rows.length === 0 ? (
@@ -167,6 +187,9 @@ export default function StatisticheConsumi() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const [showPortionLegend, setShowPortionLegend] = useState(false);
+    const [activeInfoModal, setActiveInfoModal] = useState('');
 
     const [kpi, setKpi] = useState({
         waste_kg: 0,
@@ -649,6 +672,8 @@ export default function StatisticheConsumi() {
                     value={fmtPct(kpi.gradimento_pct)}
                     label="Gradimento"
                     sub="Pasti consumati completamente"
+                    onInfoClick={() => setActiveInfoModal('gradimento')}
+                    infoLabel="Informazioni sul KPI Gradimento"
                 />
                 <KpiCard
                     iconSrc="/icons/clipboard check primary.png"
@@ -657,6 +682,8 @@ export default function StatisticheConsumi() {
                     value={fmtPct(kpi.coverage_pct)}
                     label="Copertura questionario"
                     sub="Portate con questionari completati"
+                    onInfoClick={() => setActiveInfoModal('coverage')}
+                    infoLabel="Informazioni sul KPI Copertura questionario"
                 />
             </div>
 
@@ -667,6 +694,8 @@ export default function StatisticheConsumi() {
                     iconAlt="Piatti più graditi"
                     rows={topLiked}
                     mode="good"
+                    onInfoClick={() => setActiveInfoModal('consumiRanking')}
+                    infoLabel="Informazioni sui ranking dei consumi"
                 />
 
                 <ConsumiRankCard
@@ -675,6 +704,8 @@ export default function StatisticheConsumi() {
                     iconAlt="Piatti meno graditi"
                     rows={topDisliked}
                     mode="bad"
+                    onInfoClick={() => setActiveInfoModal('consumiRanking')}
+                    infoLabel="Informazioni sui ranking dei consumi"
                 />
             </div>
 
@@ -712,10 +743,28 @@ export default function StatisticheConsumi() {
                                         Piatto
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
-                                        Porzione
+                                        <div className="flex items-center justify-end gap-2">
+                                            <span>Porzione</span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setShowPortionLegend(true)
+                                                }
+                                                aria-label="Legenda valori porzione"
+                                                className="inline-flex items-center justify-center hover:opacity-80 transition"
+                                            >
+                                                <img
+                                                    src="/icons/information blue.png"
+                                                    alt="Legenda porzione"
+                                                    className="w-4 h-4"
+                                                    draggable="false"
+                                                />
+                                            </button>
+                                        </div>
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
-                                        Spreco
+                                        Spreco stimato
                                     </th>
                                     <th className="rounded-r-2xl bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Caregiver
@@ -825,7 +874,7 @@ export default function StatisticheConsumi() {
                                     : 'Non ci sono questionari commenti.'}
                             </div>
                         ) : (
-                            <table className="w-full min-w-[1100px] border-separate border-spacing-0 text-sm">
+                            <table className="w-full min-w-[1200px] border-separate border-spacing-0 text-sm">
                                 <thead>
                                     <tr className="text-xs uppercase tracking-[0.08em] text-brand-textSecondary">
                                         <th className="rounded-l-2xl bg-black/[0.03] px-4 py-3 text-left font-semibold">
@@ -839,6 +888,9 @@ export default function StatisticheConsumi() {
                                         </th>
                                         <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                             Giorno
+                                        </th>
+                                        <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
+                                            Settimana
                                         </th>
                                         <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                             Pasto
@@ -874,6 +926,10 @@ export default function StatisticheConsumi() {
 
                                             <td className="border-b border-black/[0.05] px-3 py-2.5 text-right tabular-nums text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
                                                 {fmtInt(r.day_number)}
+                                            </td>
+
+                                            <td className="border-b border-black/[0.05] px-3 py-2.5 text-right tabular-nums text-brand-textSecondary transition-colors group-hover:bg-black/[0.015]">
+                                                {fmtInt(r.week_number)}
                                             </td>
 
                                             <td className="border-b border-black/[0.05] px-3 py-2.5 transition-colors group-hover:bg-black/[0.015]">
@@ -912,6 +968,80 @@ export default function StatisticheConsumi() {
                     </div>
                 </Card>
             </div>
+
+            <PortionLegendModal
+                open={showPortionLegend}
+                onClose={() => setShowPortionLegend(false)}
+            />
+
+            <StatisticsInfoModal
+                open={activeInfoModal === 'gradimento'}
+                onClose={() => setActiveInfoModal('')}
+                title="Come leggere il KPI Gradimento"
+                description="Il gradimento è una misura operativa basata sul consumo rilevato nei questionari, non un voto espresso separatamente."
+                rows={[
+                    {
+                        label: 'Porzione < 1',
+                        description:
+                            'La portata non risulta consumata completamente.',
+                    },
+                    {
+                        label: 'Porzione >= 1',
+                        description:
+                            'La portata risulta consumata completamente e viene considerata positiva nel KPI.',
+                    },
+                    {
+                        label: 'Gradimento %',
+                        description:
+                            'Percentuale di portate consumate completamente sul totale dei questionari considerati nel perimetro filtrato.',
+                    },
+                ]}
+                note="Il valore 2 indica piatto finito e richiesta di porzione maggiore, quindi rientra comunque tra i pasti completati."
+            />
+
+            <StatisticsInfoModal
+                open={activeInfoModal === 'coverage'}
+                onClose={() => setActiveInfoModal('')}
+                title="Come leggere il KPI Copertura questionario"
+                description="La copertura indica quanto il dataset dei questionari è completo rispetto alle portate attese nel perimetro filtrato."
+                rows={[
+                    {
+                        label: 'Copertura %',
+                        description:
+                            'Quota di portate per cui esiste un questionario compilato rispetto al totale considerato dal report.',
+                    },
+                    {
+                        label: '100%',
+                        description:
+                            'Ogni portata considerata ha un questionario registrato.',
+                    },
+                    {
+                        label: 'Valori più bassi',
+                        description:
+                            'Indicano che una parte delle portate nel periodo o nel filtro selezionato non ha ancora un questionario associato.',
+                    },
+                ]}
+            />
+
+            <StatisticsInfoModal
+                open={activeInfoModal === 'consumiRanking'}
+                onClose={() => setActiveInfoModal('')}
+                title="Come leggere i ranking di gradimento"
+                description="I ranking ordinano i piatti in base al consumo medio registrato nei questionari disponibili."
+                rows={[
+                    {
+                        label: 'Consumo medio',
+                        description:
+                            'Media del valore di porzione registrato nei questionari del piatto.',
+                    },
+                    {
+                        label: 'Questionari',
+                        description:
+                            'Numero di questionari disponibili usati per calcolare il ranking del piatto.',
+                    },
+                ]}
+                note="Un valore 2 significa piatto consumato e richiesta di porzione maggiore, ma nel ranking la percentuale mostrata resta comunque al massimo 100%."
+            />
 
             {error && <div className="mt-3 text-brand-error">{error}</div>}
         </AppLayout>

@@ -40,13 +40,13 @@ export default function MenuHistory() {
                 <div className="mt-6" />
 
                 {loading && (
-                    <p className="mx-10 text-brand-textSecondary">
+                    <p className="text-brand-textSecondary">
                         Caricamento menù archiviati…
                     </p>
                 )}
 
                 {!loading && menus.length === 0 && (
-                    <p className="mx-10 text-brand-textSecondary">
+                    <p className="text-brand-textSecondary">
                         Nessun menù archiviato disponibile
                     </p>
                 )}

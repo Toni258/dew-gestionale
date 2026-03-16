@@ -10,6 +10,7 @@ import DateRangePicker from '../../components/ui/DateRangePicker';
 import CustomSelect from '../../components/ui/CustomSelect';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import Pagination from '../../components/ui/Pagination';
+import StatisticsInfoModal from '../../components/modals/StatisticsInfoModal';
 import { withLoader } from '../../services/withLoader';
 import { getScelteMenus, getScelteReport } from '../../services/reportsApi';
 import StatsMenuSelectionSync from '../../components/statistics/StatsMenuSelectionSync';
@@ -204,6 +205,7 @@ export default function StatisticheScelte() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [activeInfoModal, setActiveInfoModal] = useState('');
 
     const [kpi, setKpi] = useState(EMPTY_KPI);
     const [rankings, setRankings] = useState(EMPTY_RANKINGS);
@@ -640,6 +642,8 @@ export default function StatisticheScelte() {
                     value={fmtPct(kpi.overall_choice_rate_pct, 1)}
                     label="Tasso medio stimato"
                     sub="Scelte registrate / opportunità stimate"
+                    onInfoClick={() => setActiveInfoModal('choiceRate')}
+                    infoLabel="Informazioni sul KPI Tasso medio stimato"
                 />
                 <StatsKpiCard
                     iconSrc="/icons/empty-plate-error.png"
@@ -748,8 +752,24 @@ export default function StatisticheScelte() {
             <div className="mt-8">
                 <Card className="overflow-hidden rounded-[24px] border border-white/60 bg-white/85 p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
                     <div className="border-b border-black/5 px-3 pb-4 pt-1">
-                        <div className="font-semibold text-brand-text">
-                            Tabella aggregata piatti
+                        <div className="flex items-center gap-2">
+                            <div className="font-semibold text-brand-text">
+                                Tabella aggregata piatti
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setActiveInfoModal('aggregatedDishes')}
+                                aria-label="Informazioni sulla tabella aggregata piatti"
+                                className="inline-flex items-center justify-center hover:opacity-80 transition"
+                            >
+                                <img
+                                    src="/icons/information blue.png"
+                                    alt="Informazioni sulla tabella aggregata piatti"
+                                    className="h-4 w-4"
+                                    draggable={false}
+                                />
+                            </button>
                         </div>
                         <div className="mt-1 text-sm text-brand-textSecondary">
                             Apparizioni nel menù, opportunità stimate e tasso di
@@ -1069,8 +1089,80 @@ export default function StatisticheScelte() {
                 </Card>
             </div>
 
+            <StatisticsInfoModal
+                open={activeInfoModal === 'choiceRate'}
+                onClose={() => setActiveInfoModal('')}
+                title="Come leggere il KPI Tasso medio stimato"
+                description="Il tasso confronta le scelte realmente registrate con le opportunità teoriche di scelta nel perimetro filtrato."
+                rows={[
+                    {
+                        label: 'Scelte registrate',
+                        description:
+                            'Numero di scelte effettivamente presenti nei dati.',
+                    },
+                    {
+                        label: 'Opportunità stimate',
+                        description:
+                            'Numero teorico di occasioni di scelta: apparizioni del piatto nel menù × pazienti nel perimetro filtrato.',
+                    },
+                    {
+                        label: 'Tasso %',
+                        description:
+                            'Rapporto tra scelte registrate e opportunità stimate.',
+                    },
+                ]}
+                note={`Il numero di pazienti considerato nel calcolo corrente è ${fmtInt(
+                    kpi.patient_scope_count,
+                )}.`}
+            />
+
+            <StatisticsInfoModal
+                open={activeInfoModal === 'aggregatedDishes'}
+                onClose={() => setActiveInfoModal('')}
+                title="Come leggere la tabella aggregata piatti"
+                description="Questa tabella riassume per ogni piatto presenza nel menù, bacino potenziale di scelta e scelte effettivamente registrate."
+                rows={[
+                    {
+                        label: 'Apparizioni',
+                        description:
+                            'Quante volte il piatto compare nel menù nel periodo filtrato.',
+                    },
+                    {
+                        label: 'Pazienti',
+                        description:
+                            'Numero di pazienti considerati dal filtro applicato.',
+                    },
+                    {
+                        label: 'Opportunità',
+                        description:
+                            'Apparizioni × pazienti, cioè occasioni teoriche di scelta per quel piatto.',
+                    },
+                    {
+                        label: 'Scelte',
+                        description:
+                            'Numero di volte in cui il piatto è stato effettivamente scelto.',
+                    },
+                    {
+                        label: 'Tasso',
+                        description:
+                            'Rapporto tra scelte registrate e opportunità stimate.',
+                    },
+                    {
+                        label: 'Ospite / Famiglia / Caregiver',
+                        description:
+                            'Ripartizione delle scelte per tipo di compilatore.',
+                    },
+                    {
+                        label: 'Baby food',
+                        description:
+                            'Numero di scelte registrate come baby food.',
+                    },
+                ]}
+            />
+
             {/* Error message */}
             {error && <div className="text-brand-error mt-3">{error}</div>}
         </AppLayout>
     );
 }
+

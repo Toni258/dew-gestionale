@@ -9,6 +9,8 @@ export default function StatsKpiCard({
     value,
     label,
     sub,
+    onInfoClick,
+    infoLabel = `Informazioni su ${label}`,
 }) {
     return (
         <Card className="rounded-[24px] border border-white/60 bg-white/85 px-5 py-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
@@ -33,8 +35,26 @@ export default function StatsKpiCard({
                         {value}
                     </div>
 
-                    <div className="mt-2 text-[14px] font-medium leading-5 text-brand-text">
-                        {label}
+                    <div className="mt-2 flex items-start gap-2">
+                        <div className="text-[14px] font-medium leading-5 text-brand-text">
+                            {label}
+                        </div>
+
+                        {onInfoClick && (
+                            <button
+                                type="button"
+                                onClick={onInfoClick}
+                                aria-label={infoLabel}
+                                className="mt-[1px] inline-flex shrink-0 items-center justify-center hover:opacity-80 transition"
+                            >
+                                <img
+                                    src="/icons/information blue.png"
+                                    alt={infoLabel}
+                                    className="h-4 w-4"
+                                    draggable={false}
+                                />
+                            </button>
+                        )}
                     </div>
 
                     {sub && (

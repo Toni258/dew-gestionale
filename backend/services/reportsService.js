@@ -791,35 +791,37 @@ export async function getConsumiReportData(query = {}) {
         `;
 
         const commentsSql = `
-            SELECT
-                sx.date,
-                p.name AS patient_name,
-                p.surname AS patient_surname,
-                p.floor,
-                p.room,
-                (m.day_index + 1) AS day_number,
-                m.type AS meal_type,
-                sx.comments,
-                cg.name AS caregiver_name,
-                cg.surname AS caregiver_surname
-            ${commentsFrom}
-            ${commentsWhere}
-            GROUP BY
-                sx.date,
-                p.id_patient,
-                p.name,
-                p.surname,
-                p.floor,
-                p.room,
-                m.day_index,
-                m.type,
-                sx.comments,
-                sx.id_caregiver,
-                cg.name,
-                cg.surname
-            ORDER BY sx.date DESC, p.surname ASC, p.name ASC, m.type ASC
-            LIMIT ? OFFSET ?
-        `;
+        SELECT
+            sx.date,
+            p.name AS patient_name,
+            p.surname AS patient_surname,
+            p.floor,
+            p.room,
+            (MOD(m.day_index, 7) + 1) AS day_number,
+            (FLOOR(m.day_index / 7) + 1) AS week_number,
+            m.type AS meal_type,
+            sx.comments,
+            cg.name AS caregiver_name,
+            cg.surname AS caregiver_surname
+        ${commentsFrom}
+        ${commentsWhere}
+        GROUP BY
+            sx.date,
+            p.id_patient,
+            p.name,
+            p.surname,
+            p.floor,
+            p.room,
+            m.day_index,
+            (FLOOR(m.day_index / 7) + 1),
+            m.type,
+            sx.comments,
+            sx.id_caregiver,
+            cg.name,
+            cg.surname
+        ORDER BY sx.date DESC, p.surname ASC, p.name ASC, m.type ASC
+        LIMIT ? OFFSET ?
+    `;
 
         const patientsOptionsSql = `
             SELECT
