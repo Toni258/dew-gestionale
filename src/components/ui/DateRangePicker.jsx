@@ -235,7 +235,12 @@ export default function DateRangePicker({
                                 </span>
                             )}
                             <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                                📅
+                                <img
+                                    src="/icons/calendar-nero.png"
+                                    alt="Icona calendario"
+                                    className="w-4 h-4"
+                                    draggable={false}
+                                />
                             </span>
                         </button>
                     </div>
@@ -267,7 +272,12 @@ export default function DateRangePicker({
                                 </span>
                             )}
                             <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                                📅
+                                <img
+                                    src="/icons/calendar-nero.png"
+                                    alt="Icona calendario"
+                                    className="w-4 h-4"
+                                    draggable={false}
+                                />
                             </span>
                         </button>
                     </div>
@@ -294,7 +304,12 @@ export default function DateRangePicker({
                                     ${canGoPrev() ? 'hover:bg-black/10' : 'opacity-30 cursor-not-allowed'}
                                 `}
                             >
-                                ◀
+                                <img
+                                    src="/icons/Chevron sinistra nero.png"
+                                    alt="Icona calendario"
+                                    className="w-5 h-5"
+                                    draggable={false}
+                                />
                             </button>
 
                             <div className="grid grid-cols-2 text-center font-semibold text-brand-text">
@@ -315,7 +330,12 @@ export default function DateRangePicker({
                                     ${canGoNext() ? 'hover:bg-black/10' : 'opacity-30 cursor-not-allowed'}
                                 `}
                             >
-                                ▶
+                                <img
+                                    src="/icons/Chevron destra nero.png"
+                                    alt="Icona calendario"
+                                    className="w-5 h-5"
+                                    draggable={false}
+                                />
                             </button>
                         </div>
 

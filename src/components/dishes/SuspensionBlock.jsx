@@ -34,15 +34,15 @@ export default function SuspensionBlock({ initialSuspension }) {
                         }
                     }}
                     className={`
-            mt-2 relative w-12 h-7 rounded-full transition-colors
-            ${enabled ? 'bg-green-500' : 'bg-gray-300'}
-          `}
+                        mt-2 relative w-12 h-7 rounded-full transition-colors
+                        ${enabled ? 'bg-green-500' : 'bg-gray-300'}
+                    `}
                 >
                     <span
                         className={`
-              absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform
-              ${enabled ? 'translate-x-5' : ''}
-            `}
+                            absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform
+                            ${enabled ? 'translate-x-5' : ''}
+                        `}
                     />
                 </button>
             </div>
@@ -58,7 +58,7 @@ export default function SuspensionBlock({ initialSuspension }) {
                     <div className="absolute inset-0 z-10 bg-gray-200/70 rounded-xl" />
                 )}
 
-                <div className="flex gap-6 relative z-0">
+                <div className="flex gap-6 relative z-20">
                     <div className="w-1/6 flex flex-col gap-4">
                         <FormGroup label="Data inizio" required={enabled}>
                             <DatePicker name="start_date" disabled={!enabled} />

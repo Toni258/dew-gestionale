@@ -191,7 +191,12 @@ export default function DatePicker({
                         </span>
                     )}
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70">
-                        📅
+                        <img
+                            src="/icons/calendar-nero.png"
+                            alt="Icona calendario"
+                            className="w-4 h-4"
+                            draggable={false}
+                        />
                     </span>
                 </button>
             </div>
@@ -230,7 +235,12 @@ export default function DatePicker({
                             onClick={prevMonth}
                             className="px-2 py-1 hover:bg-black/10 rounded-md"
                         >
-                            ◀
+                            <img
+                                src="/icons/Chevron sinistra nero.png"
+                                alt="Icona calendario"
+                                className="w-5 h-5"
+                                draggable={false}
+                            />
                         </button>
 
                         <div className="font-semibold text-brand-text">
@@ -243,7 +253,12 @@ export default function DatePicker({
                             onClick={nextMonth}
                             className="px-2 py-1 hover:bg-black/10 rounded-md"
                         >
-                            ▶
+                            <img
+                                src="/icons/Chevron destra nero.png"
+                                alt="Icona calendario"
+                                className="w-5 h-5"
+                                draggable={false}
+                            />
                         </button>
                     </div>
 
