@@ -17,7 +17,7 @@ export default function PasswordResetRequestsModal({
                 <div className="px-6 py-5 border-b border-brand-divider/60 bg-brand-error/5">
                     <div className="flex items-start gap-3">
                         <img
-                            src="/warning rosso.png"
+                            src="/icons/warning rosso.png"
                             alt="Avviso urgente"
                             className="w-7 h-7 mt-1"
                             draggable={false}

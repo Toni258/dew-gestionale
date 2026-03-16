@@ -7,21 +7,21 @@ const ALERT_STYLES = {
     error: {
         container: 'border-brand-error bg-brand-error/5',
         badge: 'bg-brand-error/12 text-brand-error border-brand-error/20',
-        icon: '/warning rosso.png',
+        icon: '/icons/warning rosso.png',
         label: 'Urgente',
         buttonVariant: 'danger',
     },
     warning: {
         container: 'border-brand-warning bg-brand-warning/10',
         badge: 'bg-brand-warning/15 text-brand-warning border-brand-warning/20',
-        icon: '/warning giallo.png',
+        icon: '/icons/warning giallo.png',
         label: 'Attenzione',
         buttonVariant: 'warning',
     },
     info: {
         container: 'border-brand-secondary/40 bg-brand-secondary/5',
         badge: 'bg-brand-secondary/10 text-brand-secondary border-brand-secondary/20',
-        icon: '/information blue.png',
+        icon: '/icons/information blue.png',
         label: 'Info',
         buttonVariant: 'secondary',
     },
@@ -153,7 +153,10 @@ export function QuickStatusCard({
                     <span className="text-lg font-semibold text-brand-text">
                         {title}
                     </span>
-                    <StatusPill label={menu.state_label} tone={menu.state_tone} />
+                    <StatusPill
+                        label={menu.state_label}
+                        tone={menu.state_tone}
+                    />
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -350,7 +353,9 @@ export function SuspendedDishRow({ dish, onAction }) {
                     </div>
 
                     <div className="text-sm text-brand-textSecondary">
-                        <span className="font-medium text-brand-text">Tipo:</span>{' '}
+                        <span className="font-medium text-brand-text">
+                            Tipo:
+                        </span>{' '}
                         {dish.type_label} ·{' '}
                         <span className="font-medium text-brand-text">
                             Valido fino al:

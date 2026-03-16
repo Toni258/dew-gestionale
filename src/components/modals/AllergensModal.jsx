@@ -21,7 +21,7 @@ export default function AllergensModal({ open, onClose }) {
                         aria-label="Chiudi"
                     >
                         <img
-                            src="/cancel.png"
+                            src="/icons/cancel.png"
                             alt="Chiudi"
                             className="w-5 h-5"
                             draggable="false"

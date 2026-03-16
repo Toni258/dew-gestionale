@@ -26,7 +26,7 @@ export default function ArchiveMenuModal({
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                         <img
-                            src="/warning rosso.png"
+                            src="/icons/warning rosso.png"
                             className="w-6 h-6"
                             alt="Avvertenza"
                         />

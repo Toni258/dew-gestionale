@@ -14,7 +14,7 @@ export default function Select({
         return (
             <select
                 className={`input-default cursor-pointer 
-                    appearance-none bg-[url('/chevron-down-primary.png')] 
+                    appearance-none bg-[url('/icons/chevron-down-primary.png')] 
                     bg-no-repeat bg-[length:16px_16px]
                     bg-[position:calc(100%-12px)_center] pr-10 ${className}`}
                 {...props}
@@ -39,7 +39,7 @@ export default function Select({
                 {...field}
                 {...props}
                 className={`input-default cursor-pointer 
-                    appearance-none bg-[url('/chevron-down-primary.png')] 
+                    appearance-none bg-[url('/icons/chevron-down-primary.png')] 
                     bg-no-repeat bg-[length:16px_16px]
                     bg-[position:calc(100%-12px)_center] 
                     pr-10 ${

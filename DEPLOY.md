@@ -131,20 +131,4 @@ GET /health
 
 ## 10. SQL da eseguire
 
-Per nuove installazioni dopo il dump usa `patch_after_dump.sql`.
-
-Per database già esistenti che hanno già ricevuto la patch precedente, esegui anche:
-
-```text
-sql/20260314_add_food_availability_pairing_replacements.sql
-```
-
-## 11. Nota importante
-
-Se nel database esistono **sospensioni attive create prima di questa migration**, il nuovo tracciamento dei pairing sostitutivi non può ricostruire in automatico quali sostituzioni appartenevano a quelle vecchie sospensioni.
-
-In quel caso conviene:
-
-- verificare manualmente quelle sospensioni già aperte
-- applicare la migration
-- usare da quel momento in poi il nuovo flusso di sospensione
+Per applicare le modifiche al database (quindi già esistente) usare il file `patch_after_dump.sql`.

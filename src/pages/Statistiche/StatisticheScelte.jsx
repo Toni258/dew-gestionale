@@ -618,7 +618,7 @@ export default function StatisticheScelte() {
             {/* KPI cards */}
             <div className="mt-6 grid grid-cols-6 gap-5">
                 <StatsKpiCard
-                    iconSrc="/checklist-secondary.png"
+                    iconSrc="/icons/checklist-secondary.png"
                     iconAlt="Scelte totali"
                     iconBg="bg-blue-100"
                     value={fmtInt(kpi.total_choices)}
@@ -626,7 +626,7 @@ export default function StatisticheScelte() {
                     sub="Record di scelta nel periodo"
                 />
                 <StatsKpiCard
-                    iconSrc="/dish-primary.png"
+                    iconSrc="/icons/dish-primary.png"
                     iconAlt="Piatti distinti scelti"
                     iconBg="bg-green-100"
                     value={fmtInt(kpi.distinct_dishes_chosen)}
@@ -634,7 +634,7 @@ export default function StatisticheScelte() {
                     sub="Varietà reale delle preferenze"
                 />
                 <StatsKpiCard
-                    iconSrc="/percentage-chart-secondary.png"
+                    iconSrc="/icons/percentage-chart-secondary.png"
                     iconAlt="Tasso di scelta"
                     iconBg="bg-purple-100"
                     value={fmtPct(kpi.overall_choice_rate_pct, 1)}
@@ -642,7 +642,7 @@ export default function StatisticheScelte() {
                     sub="Scelte registrate / opportunità stimate"
                 />
                 <StatsKpiCard
-                    iconSrc="/empty-plate-error.png"
+                    iconSrc="/icons/empty-plate-error.png"
                     iconAlt=""
                     iconBg="bg-red-100"
                     value={fmtInt(kpi.never_chosen_count)}
@@ -650,7 +650,7 @@ export default function StatisticheScelte() {
                     sub="Disponibili ma mai richiesti"
                 />
                 <StatsKpiCard
-                    iconSrc="/tag-warning.png"
+                    iconSrc="/icons/tag-warning.png"
                     iconAlt="Categoria più richiesta"
                     iconBg="bg-yellow-100"
                     value={kpi.top_category_label || '—'}
@@ -658,7 +658,7 @@ export default function StatisticheScelte() {
                     sub="Basata sulle scelte registrate"
                 />
                 <StatsKpiCard
-                    iconSrc="/baby-food-primary.png"
+                    iconSrc="/icons/baby-food-primary.png"
                     iconAlt="Scelte baby food"
                     iconBg="bg-green-100"
                     value={fmtPct(kpi.baby_food_share_pct, 1)}
@@ -679,7 +679,7 @@ export default function StatisticheScelte() {
             <div className="mt-6 grid grid-cols-3 gap-6">
                 <StatsRankCard
                     title="Piatti più richiesti"
-                    iconSrc="/star primary.png"
+                    iconSrc="/icons/star primary.png"
                     iconAlt="Piatti più richiesti"
                     rows={rankings.topChosen}
                     mode="top"
@@ -687,7 +687,7 @@ export default function StatisticheScelte() {
 
                 <StatsRankCard
                     title="Piatti meno richiesti"
-                    iconSrc="/down trend red.png"
+                    iconSrc="/icons/down trend red.png"
                     iconAlt="Piatti meno richiesti"
                     rows={rankings.bottomChosen}
                     mode="bottom"
@@ -695,7 +695,7 @@ export default function StatisticheScelte() {
 
                 <StatsRankCard
                     title="Piatti mai scelti"
-                    iconSrc="/no-food-text-secondary.png"
+                    iconSrc="/icons/no-food-text-secondary.png"
                     iconAlt="Piatti mai scelti"
                     rows={rankings.neverChosen}
                     mode="never"
@@ -707,7 +707,7 @@ export default function StatisticheScelte() {
                 <StatsBarsCard
                     title="Trend di scelta per settimana"
                     sub="Scelte registrate / opportunità stimate nel perimetro filtrato"
-                    iconSrc="/calendar-primary.png"
+                    iconSrc="/icons/calendar-primary.png"
                     iconAlt="Trend settimanale"
                     rows={weeklyChartRows}
                     barMode="percent"
@@ -721,7 +721,7 @@ export default function StatisticheScelte() {
                 <StatsBarsCard
                     title="Tasso di scelta per portata"
                     sub="Scelte registrate / opportunità stimate nel perimetro filtrato"
-                    iconSrc="/category-primary.png"
+                    iconSrc="/icons/category-primary.png"
                     iconAlt="Tasso di scelta per portata"
                     rows={byCourseChartRows}
                     barMode="percent"
@@ -736,7 +736,7 @@ export default function StatisticheScelte() {
             <div className="mt-6">
                 <StatsBarsCard
                     title="Distribuzione per compilatore"
-                    iconSrc="/group-users-secondary.png"
+                    iconSrc="/icons/group-users-secondary.png"
                     iconAlt="Distribuzione per compilatore"
                     rows={byChooserChartRows}
                     barMode="percent"

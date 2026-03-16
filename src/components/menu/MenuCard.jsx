@@ -121,7 +121,7 @@ export default function MenuCard({ menu, onArchive }) {
                 ) : (
                     <div className="pointer-events-none">
                         <img
-                            src="/Chevron destra secondario.png"
+                            src="/icons/Chevron destra secondario.png"
                             alt="Apri menù"
                             className="w-10 h-10 select-none opacity-60"
                             draggable={false}

@@ -75,7 +75,7 @@ export default function Login() {
                     {/* Logo + titolo */}
                     <div className="flex flex-row items-center">
                         <img
-                            src="/Do Eat Well Logo Verde.png"
+                            src="/icons/Do Eat Well Logo Verde.png"
                             alt="logo"
                             className="w-[85px] h-[85px]"
                         />

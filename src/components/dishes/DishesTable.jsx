@@ -44,7 +44,7 @@ export default memo(function DishesTable({
                                         onClick={onShowAllergensInfo}
                                     >
                                         <img
-                                            src="/information bianco.png"
+                                            src="/icons/information bianco.png"
                                             className="w-4 h-4"
                                             alt="Legenda allergeni"
                                         />

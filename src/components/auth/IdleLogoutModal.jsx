@@ -20,7 +20,7 @@ export default function IdleLogoutModal({
             <div className="bg-white rounded-2xl p-8">
                 <div className="flex items-start gap-3">
                     <img
-                        src="/warning giallo.png"
+                        src="/icons/warning giallo.png"
                         alt="Avviso inattività"
                         className="w-6 h-6 mt-1"
                         draggable={false}

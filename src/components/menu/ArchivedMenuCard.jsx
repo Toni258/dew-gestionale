@@ -85,7 +85,7 @@ export default function ArchivedMenuCard({ menu }) {
             <div className="flex flex-[1] items-center justify-center">
                 <div className="pointer-events-none">
                     <img
-                        src="/Chevron destra secondario.png"
+                        src="/icons/Chevron destra secondario.png"
                         alt="Apri menù"
                         className="w-10 h-10 select-none opacity-60"
                         draggable={false}

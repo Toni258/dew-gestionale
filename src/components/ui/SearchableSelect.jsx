@@ -253,7 +253,7 @@ export default function SearchableSelect({
                             <div className="ios-spinner" />
                         ) : (
                             <img
-                                src="/chevron-down-primary.png"
+                                src="/icons/chevron-down-primary.png"
                                 alt=""
                                 className={`w-4 h-4 opacity-70 transition-transform duration-200 ${
                                     open ? 'rotate-180' : 'rotate-0'

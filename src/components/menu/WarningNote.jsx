@@ -1,7 +1,7 @@
 // Warning note.
 export default function WarningNote({
     children,
-    iconSrc = '/warning giallo.png',
+    iconSrc = '/icons/warning giallo.png',
 }) {
     return (
         <div className="flex items-center gap-4">

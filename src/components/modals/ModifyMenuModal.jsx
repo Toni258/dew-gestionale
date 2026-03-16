@@ -76,9 +76,13 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                             errorMessage:
                                 'Impossibile verificare le sovrapposizioni.',
                             fn: async () => {
-                                return checkMenuDatesOverlap(start_date, end_date, {
-                                    excludeName: menu.season_type,
-                                });
+                                return checkMenuDatesOverlap(
+                                    start_date,
+                                    end_date,
+                                    {
+                                        excludeName: menu.season_type,
+                                    },
+                                );
                             },
                         });
 
@@ -141,7 +145,7 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                                 />
                                 <div className="flex items-center gap-4 px-6 mt-2">
                                     <img
-                                        src="/warning giallo.png"
+                                        src="/icons/warning giallo.png"
                                         className="w-5 h-5"
                                         alt="Avvertenza"
                                     />
@@ -194,7 +198,7 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                             <div className="flex flex-col flex-[2] gap-3">
                                 <div className="flex gap-4 px-6">
                                     <img
-                                        src="/information nero primary.png"
+                                        src="/icons/information nero primary.png"
                                         className="w-5 h-5 mt-1"
                                         alt="Informazione"
                                     />
@@ -209,7 +213,7 @@ export default function ModifyMenuModal({ menu, open, onClose, onConfirm }) {
                                 </div>
                                 <div className="flex gap-4 px-6">
                                     <img
-                                        src="/warning giallo.png"
+                                        src="/icons/warning giallo.png"
                                         className="w-5 h-5 mt-1"
                                         alt="Avvertenza"
                                     />

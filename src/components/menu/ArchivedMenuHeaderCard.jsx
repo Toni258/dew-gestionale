@@ -40,7 +40,7 @@ export default function ArchivedMenuHeaderCard({ menu, onClickFixedDishes }) {
                     onClick={onClickFixedDishes}
                 >
                     <img
-                        src="/eye white.png"
+                        src="/icons/eye white.png"
                         alt="Modifica piatti fissi"
                         className="w-6 h-6 select-none"
                         draggable={false}

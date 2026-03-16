@@ -3,19 +3,19 @@ const VARIANT_STYLES = {
     info: {
         bg: 'bg-brand-secondary/10',
         border: 'border-brand-secondary/50',
-        icon: '/information blue.png',
+        icon: '/icons/information blue.png',
         alt: 'Informazione',
     },
     warning: {
         bg: 'bg-brand-warning/10',
         border: 'border-brand-warning/50',
-        icon: '/warning giallo.png',
+        icon: '/icons/warning giallo.png',
         alt: 'Avviso',
     },
     error: {
         bg: 'bg-brand-error/10',
         border: 'border-brand-error/50',
-        icon: '/warning rosso.png',
+        icon: '/icons/warning rosso.png',
         alt: 'Errore',
     },
 };

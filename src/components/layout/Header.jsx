@@ -16,7 +16,7 @@ export default function Header({ title }) {
             {/* Left: Logo + App Name */}
             <div className="flex items-center select-none">
                 <img
-                    src="/Do Eat Well Logo Bianco.png"
+                    src="/icons/Do Eat Well Logo Bianco.png"
                     alt="logo"
                     className="w-[55px] h-[55px]"
                     draggable={false}
@@ -41,7 +41,7 @@ export default function Header({ title }) {
                 >
                     <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-inner">
                         <img
-                            src="/user icon verde.png"
+                            src="/icons/user icon verde.png"
                             className="w-5 h-5 object-contain"
                             draggable={false}
                         />

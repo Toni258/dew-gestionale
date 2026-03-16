@@ -118,7 +118,7 @@ export default function ImageUploader({ name, disabled = false }) {
                 ) : (
                     <div className="flex flex-col items-center gap-2 select-none">
                         <img
-                            src="/add_photo_alternate_rounded.png"
+                            src="/icons/add_photo_alternate_rounded.png"
                             alt="Carica foto"
                             className="w-12 h-12"
                             draggable={false}

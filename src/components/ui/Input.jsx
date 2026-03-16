@@ -121,8 +121,8 @@ export default function Input({
                         <img
                             src={
                                 showPassword
-                                    ? '/eye open.png'
-                                    : '/eye closed.png'
+                                    ? '/icons/eye open.png'
+                                    : '/icons/eye closed.png'
                             }
                             className="w-5 h-5"
                             alt=""

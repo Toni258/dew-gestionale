@@ -85,7 +85,7 @@ export default function MultiSelectCheckbox({
                     </span>
 
                     <img
-                        src="/chevron-down-primary.png"
+                        src="/icons/chevron-down-primary.png"
                         className={`
                             w-4 h-4 opacity-70 absolute right-3 top-1/2 -translate-y-1/2 
                             transition-transform duration-200

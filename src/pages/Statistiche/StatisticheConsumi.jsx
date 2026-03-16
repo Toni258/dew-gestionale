@@ -619,7 +619,7 @@ export default function StatisticheConsumi() {
 
             <div className="mt-6 grid grid-cols-5 gap-5">
                 <KpiCard
-                    iconSrc="/warning giallo.png"
+                    iconSrc="/icons/warning giallo.png"
                     iconAlt="Spreco totale"
                     iconBg="bg-yellow-100"
                     value={`${fmtDec(kpi.waste_kg, 2)} kg`}
@@ -627,7 +627,7 @@ export default function StatisticheConsumi() {
                     sub="Periodo selezionato"
                 />
                 <KpiCard
-                    iconSrc="/fire red.png"
+                    iconSrc="/icons/fire red.png"
                     iconAlt="Kcal sprecate"
                     iconBg="bg-red-100"
                     value={fmtInt(kpi.kcal_wasted)}
@@ -635,7 +635,7 @@ export default function StatisticheConsumi() {
                     sub="Energia non consumata"
                 />
                 <KpiCard
-                    iconSrc="/pie chart blue.png"
+                    iconSrc="/icons/pie chart blue.png"
                     iconAlt="Consumo medio"
                     iconBg="bg-blue-100"
                     value={fmtDec(kpi.avg_consumption, 2)}
@@ -643,7 +643,7 @@ export default function StatisticheConsumi() {
                     sub="Porzione media consumata"
                 />
                 <KpiCard
-                    iconSrc="/like primary.png"
+                    iconSrc="/icons/like primary.png"
                     iconAlt="Gradimento"
                     iconBg="bg-green-100"
                     value={fmtPct(kpi.gradimento_pct)}
@@ -651,7 +651,7 @@ export default function StatisticheConsumi() {
                     sub="Pasti consumati completamente"
                 />
                 <KpiCard
-                    iconSrc="/clipboard check primary.png"
+                    iconSrc="/icons/clipboard check primary.png"
                     iconAlt="Copertura questionario"
                     iconBg="bg-green-100"
                     value={fmtPct(kpi.coverage_pct)}
@@ -663,7 +663,7 @@ export default function StatisticheConsumi() {
             <div className="mt-6 grid grid-cols-2 gap-6">
                 <ConsumiRankCard
                     title="Piatti più graditi"
-                    iconSrc="/star primary.png"
+                    iconSrc="/icons/star primary.png"
                     iconAlt="Piatti più graditi"
                     rows={topLiked}
                     mode="good"
@@ -671,7 +671,7 @@ export default function StatisticheConsumi() {
 
                 <ConsumiRankCard
                     title="Piatti meno graditi"
-                    iconSrc="/down trend red.png"
+                    iconSrc="/icons/down trend red.png"
                     iconAlt="Piatti meno graditi"
                     rows={topDisliked}
                     mode="bad"

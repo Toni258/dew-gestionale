@@ -17,7 +17,7 @@ export default function WarnIncompleteMealModal({
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-3">
                         <img
-                            src="/warning giallo.png"
+                            src="/icons/warning giallo.png"
                             className="w-6 h-6"
                             alt="Avvertenza"
                         />

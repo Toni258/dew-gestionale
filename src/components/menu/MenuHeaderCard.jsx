@@ -54,7 +54,7 @@ export default function MenuHeaderCard({
                     onClick={onClickFixedDishes}
                 >
                     <img
-                        src="/edit bianco.png"
+                        src="/icons/edit bianco.png"
                         alt="Modifica piatti fissi"
                         className="w-5 h-5 select-none opacity-60"
                         draggable={false}

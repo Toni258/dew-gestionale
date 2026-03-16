@@ -57,7 +57,7 @@ export default memo(function Pagination({
                     aria-label="Pagina precedente"
                 >
                     <img
-                        src="/Chevron sinistra nero.png"
+                        src="/icons/Chevron sinistra nero.png"
                         draggable="false"
                         alt="Precedente"
                         className="w-5 h-5 select-none"
@@ -113,7 +113,7 @@ export default memo(function Pagination({
                     aria-label="Pagina successiva"
                 >
                     <img
-                        src="/Chevron destra nero.png"
+                        src="/icons/Chevron destra nero.png"
                         draggable="false"
                         alt="Successiva"
                         className="w-5 h-5 select-none"
