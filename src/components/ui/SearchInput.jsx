@@ -23,7 +23,12 @@ export default function SearchInput({
         >
             {/* Icona lente */}
             <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none text-base">
-                🔍
+                <img
+                    src="/icons/search_nero.png"
+                    alt="ricerca"
+                    className="w-4 h-4"
+                    draggable={false}
+                />
             </span>
 
             {/* Input */}
@@ -50,7 +55,12 @@ export default function SearchInput({
                         text-sm text-brand-textSecondary hover:text-brand-text
                     "
                 >
-                    ✕
+                    <img
+                        src="/icons/close_nero.png"
+                        alt="chiudi"
+                        className="w-3 h-3"
+                        draggable={false}
+                    />
                 </button>
             )}
         </form>
