@@ -46,6 +46,7 @@ const UserManagerMobileApp = lazy(
 const CreateUserGestionale = lazy(
     () => import('../pages/users/CreateUserGestionale'),
 );
+const Forbidden = lazy(() => import('../pages/Forbidden'));
 
 function RouteFallback() {
     return (
@@ -71,6 +72,7 @@ export default function AppRouter() {
                         {/* PRIVATE */}
                         <Route element={<ProtectedRoute />}>
                             <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/forbidden" element={<Forbidden />} />
 
                             {/* Menu routes */}
                             <Route path="/menu" element={<MenuList />} />
@@ -139,10 +141,15 @@ export default function AppRouter() {
                                 path="/user-manager/gestionale"
                                 element={<UserManagerGestionale />}
                             />
+
                             <Route
-                                path="/user-manager/create"
-                                element={<CreateUserGestionale />}
-                            />
+                                element={<ProtectedRoute roles={['super_user']} />}
+                            >
+                                <Route
+                                    path="/user-manager/create"
+                                    element={<CreateUserGestionale />}
+                                />
+                            </Route>
                         </Route>
                     </Routes>
                 </Suspense>

@@ -2,8 +2,8 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute() {
-    const { loading, isAuthenticated } = useAuth();
+export default function ProtectedRoute({ roles = [] }) {
+    const { loading, isAuthenticated, user } = useAuth();
     const location = useLocation();
 
     if (loading) return null; // oppure spinner
@@ -14,6 +14,16 @@ export default function ProtectedRoute() {
                 to="/login"
                 replace
                 state={{ reason: 'auth_required', from: location.pathname }}
+            />
+        );
+    }
+
+    if (roles.length > 0 && !roles.includes(user?.role)) {
+        return (
+            <Navigate
+                to="/forbidden"
+                replace
+                state={{ from: location.pathname }}
             />
         );
     }
