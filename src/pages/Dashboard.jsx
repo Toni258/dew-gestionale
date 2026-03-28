@@ -33,8 +33,8 @@ export default function Dashboard() {
         showPasswordResetRequestsModal,
         setShowPasswordResetRequestsModal,
     } = useDashboardData(isSuperUser);
-    // Main state used by the page
 
+    // Main state used by the page
     const [showArchiveModal, setShowArchiveModal] = useState(false);
     const [menuToArchive, setMenuToArchive] = useState(null);
     const [archiving, setArchiving] = useState(false);
@@ -45,8 +45,8 @@ export default function Dashboard() {
     const alerts = data?.alerts ?? [];
     const checklist = data?.checklist ?? [];
     const suspendedDishes = data?.suspended_dishes ?? [];
-    // Derived data used by the UI
 
+    // Derived data used by the UI
     const archiveCandidateBySeason = useMemo(() => {
         const map = new Map();
 
