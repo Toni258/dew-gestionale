@@ -114,7 +114,8 @@ export default function Login() {
                             className="w-[85%] mb-4"
                         >
                             Hai richiesto il ripristino della password. Attendi
-                            che il super user imposti una password temporanea.
+                            che il l&apos;amministratore imposti una password
+                            temporanea.
                         </AlertBox>
                     )}
 
