@@ -1,3 +1,4 @@
+
 // Service layer used for dish suspensions.
 import { withTransaction } from '../db/tx.js';
 import { pool } from '../db/db.js';
@@ -16,6 +17,7 @@ import {
     isFoodFixedInMenu,
     isFoodSuspendedInRange,
     listDishConflictsForPeriod,
+    listTrackedReplacementRowsByAvailability,
     restoreOriginalDishPairingsByRange,
     upsertFoodAvailability,
 } from '../repositories/dishesRepo.js';
@@ -48,6 +50,47 @@ function parseReplacementMap(replacements = []) {
                     : Number(item.id_food_new),
             ]),
     );
+}
+
+
+// Builds the data needed for active tracked replacement map.
+function buildActiveTrackedReplacementMap(rows = []) {
+    return new Map(
+        rows
+            .filter((row) => row?.disabled_at == null)
+            .map((row) => [
+                Number(row.original_id_dish_pairing),
+                Number(row.replacement_id_food),
+            ])
+            .filter(
+                ([originalPairingId, replacementFoodId]) =>
+                    Number.isFinite(originalPairingId) &&
+                    Number.isFinite(replacementFoodId),
+            ),
+    );
+}
+
+// Checks whether the requested replacements match the currently active ones.
+function hasSameReplacementSelection(conflictIds = [], nextMap, currentMap) {
+    const normalizedConflictIds = conflictIds.filter(Number.isFinite);
+
+    if (normalizedConflictIds.length === 0) {
+        return currentMap.size === 0;
+    }
+
+    if (currentMap.size !== normalizedConflictIds.length) {
+        return false;
+    }
+
+    return normalizedConflictIds.every((conflictId) => {
+        const nextReplacementId = nextMap.get(conflictId);
+        const currentReplacementId = currentMap.get(conflictId);
+
+        return (
+            Number.isFinite(Number(nextReplacementId)) &&
+            Number(nextReplacementId) === Number(currentReplacementId)
+        );
+    });
 }
 
 // Helper function used by summarize conflicts.
@@ -167,11 +210,6 @@ export async function applyDishSuspension(dishIdRaw, payload = {}) {
             dishId,
         );
 
-        await resetExistingSuspensionState(conn, {
-            dishId,
-            existingSuspension,
-        });
-
         const idAvail = await upsertFoodAvailability(conn, {
             existingIdAvail: existingSuspension?.id_avail,
             dishId,
@@ -210,6 +248,51 @@ export async function applyDishSuspension(dishIdRaw, payload = {}) {
                 );
             }
         }
+
+        const activeTrackedRows = existingSuspension?.id_avail
+            ? await listTrackedReplacementRowsByAvailability(
+                  conn,
+                  existingSuspension.id_avail,
+              )
+            : [];
+        const currentReplacementMap = buildActiveTrackedReplacementMap(
+            activeTrackedRows,
+        );
+
+        const canReuseExistingReplaceState =
+            !!existingSuspension &&
+            action === 'replace' &&
+            hasSameReplacementSelection(
+                conflictIds,
+                repMap,
+                currentReplacementMap,
+            );
+
+        if (canReuseExistingReplaceState) {
+            return {
+                ok: true,
+                mode: 'apply',
+                action,
+                dish: { id_food: dish.id_food, name: dish.name },
+                suspension: {
+                    valid_from,
+                    valid_to,
+                    reason: normalizeReason(reason),
+                },
+                disabled_pairings: 0,
+                inserted_pairings: 0,
+                skipped_duplicates: 0,
+                conflicts_preview: conflicts,
+                summary: summarizeConflicts(conflicts),
+                message:
+                    'Sospensione aggiornata: commento e intervallo salvati mantenendo le sostituzioni già presenti.',
+            };
+        }
+
+        await resetExistingSuspensionState(conn, {
+            dishId,
+            existingSuspension,
+        });
 
         const disabledPairings = await disableDishPairingsByIds(conn, {
             dishId,
@@ -383,3 +466,4 @@ export async function disableDishSuspensionByDishId(dishIdRaw) {
         };
     });
 }
+

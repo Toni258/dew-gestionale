@@ -1,3 +1,4 @@
+
 // Custom hook used to manage dish.
 // Caricamento dish + mapping in initialValues/originalDish/initialSuspension
 
@@ -64,6 +65,22 @@ export function useDish(dishId) {
                     valid_from: data.suspension?.valid_from ?? '',
                     valid_to: data.suspension?.valid_to ?? '',
                     reason: data.suspension?.reason ?? '',
+                    replacements: Object.fromEntries(
+                        (data.suspension?.replacements ?? []).map(
+                            (replacement) => [
+                                String(replacement.id_dish_pairing),
+                                String(replacement.id_food_new),
+                            ],
+                        ),
+                    ),
+                    replacementLabels: Object.fromEntries(
+                        (data.suspension?.replacements ?? [])
+                            .filter((replacement) => replacement.label)
+                            .map((replacement) => [
+                                String(replacement.id_dish_pairing),
+                                replacement.label,
+                            ]),
+                    ),
                 });
 
                 setOriginalDish({
@@ -100,3 +117,4 @@ export function useDish(dishId) {
         existingImageUrl,
     };
 }
+

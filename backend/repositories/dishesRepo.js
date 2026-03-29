@@ -1,3 +1,4 @@
+
 // Database queries used for dishes.
 export async function countFilteredDishes(
     poolOrConn,
@@ -499,18 +500,21 @@ export async function listTrackedReplacementRowsByAvailability(poolOrConn, idAva
     const [rows] = await poolOrConn.query(
         `
             SELECT
-                id_food_avail_pairing_replacement,
-                id_avail,
-                original_id_dish_pairing,
-                replacement_id_dish_pairing,
-                original_id_food,
-                replacement_id_food,
-                season_type,
-                id_meal,
-                disabled_at
-            FROM food_availability_pairing_replacements
-            WHERE id_avail = ?
-            ORDER BY id_food_avail_pairing_replacement ASC
+                track.id_food_avail_pairing_replacement,
+                track.id_avail,
+                track.original_id_dish_pairing,
+                track.replacement_id_dish_pairing,
+                track.original_id_food,
+                track.replacement_id_food,
+                track.season_type,
+                track.id_meal,
+                track.disabled_at,
+                repl_food.name AS replacement_food_name
+            FROM food_availability_pairing_replacements track
+            LEFT JOIN food repl_food
+                ON repl_food.id_food = track.replacement_id_food
+            WHERE track.id_avail = ?
+            ORDER BY track.id_food_avail_pairing_replacement ASC
         `,
         [idAvail],
     );

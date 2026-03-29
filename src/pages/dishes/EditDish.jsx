@@ -1,3 +1,4 @@
+
 // Page used to edit an existing dish.
 // The page keeps only the high-level workflow, while the suspension preview
 // and form helpers live in dedicated modules.
@@ -56,7 +57,7 @@ export default function EditDish() {
         setReplacementForPairing,
         runDishSuspensionFlow,
         applySuspension,
-    } = useDishSuspensionFlow(dishId);
+    } = useDishSuspensionFlow(dishId, { initialSuspension });
 
     // Handles the logic for dish submit.
     async function handleDishSubmit(values) {
@@ -282,3 +283,4 @@ export default function EditDish() {
         </AppLayout>
     );
 }
+

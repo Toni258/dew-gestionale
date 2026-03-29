@@ -2,10 +2,7 @@
 // The page only keeps the submit orchestration, while this hook stores
 // the preview state, grouped conflicts and replacement options.
 import { useEffect, useMemo, useState } from 'react';
-import {
-    suspendDishApply,
-    suspendDishDryRun,
-} from '../../services/dishesApi';
+import { suspendDishApply, suspendDishDryRun } from '../../services/dishesApi';
 import { getAvailableFoodsForMenu } from '../../services/foodsApi';
 import {
     buildDishSuspensionMenuKey,
@@ -14,7 +11,10 @@ import {
 } from '../../utils/dishes/dishSuspension';
 
 // Manages the state and side effects for dish suspension flow.
-export function useDishSuspensionFlow(dishId) {
+export function useDishSuspensionFlow(
+    dishId,
+    { initialSuspension = null } = {},
+) {
     // Main state used by the page
     const [suspensionPreview, setSuspensionPreview] = useState(null);
     const [expandedMenus, setExpandedMenus] = useState({});
@@ -96,8 +96,48 @@ export function useDishSuspensionFlow(dishId) {
 
                 if (!alive) return;
 
-                setOptionsByType(Object.fromEntries(entries));
-                setReplacementByPairing({});
+                const nextOptionsByType = Object.fromEntries(entries);
+                const initialReplacementByPairing =
+                    initialSuspension?.replacements ?? {};
+                const initialReplacementLabels =
+                    initialSuspension?.replacementLabels ?? {};
+                const nextReplacementByPairing = {};
+
+                for (const conflict of suspensionPreview.conflicts) {
+                    const pairingKey = String(conflict.id_dish_pairing);
+                    const selectedValue =
+                        replacementByPairing?.[pairingKey] ??
+                        initialReplacementByPairing[pairingKey] ??
+                        '';
+
+                    if (!selectedValue) {
+                        continue;
+                    }
+
+                    nextReplacementByPairing[pairingKey] =
+                        String(selectedValue);
+
+                    const optionsKey = buildDishSuspensionMenuKey(conflict);
+                    const currentOptions = nextOptionsByType[optionsKey] ?? [];
+                    const alreadyPresent = currentOptions.some(
+                        (option) => option.value === String(selectedValue),
+                    );
+
+                    if (!alreadyPresent) {
+                        nextOptionsByType[optionsKey] = [
+                            {
+                                value: String(selectedValue),
+                                label:
+                                    initialReplacementLabels[pairingKey] ??
+                                    `Piatto #${selectedValue}`,
+                            },
+                            ...currentOptions,
+                        ];
+                    }
+                }
+
+                setOptionsByType(nextOptionsByType);
+                setReplacementByPairing(nextReplacementByPairing);
             } catch (error) {
                 if (!alive) return;
                 setOptionsByType({});
@@ -118,7 +158,7 @@ export function useDishSuspensionFlow(dishId) {
         return () => {
             alive = false;
         };
-    }, [dishId, suspensionPreview]);
+    }, [dishId, initialSuspension, suspensionPreview]);
 
     // Helper function used by toggle menu.
     function toggleMenu(seasonType) {

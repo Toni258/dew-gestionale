@@ -226,7 +226,7 @@ export default function Dashboard() {
                 <section>
                     <SectionTitle
                         title="Piatti sospesi"
-                        subtitle="Elenco sintetico dei piatti attualmente sospesi, con periodo di validità, motivo e un’indicazione sul possibile sostituto quando è ricostruibile."
+                        subtitle="Elenco dei piatti sospesi, con periodo di validità, motivo e un’indicazione sul possibile sostituto se presente."
                     />
 
                     <Card className="border border-brand-divider/70 !p-5">

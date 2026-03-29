@@ -1,3 +1,4 @@
+
 // Service layer for dish CRUD operations.
 // It validates payloads, coordinates repository calls and handles uploaded images.
 import { pool } from '../db/db.js';
@@ -16,6 +17,7 @@ import {
     findDishSummaryById,
     insertDish,
     listFilteredDishes,
+    listTrackedReplacementRowsByAvailability,
     updateDish,
 } from '../repositories/dishesRepo.js';
 
@@ -90,6 +92,23 @@ function normalizeDishPayload(body = {}) {
         fats: normalizeNonNegativeNumber(body.fats, 'Grassi'),
         allergy_notes: normalizeAllergyNotes(body.allergy_notes),
     };
+}
+
+
+// Builds the data needed for active suspension replacements.
+function mapActiveSuspensionReplacements(rows = []) {
+    return rows
+        .filter((row) => row?.disabled_at == null)
+        .map((row) => ({
+            id_dish_pairing: Number(row.original_id_dish_pairing),
+            id_food_new: Number(row.replacement_id_food),
+            label: String(row.replacement_food_name ?? '').trim() || null,
+        }))
+        .filter(
+            (row) =>
+                Number.isFinite(row.id_dish_pairing) &&
+                Number.isFinite(row.id_food_new),
+        );
 }
 
 // Returns the data used by filtered dishes data.
@@ -214,6 +233,9 @@ export async function getDishByIdData(dishIdRaw) {
     }
 
     const suspension = await findCurrentOrFutureSuspensionByFoodId(pool, dishId);
+    const trackedReplacementRows = suspension
+        ? await listTrackedReplacementRowsByAvailability(pool, suspension.id_avail)
+        : [];
 
     return {
         ...dish,
@@ -226,6 +248,9 @@ export async function getDishByIdData(dishIdRaw) {
                   valid_from: suspension.valid_from,
                   valid_to: suspension.valid_to,
                   reason: suspension.reason,
+                  replacements: mapActiveSuspensionReplacements(
+                      trackedReplacementRows,
+                  ),
               }
             : null,
     };
@@ -277,3 +302,4 @@ export async function updateDishData(dishIdRaw, body = {}, file = null) {
         throw error;
     }
 }
+
