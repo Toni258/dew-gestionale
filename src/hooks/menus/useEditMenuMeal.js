@@ -145,11 +145,6 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
     // );
     // }, [selectedFoods]);
 
-    // Selezione parziale (almeno un piatto selezionato)
-    const hasAtLeastOneSelectedNow = useMemo(() => {
-        return COURSE_TYPES.some((c) => Boolean(selectedFoods[c.key]?.id_food));
-    }, [selectedFoods]);
-
     const hasChanges = useMemo(() => {
         return COURSE_TYPES.some((c) => {
             const now = selectedFoods[c.key]?.id_food ?? null;
@@ -163,20 +158,21 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         : 'Composizione pasto';
     const buttonLabel = hasSomethingSaved ? 'Salva modifica' : 'Aggiungi pasto';
 
-    const disableSave = saving || !hasAtLeastOneSelectedNow || !hasChanges;
+    const disableSave = saving || !hasChanges;
 
     // Con controllo se tutti i piatti sono stati selezionati
     // const disableSave = saving || !allSelectedNow || (hasSomethingSaved && !hasChanges);
 
     const totals = useMemo(() => {
-        return Object.values(selectedFoods).reduce(
-            (acc, f) => {
-                if (!f) return acc;
-                acc.weight += Number(f.grammage_tot || 0);
-                acc.kcal += Number(f.kcal_tot || 0);
-                acc.proteins += Number(f.proteins || 0);
-                acc.carbs += Number(f.carbs || 0);
-                acc.fats += Number(f.fats || 0);
+        return COURSE_TYPES.reduce(
+            (acc, course) => {
+                const food = selectedFoods[course.key];
+                if (!food) return acc;
+                acc.weight += Number(food.grammage_tot || 0);
+                acc.kcal += Number(food.kcal_tot || 0);
+                acc.proteins += Number(food.proteins || 0);
+                acc.carbs += Number(food.carbs || 0);
+                acc.fats += Number(food.fats || 0);
                 return acc;
             },
             { weight: 0, kcal: 0, proteins: 0, carbs: 0, fats: 0 },
@@ -206,12 +202,6 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
 
     // Helper function used by save.
     async function save() {
-        // validazione
-        if (!hasAtLeastOneSelectedNow) {
-            notify.warning('Seleziona almeno un piatto');
-            return { ok: false };
-        }
-
         if (hasSomethingSaved && !hasChanges) {
             notify.info('Nessuna modifica da salvare');
             return { ok: false };

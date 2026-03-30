@@ -1,4 +1,3 @@
-// Table component used for dishes.
 import { memo } from 'react';
 
 import { NavLink } from 'react-router-dom';
@@ -6,7 +5,6 @@ import { extractAllergenEmojis } from '../../utils/extractAllergens';
 import { formatNumber } from '../../utils/format';
 import { capitalize } from '../../utils/capitalize';
 import StatusDot from './StatusDot';
-import PageButton from '../ui/PageButton';
 import Pagination from '../ui/Pagination';
 
 // Table used to show dishes with their main data and available actions.
@@ -20,6 +18,7 @@ export default memo(function DishesTable({
     onPageChange,
     onPageSizeChange,
     onDelete,
+    onShowStatusInfo,
     onShowAllergensInfo,
 }) {
     return (
@@ -29,7 +28,22 @@ export default memo(function DishesTable({
                     {/* Table header */}
                     <thead className="bg-brand-primary text-white">
                         <tr>
-                            <th className="px-3 py-3 text-center">STATO</th>
+                            <th className="px-3 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                    <span>STATO</span>
+                                    <button
+                                        type="button"
+                                        onClick={onShowStatusInfo}
+                                        aria-label="Legenda stato piatto"
+                                    >
+                                        <img
+                                            src="/icons/information bianco.png"
+                                            className="w-4 h-4"
+                                            alt="Legenda stato piatto"
+                                        />
+                                    </button>
+                                </div>
+                            </th>
                             <th className="px-3 py-3 text-left">NOME</th>
                             <th className="px-3 py-3 text-left">TIPO</th>
                             <th className="px-3 py-3 text-left">PESO (G)</th>
@@ -42,6 +56,7 @@ export default memo(function DishesTable({
                                     <button
                                         type="button"
                                         onClick={onShowAllergensInfo}
+                                        aria-label="Legenda allergeni"
                                     >
                                         <img
                                             src="/icons/information bianco.png"
@@ -100,10 +115,16 @@ export default memo(function DishesTable({
                                 </td>
 
                                 {/* Main macronutrients */}
-                                <td className="px-3 py-2.5 whitespace-nowrap">
-                                    🥩 {formatNumber(r.proteins)} | 🍞{' '}
-                                    {formatNumber(r.carbs)} | 🧈{' '}
-                                    {formatNumber(r.fats)}
+                                <td className="px-3 py-2.5 flex w-full align-left">
+                                    <span className="flex-[1]">
+                                        🥩 {formatNumber(r.proteins)}
+                                    </span>
+                                    <span className="flex-[1]">
+                                        🍞 {formatNumber(r.carbs)}
+                                    </span>
+                                    <span className="flex-[1]">
+                                        🧈 {formatNumber(r.fats)}
+                                    </span>
                                 </td>
 
                                 {/* Allergens shown as emojis */}

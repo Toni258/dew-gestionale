@@ -27,8 +27,11 @@ export async function listMenus(poolOrConn) {
                 JOIN arch_meal_snapshot m
                     ON m.id_arch_menu = dp.id_arch_menu
                     AND m.id_meal = dp.id_meal
+                JOIN arch_food_snapshot f
+                    ON f.id_arch_food = dp.id_arch_food
                 WHERE m.first_choice = 0
                     AND dp.used = 1
+                    AND f.type IN ('primo', 'secondo', 'contorno', 'ultimo')
                 GROUP BY dp.id_arch_menu, dp.id_meal
             ) y
             GROUP BY y.id_arch_menu

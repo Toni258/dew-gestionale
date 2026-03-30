@@ -173,7 +173,14 @@ export function QuickStatusCard({
                         <div className="text-xs uppercase tracking-[0.08em] text-brand-textSecondary">
                             Compilazione
                         </div>
-                        <div className="mt-1 text-lg font-semibold text-brand-primary">
+                        <div
+                            className={
+                                'mt-1 text-lg font-semibold ' +
+                                (menu.meals_compiled < menu.meals_total
+                                    ? 'text-brand-error'
+                                    : 'text-brand-primary')
+                            }
+                        >
                             {menu.meals_compiled}/{menu.meals_total}
                         </div>
                         <div className="text-xs text-brand-textSecondary">
@@ -185,7 +192,15 @@ export function QuickStatusCard({
                         <div className="text-xs uppercase tracking-[0.08em] text-brand-textSecondary">
                             Piatti fissi
                         </div>
-                        <div className="mt-1 text-lg font-semibold text-brand-primary">
+                        <div
+                            className={
+                                'mt-1 text-lg font-semibold ' +
+                                (menu.fixed_missing_slots > 0 ||
+                                menu.fixed_slots_filled < menu.fixed_slots_total
+                                    ? 'text-brand-error'
+                                    : 'text-brand-primary')
+                            }
+                        >
                             {menu.fixed_slots_filled}/{menu.fixed_slots_total}
                         </div>
                         <div className="text-xs text-brand-textSecondary">

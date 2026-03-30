@@ -217,10 +217,6 @@ export async function upsertMenuMealComposition({
         .map((k) => [k, foods?.[k] ?? null])
         .filter(([, v]) => v !== null && v !== undefined && v !== '');
 
-    if (selectedEntries.length === 0) {
-        throw new HttpError(400, 'Seleziona almeno un piatto');
-    }
-
     const ids = selectedEntries.map(([, v]) => Number(v));
 
     if (ids.some((x) => !Number.isInteger(x) || x <= 0)) {
@@ -241,8 +237,10 @@ export async function upsertMenuMealComposition({
 
         await repo.deleteMealCompositionNoCoperto(conn, { seasonType, idMeal });
 
-        const values = ids.map((idFood) => [idMeal, idFood, seasonType, 1]);
-        await repo.insertDishPairings(conn, values);
+        if (ids.length > 0) {
+            const values = ids.map((idFood) => [idMeal, idFood, seasonType, 1]);
+            await repo.insertDishPairings(conn, values);
+        }
 
         return { ok: true };
     });

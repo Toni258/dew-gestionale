@@ -1,4 +1,3 @@
-// Main page for dishes list.
 import AppLayout from '../../components/layout/AppLayout';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -12,6 +11,7 @@ import DishesTable from '../../components/dishes/DishesTable';
 
 import DeleteDishModal from '../../components/modals/DeleteDishModal';
 import AllergensModal from '../../components/modals/AllergensModal';
+import DishStatusInfoModal from '../../components/modals/DishStatusInfoModal';
 
 import { withLoader } from '../../services/withLoader';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
@@ -30,6 +30,7 @@ export default function DishesList() {
         allergeni: [],
     });
 
+    const [showStatusInfo, setShowStatusInfo] = useState(false);
     const [showAllergensInfo, setShowAllergensInfo] = useState(false);
     const [dishToDelete, setDishToDelete] = useState(null);
 
@@ -169,6 +170,7 @@ export default function DishesList() {
                 onPageChange={setPage}
                 onPageSizeChange={handlePageSizeChange}
                 onDelete={(dish) => setDishToDelete(dish)}
+                onShowStatusInfo={() => setShowStatusInfo(true)}
                 onShowAllergensInfo={() => setShowAllergensInfo(true)}
             />
 
@@ -192,6 +194,11 @@ export default function DishesList() {
 
                     if (!res.ok) return;
                 }}
+            />
+
+            <DishStatusInfoModal
+                open={showStatusInfo}
+                onClose={() => setShowStatusInfo(false)}
             />
 
             <AllergensModal

@@ -33,8 +33,10 @@ export async function listMenus(poolOrConn) {
                     dp.id_meal
                 FROM dish_pairing dp
                 JOIN meal m ON m.id_meal = dp.id_meal
+                JOIN food f ON f.id_food = dp.id_food
                 WHERE m.first_choice = 0
-                AND dp.used = 1
+                  AND dp.used = 1
+                  AND f.type IN ('primo', 'secondo', 'contorno', 'ultimo')
                 GROUP BY dp.season_type, dp.id_meal
             ) x
             GROUP BY x.season_type
