@@ -100,7 +100,12 @@ export default function Input({
                             <span className="block w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
                         )}
                         {shouldShowSuccess && (
-                            <span className="text-green-600 text-lg">✔</span>
+                            <img
+                                src="/icons/checkmark-verde.png"
+                                alt="Successo"
+                                className="h-5 w-5 shrink-0"
+                                draggable={false}
+                            />
                         )}
                     </div>
                 )}

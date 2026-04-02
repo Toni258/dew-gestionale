@@ -19,6 +19,38 @@ export default function InfoMacro({ food }) {
                 </span>
             </div>
             <div className="flex">
+                <span className="w-1/3 flex items-center">
+                    <img
+                        src="/icons/steak.png"
+                        alt="Proteine"
+                        title="Proteine"
+                        className="h-5 w-5 mr-1 cursor-help select-none"
+                        draggable={false}
+                    />{' '}
+                    {Number(food.proteins || 0).toFixed(2)} g
+                </span>
+                <span className="w-1/3 flex items-center">
+                    <img
+                        src="/icons/bread.png"
+                        alt="Carboidrati"
+                        title="Carboidrati"
+                        className="h-5 w-5 mr-1 cursor-help select-none"
+                        draggable={false}
+                    />{' '}
+                    {Number(food.carbs || 0).toFixed(2)} g
+                </span>
+                <span className="w-1/3 flex items-center">
+                    <img
+                        src="/icons/butter.png"
+                        alt="Grassi"
+                        title="Grassi"
+                        className="h-5 w-5 mr-1 cursor-help select-none"
+                        draggable={false}
+                    />{' '}
+                    {Number(food.fats || 0).toFixed(2)} g
+                </span>
+
+                {/* Alternative senza icone:
                 <span className="w-1/3">
                     Proteine: {Number(food.proteins || 0).toFixed(2)} g
                 </span>
@@ -28,6 +60,7 @@ export default function InfoMacro({ food }) {
                 <span className="w-1/3">
                     Grassi: {Number(food.fats || 0).toFixed(2)} g
                 </span>
+                */}
             </div>
         </div>
     );

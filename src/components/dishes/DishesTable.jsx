@@ -6,6 +6,7 @@ import { formatNumber } from '../../utils/format';
 import { capitalize } from '../../utils/capitalize';
 import StatusDot from './StatusDot';
 import Pagination from '../ui/Pagination';
+import MacronutrientsInfoButton from '../ui/MacronutrientsInfoButton';
 
 // Table used to show dishes with their main data and available actions.
 export default memo(function DishesTable({
@@ -48,7 +49,15 @@ export default memo(function DishesTable({
                             <th className="px-3 py-3 text-left">TIPO</th>
                             <th className="px-3 py-3 text-left">PESO (G)</th>
                             <th className="px-3 py-3 text-left">KCAL</th>
-                            <th className="px-3 py-3 text-left">MACRO (G)</th>
+                            <th className="px-3 py-3 text-left">
+                                <div className="flex items-center gap-2">
+                                    <span>MACRO (G)</span>
+                                    <MacronutrientsInfoButton
+                                        iconSrc="/icons/information bianco.png"
+                                        iconClassName="w-4 h-4"
+                                    />
+                                </div>
+                            </th>
                             <th className="px-3 py-3 text-left">
                                 <div className="flex items-center gap-2">
                                     <span>ALLERGENI</span>
@@ -116,14 +125,35 @@ export default memo(function DishesTable({
 
                                 {/* Main macronutrients */}
                                 <td className="px-3 py-2.5 flex w-full align-left">
-                                    <span className="flex-[1]">
-                                        🥩 {formatNumber(r.proteins)}
+                                    <span className="flex-[1] flex">
+                                        <img
+                                            src="/icons/steak.png"
+                                            alt="Proteine"
+                                            title="Proteine"
+                                            className="h-5 w-5 mr-1 cursor-help select-none"
+                                            draggable={false}
+                                        />{' '}
+                                        {formatNumber(r.proteins)}
                                     </span>
-                                    <span className="flex-[1]">
-                                        🍞 {formatNumber(r.carbs)}
+                                    <span className="flex-[1] flex">
+                                        <img
+                                            src="/icons/bread.png"
+                                            alt="Carboidrati"
+                                            title="Carboidrati"
+                                            className="h-5 w-5 mr-1 cursor-help select-none"
+                                            draggable={false}
+                                        />{' '}
+                                        {formatNumber(r.carbs)}
                                     </span>
-                                    <span className="flex-[1]">
-                                        🧈 {formatNumber(r.fats)}
+                                    <span className="flex-[1] flex">
+                                        <img
+                                            src="/icons/butter.png"
+                                            alt="Grassi"
+                                            title="Grassi"
+                                            className="h-5 w-5 mr-1 cursor-help select-none"
+                                            draggable={false}
+                                        />{' '}
+                                        {formatNumber(r.fats)}
                                     </span>
                                 </td>
 
@@ -138,28 +168,43 @@ export default memo(function DishesTable({
                                                 title={a.label}
                                                 className="cursor-help select-none"
                                             >
-                                                {a.emoji}
+                                                <img
+                                                    src={'/icons/' + a.icon}
+                                                    alt={a.label}
+                                                    className="h-5 w-5"
+                                                    draggable={false}
+                                                />
                                             </span>
                                         ))}
                                     </div>
                                 </td>
 
                                 {/* Row actions */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 flex">
                                     <NavLink
                                         to={`/dishes/edit/${r.id_food}`}
-                                        className="text-brand-primary font-semibold"
+                                        className="bg-brand-warning/25 p-1.5 rounded-md"
                                     >
-                                        ✏
+                                        <img
+                                            src="/icons/pencil-giallo.png"
+                                            alt="Modifica"
+                                            className="h-4 w-4 shrink-0"
+                                            draggable={false}
+                                        />
                                     </NavLink>
 
                                     {/* Delete is available only for inactive dishes */}
                                     {r.status === 'non_attivo' && (
                                         <button
-                                            className="ml-3 text-red-500"
+                                            className="ml-3 500 bg-brand-error/25 p-1.5 rounded-md"
                                             onClick={() => onDelete(r)}
                                         >
-                                            🗑
+                                            <img
+                                                src="/icons/delete-1-rosso.png"
+                                                alt="Elimina"
+                                                className="h-4 w-4 shrink-0"
+                                                draggable={false}
+                                            />
                                         </button>
                                     )}
                                 </td>

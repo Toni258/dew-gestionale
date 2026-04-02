@@ -22,81 +22,111 @@ export default function MobileAppUsersTable({
         <div className="overflow-hidden rounded-xl border border-brand-divider bg-white">
             <div className="overflow-x-auto">
                 <table className="min-w-[980px] w-full table-auto text-sm">
-                <thead className="bg-brand-primary text-white">
-                    <tr>
-                        <th className="px-4 py-3 text-left">STATO</th>
-                        <th className="px-4 py-3 text-left">ID</th>
-                        <th className="px-4 py-3 text-left">RUOLO</th>
-                        <th className="px-4 py-3 text-left">EMAIL</th>
-                        <th className="px-4 py-3 text-left">UTENTE</th>
-                        <th className="px-4 py-3 text-left">ACCEPTANCE IP</th>
-                        <th className="px-4 py-3 text-left">
-                            ACCEPTANCE TIME
-                        </th>
-                        {isSuperUser && (
-                            <th className="px-4 py-3 text-left">AZIONI</th>
-                        )}
-                    </tr>
-                </thead>
-                <tbody>
-                    {!loading && rows.length === 0 && (
+                    <thead className="bg-brand-primary text-white">
                         <tr>
-                            <td
-                                colSpan={isSuperUser ? 8 : 7}
-                                className="px-4 py-4 text-brand-textSecondary"
-                            >
-                                Nessun utente trovato.
-                            </td>
-                        </tr>
-                    )}
-
-                    {rows.map((user) => (
-                        <tr key={user.id_caregiver} className="border-b">
-                            <td className="px-4 py-3">
-                                {user.is_disabled ? 'Disabilitato' : 'Abilitato'}
-                            </td>
-                            <td className="px-4 py-3">{user.id_caregiver}</td>
-                            <td className="px-4 py-3">
-                                {MOBILE_ROLE_LABELS[user.role] || user.role}
-                            </td>
-                            <td className="px-4 py-3">{user.email}</td>
-                            <td className="px-4 py-3">
-                                {user.name} {user.surname}
-                            </td>
-                            <td className="px-4 py-3">{user.acceptance_ip}</td>
-                            <td className="px-4 py-3">
-                                {formatDateTime(user.acceptance_time)}
-                            </td>
+                            <th className="px-4 py-3 text-left">STATO</th>
+                            <th className="px-4 py-3 text-left">ID</th>
+                            <th className="px-4 py-3 text-left">RUOLO</th>
+                            <th className="px-4 py-3 text-left">EMAIL</th>
+                            <th className="px-4 py-3 text-left">UTENTE</th>
+                            <th className="px-4 py-3 text-left">
+                                ACCEPTANCE IP
+                            </th>
+                            <th className="px-4 py-3 text-left">
+                                ACCEPTANCE TIME
+                            </th>
                             {isSuperUser && (
-                                <td className="px-4 py-3">
-                                    <button
-                                        className="text-red-500"
-                                        onClick={() => onEdit(user)}
-                                    >
-                                        ✏
-                                    </button>
-
-                                    {!user.is_disabled && (
-                                        <button
-                                            className="ml-3 text-red-500"
-                                            onClick={() => onDisable(user)}
-                                        >
-                                            🚫
-                                        </button>
-                                    )}
-
-                                    <button
-                                        className="ml-3 text-red-500"
-                                        onClick={() => onDelete(user)}
-                                    >
-                                        🗑
-                                    </button>
-                                </td>
+                                <th className="px-4 py-3 text-left">AZIONI</th>
                             )}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {!loading && rows.length === 0 && (
+                            <tr>
+                                <td
+                                    colSpan={isSuperUser ? 8 : 7}
+                                    className="px-4 py-4 text-brand-textSecondary"
+                                >
+                                    Nessun utente trovato.
+                                </td>
+                            </tr>
+                        )}
+
+                        {rows.map((user) => (
+                            <tr key={user.id_caregiver} className="border-b">
+                                <td className="px-4 py-3">
+                                    {user.is_disabled
+                                        ? 'Disabilitato'
+                                        : 'Abilitato'}
+                                </td>
+                                <td className="px-4 py-3">
+                                    {user.id_caregiver}
+                                </td>
+                                <td className="px-4 py-3">
+                                    {MOBILE_ROLE_LABELS[user.role] || user.role}
+                                </td>
+                                <td className="px-4 py-3">{user.email}</td>
+                                <td className="px-4 py-3">
+                                    {user.name} {user.surname}
+                                </td>
+                                <td className="px-4 py-3">
+                                    {user.acceptance_ip}
+                                </td>
+                                <td className="px-4 py-3">
+                                    {formatDateTime(user.acceptance_time)}
+                                </td>
+                                {isSuperUser && (
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center">
+                                            <button
+                                                className="rounded-md bg-brand-warning/25 p-1.5"
+                                                onClick={() => onEdit(user)}
+                                                type="button"
+                                            >
+                                                <img
+                                                    src="/icons/pencil-giallo.png"
+                                                    alt="Modifica"
+                                                    className="h-4 w-4 shrink-0"
+                                                    draggable={false}
+                                                />
+                                            </button>
+
+                                            {!user.is_disabled && (
+                                                <button
+                                                    className="ml-3 rounded-md bg-brand-error/25 p-1.5"
+                                                    onClick={() =>
+                                                        onDisable(user)
+                                                    }
+                                                    type="button"
+                                                >
+                                                    <img
+                                                        src="/icons/lock-rosso.png"
+                                                        alt="Disabilita"
+                                                        className="h-4 w-4 shrink-0"
+                                                        draggable={false}
+                                                    />
+                                                </button>
+                                            )}
+
+                                            <button
+                                                className="ml-3 rounded-md bg-brand-error/25 p-1.5"
+                                                onClick={() => onDelete(user)}
+                                                type="button"
+                                            >
+                                                <img
+                                                    src="/icons/delete-1-rosso.png"
+                                                    alt="Elimina"
+                                                    className="h-4 w-4 shrink-0"
+                                                    draggable={false}
+                                                />
+                                            </button>
+                                        </div>
+                                    </td>
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
             <Pagination

@@ -2,14 +2,24 @@
 import { useNavigate } from 'react-router-dom';
 import { capitalize } from '../../utils/capitalize';
 
+function formatMenuDate(value) {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '—';
+
+    const parts = raw.split('-');
+    if (parts.length !== 3) return raw;
+
+    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+}
+
 export default function MenuCard({ menu, onArchive }) {
     const navigate = useNavigate();
 
     const {
         season_type,
         day_number,
-        period_label,
-        start_year,
+        start_date,
+        end_date,
         is_active,
         is_ended,
         meals_completed,
@@ -70,27 +80,27 @@ export default function MenuCard({ menu, onArchive }) {
                         </span>
 
                         <span className="flex flex-[2] text-lg text-brand-text gap-2">
-                            Periodo:
+                            Inizio:
                             <span className="text-brand-primary font-semibold">
-                                {period_label}
+                                {formatMenuDate(start_date)}
                             </span>
                         </span>
                     </div>
 
                     <div className="mt-1 flex flex-col gap-2 lg:flex-row">
                         <span className="flex flex-[1] text-lg text-brand-text gap-2">
-                            Anno:
-                            <span className="text-brand-primary font-semibold">
-                                {start_year}
-                            </span>
-                        </span>
-
-                        <span className="flex flex-[2] text-lg text-brand-text gap-2">
                             Pasti compilati:
                             <span
                                 className={`font-semibold ${mealsCompletedClass}`}
                             >
                                 {meals_completed}/{meals_total}
+                            </span>
+                        </span>
+
+                        <span className="flex flex-[2] text-lg text-brand-text gap-2">
+                            Fine:
+                            <span className="text-brand-primary font-semibold">
+                                {formatMenuDate(end_date)}
                             </span>
                         </span>
                     </div>

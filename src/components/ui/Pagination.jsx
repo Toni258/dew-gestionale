@@ -7,7 +7,7 @@ export default memo(function Pagination({
     page = 1,
     totalPages = 1,
     pageSize = 10,
-    pageSizeOptions = [10, 15, 20, 30, 40, 50],
+    pageSizeOptions = [5, 10, 15, 20, 30, 40, 50],
     loading = false,
     onPageChange,
     onPageSizeChange,

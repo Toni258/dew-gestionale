@@ -80,7 +80,12 @@ export default function ForceChangePasswordModal() {
                 <div className="px-6 pt-6 pb-4 border-b border-brand-divider/60">
                     <div className="flex items-start gap-3">
                         <div className="w-11 h-11 rounded-xl bg-brand-primary/10 flex items-center justify-center">
-                            <span className="text-2xl">🔒</span>
+                            <img
+                                src="/icons/lock-verde.png"
+                                alt="Avviso inattività"
+                                className="h-6 w-6 shrink-0"
+                                draggable={false}
+                            />
                         </div>
 
                         <div className="flex-1">

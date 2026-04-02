@@ -7,7 +7,7 @@ const STATUS_INFO_ROWS = [
         label: 'Rosso',
         status: 'non_attivo',
         description:
-            'Il piatto, ad oggi, non è usato nel menù corrente.',
+            'Il piatto, ad oggi, non è usato nel menù corrente. Solo i piatti con questo stato possono essere eliminati.',
     },
     {
         key: 'sospeso',
@@ -20,8 +20,7 @@ const STATUS_INFO_ROWS = [
         key: 'attivo',
         label: 'Verde',
         status: 'attivo',
-        description:
-            'Il piatto è presente nel menù corrente, quindi è in uso.',
+        description: 'Il piatto è presente nel menù corrente, quindi è in uso.',
     },
 ];
 

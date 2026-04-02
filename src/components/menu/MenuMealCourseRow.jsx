@@ -16,11 +16,43 @@ function MacroBox({ food }) {
                         <strong>Kcal:</strong>{' '}
                         {Number(food.kcal_tot).toFixed(2)}
                     </div>
-                    <div>
-                        <strong>Macro nutrienti:</strong> 🥩{' '}
-                        {Number(food.proteins).toFixed(2)} | 🍞{' '}
-                        {Number(food.carbs).toFixed(2)} | 🧈{' '}
-                        {Number(food.fats).toFixed(2)}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <strong>Macro nutrienti:</strong>
+                        </div>
+
+                        <span className="flex flex-wrap items-center">
+                            <img
+                                src="/icons/steak.png"
+                                alt="Proteine"
+                                title="Proteine"
+                                className="mr-1 h-5 w-5 cursor-help select-none"
+                                draggable={false}
+                            />
+                            {Number(food.proteins).toFixed(2)}
+                        </span>
+
+                        <span className="flex items-center">
+                            <img
+                                src="/icons/bread.png"
+                                alt="Carboidrati"
+                                title="Carboidrati"
+                                className="mr-1 h-5 w-5 cursor-help select-none"
+                                draggable={false}
+                            />
+                            {Number(food.carbs).toFixed(2)}
+                        </span>
+
+                        <span className="flex items-center">
+                            <img
+                                src="/icons/butter.png"
+                                alt="Grassi"
+                                title="Grassi"
+                                className="mr-1 h-5 w-5 cursor-help select-none"
+                                draggable={false}
+                            />
+                            {Number(food.fats).toFixed(2)}
+                        </span>
                     </div>
                 </>
             ) : (

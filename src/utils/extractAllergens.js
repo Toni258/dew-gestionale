@@ -8,6 +8,6 @@ export function extractAllergenEmojis(allergyNotes) {
     const text = String(allergyNotes).toLowerCase();
 
     return ALLERGENS.filter((a) =>
-        a.patterns.some((p) => text.includes(p))
-    ).map((a) => ({ emoji: a.emoji, label: a.label, key: a.key }));
+        a.patterns.some((p) => text.includes(p)),
+    ).map((a) => ({ icon: a.icon, label: a.label, key: a.key }));
 }

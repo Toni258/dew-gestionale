@@ -37,7 +37,7 @@ export default function AllergensModal({ open, onClose }) {
                                 <th className="px-4 py-2 text-left">
                                     Allergene
                                 </th>
-                                <th className="px-4 py-2 text-left">Emoji</th>
+                                <th className="px-4 py-2 text-left">Icona</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -48,7 +48,12 @@ export default function AllergensModal({ open, onClose }) {
                                 >
                                     <td className="px-4 py-2">{a.label}</td>
                                     <td className="px-4 py-2 text-lg">
-                                        {a.emoji}
+                                        <img
+                                            src={'/icons/' + a.icon}
+                                            alt={a.label}
+                                            className="h-6 w-6"
+                                            draggable={false}
+                                        />
                                     </td>
                                 </tr>
                             ))}

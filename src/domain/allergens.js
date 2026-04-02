@@ -1,49 +1,69 @@
 // Domain constants for allergens.
 export const ALLERGENS = [
-    { key: 'glutine', label: 'Glutine', emoji: '🌾', patterns: ['glutine'] },
+    {
+        key: 'glutine',
+        label: 'Glutine',
+        icon: 'gluten.png',
+        patterns: ['glutine'],
+    },
     {
         key: 'latte',
         label: 'Latte / Lattosio',
-        emoji: '🥛',
+        icon: 'milk.png',
         patterns: ['latte', 'lattosio'],
     },
-    { key: 'uova', label: 'Uova', emoji: '🥚', patterns: ['uova'] },
-    { key: 'arachidi', label: 'Arachidi', emoji: '🥜', patterns: ['arachidi'] },
+    { key: 'uova', label: 'Uova', icon: 'egg.png', patterns: ['uova'] },
+    {
+        key: 'arachidi',
+        label: 'Arachidi',
+        icon: 'peanut.png',
+        patterns: ['arachidi'],
+    },
     {
         key: 'frutta_guscio',
         label: 'Frutta a guscio',
-        emoji: '🌰',
+        icon: 'hazelnut.png',
         patterns: ['frutta a guscio', 'frutta secca'],
     },
-    { key: 'pesce', label: 'Pesce', emoji: '🐟', patterns: ['pesce'] },
+    { key: 'pesce', label: 'Pesce', icon: 'fish.png', patterns: ['pesce'] },
     {
         key: 'crostacei',
         label: 'Crostacei',
-        emoji: '🦐',
+        icon: 'crab.png',
         patterns: ['crostacei'],
     },
     {
         key: 'molluschi',
         label: 'Molluschi',
-        emoji: '🦑',
+        icon: 'octopus.png',
         patterns: ['molluschi'],
     },
-    { key: 'soia', label: 'Soia', emoji: '🌱', patterns: ['soia'] },
-    { key: 'sedano', label: 'Sedano', emoji: '🥬', patterns: ['sedano'] },
-    { key: 'senape', label: 'Senape', emoji: '🌿', patterns: ['senape'] },
+    { key: 'soia', label: 'Soia', icon: 'soy.png', patterns: ['soia'] },
+    {
+        key: 'sedano',
+        label: 'Sedano',
+        icon: 'celery.png',
+        patterns: ['sedano'],
+    },
+    {
+        key: 'senape',
+        label: 'Senape',
+        icon: 'mustard.png',
+        patterns: ['senape'],
+    },
     {
         key: 'sesamo',
         label: 'Semi di sesamo',
-        emoji: '⚫',
+        icon: 'sesame.png',
         patterns: ['sesamo'],
     },
     {
         key: 'solfiti',
         label: 'Anidride solforosa e solfiti',
-        emoji: '🍷',
+        icon: 'wine.png',
         patterns: ['solfiti', 'anidride solforosa'],
     },
-    { key: 'lupini', label: 'Lupini', emoji: '🌻', patterns: ['lupini'] },
+    { key: 'lupini', label: 'Lupini', icon: 'lupin.png', patterns: ['lupini'] },
 ];
 
 // Helper function used by allergen options.

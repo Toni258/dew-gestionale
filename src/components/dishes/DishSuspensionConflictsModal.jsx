@@ -34,16 +34,24 @@ export default function DishSuspensionConflictsModal({
                 </h2>
 
                 <p className="text-brand-textSecondary mb-4">
-                    Il piatto <strong>{preview.dish.name}</strong> è presente nei
-                    seguenti menù nel periodo selezionato. Procedendo verrà{' '}
+                    Il piatto <strong>{preview.dish.name}</strong> è presente
+                    nei seguenti menù nel periodo selezionato. Procedendo verrà{' '}
                     <strong>rimosso automaticamente</strong>.
                 </p>
 
                 {preview.summary?.conflicts_in_active_menu > 0 && (
-                    <div className="mb-4 rounded-lg bg-red-100 p-3 text-red-700">
-                        ⚠️ Attenzione:{' '}
-                        {preview.summary.conflicts_in_active_menu} conflitti
-                        riguardano un <strong>menù attivo</strong>.
+                    <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-100 p-3 text-red-700">
+                        <img
+                            src="/icons/warning giallo.png"
+                            alt="Avviso inattività"
+                            className="h-5 w-5"
+                            draggable={false}
+                        />
+                        <span>
+                            Attenzione:{' '}
+                            {preview.summary.conflicts_in_active_menu} conflitti
+                            riguardano un <strong>menù attivo</strong>.
+                        </span>
                     </div>
                 )}
 
@@ -71,7 +79,8 @@ export default function DishSuspensionConflictsModal({
                     </thead>
                     <tbody>
                         {groupedConflicts.map((menu) => {
-                            const isExpanded = !!expandedMenus[menu.season_type];
+                            const isExpanded =
+                                !!expandedMenus[menu.season_type];
                             const isFixedOnly =
                                 menu.fixed_occurrences ===
                                 menu.total_occurrences;
@@ -111,7 +120,9 @@ export default function DishSuspensionConflictsModal({
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    onToggleMenu(menu.season_type)
+                                                    onToggleMenu(
+                                                        menu.season_type,
+                                                    )
                                                 }
                                                 className="text-sm text-brand-primary hover:underline"
                                             >
@@ -235,7 +246,10 @@ export default function DishSuspensionConflictsModal({
                         Annulla
                     </Button>
 
-                    <Button variant="secondary" onClick={onSaveWithoutReplacement}>
+                    <Button
+                        variant="secondary"
+                        onClick={onSaveWithoutReplacement}
+                    >
                         Salva sospensione (non sostituire)
                     </Button>
 

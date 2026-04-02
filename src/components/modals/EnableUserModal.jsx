@@ -1,41 +1,53 @@
-// Modal used for enable user.
 import Modal from '../ui/Modal';
+import Button from '../ui/Button';
+import AlertBox from '../ui/AlertBox';
 
 export default function EnableUserModal({ show, user, onClose, onConfirm }) {
     if (!show || !user) return null;
 
     return (
-        <Modal onClose={onClose}>
-            <div className="bg-white rounded-xl p-8 w-[520px] flex flex-col items-center text-center">
-                <h2 className="text-brand-text text-xl font-semibold mb-2">
-                    Riabilitare questo utente?
-                </h2>
+        <Modal onClose={onClose} contentClassName="w-[450px] max-w-[90vw]">
+            <div className="bg-white rounded-xl p-8 flex flex-col">
+                <div className="flex flex-col gap-1">
+                    <span className="text-brand-text text-2xl font-semibold">
+                        Riabilita utente
+                    </span>
 
-                <p className="text-brand-primary text-lg font-bold mb-3">
-                    {user.name} {user.surname}
-                </p>
+                    <span className="text-lg font-semibold">
+                        Utente:{' '}
+                        <span className="text-brand-primary">
+                            {user.name} {user.surname}
+                        </span>
+                    </span>
+                </div>
 
-                <p className="text-sm text-brand-textSecondary mb-6">
-                    L’utente tornerà nello stato <strong>Attivo</strong> e potrà
-                    nuovamente accedere al gestionale.
-                </p>
+                <div className="w-full flex justify-center mt-6">
+                    <AlertBox variant="info" title="Conferma operazione">
+                        L’utente tornerà nello stato <strong>Attivo</strong> e
+                        potrà nuovamente accedere al gestionale.
+                    </AlertBox>
+                </div>
 
-                <div className="flex justify-center gap-8">
-                    <button
+                <div className="flex mt-8 gap-6">
+                    <Button
                         type="button"
-                        onClick={onClose}
-                        className="bg-brand-sidebar text-black px-6 py-2 rounded-xl font-semibold"
-                    >
-                        Annulla
-                    </button>
-
-                    <button
-                        type="button"
+                        size="md"
+                        variant="primary"
+                        className="rounded-lg"
                         onClick={() => onConfirm(user)}
-                        className="bg-brand-primary text-white px-6 py-2 rounded-xl font-semibold hover:opacity-80 transition"
                     >
                         Riabilita
-                    </button>
+                    </Button>
+
+                    <Button
+                        type="button"
+                        size="md"
+                        variant="secondary"
+                        className="rounded-lg"
+                        onClick={onClose}
+                    >
+                        Annulla
+                    </Button>
                 </div>
             </div>
         </Modal>

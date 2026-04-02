@@ -306,7 +306,12 @@ export default function SearchableSelect({
                                         "
                                         aria-label="Svuota ricerca"
                                     >
-                                        ✕
+                                        <img
+                                            src="/icons/close_nero.png"
+                                            alt="Chiudi"
+                                            className="h-3 w-3 shrink-0"
+                                            draggable={false}
+                                        />
                                     </button>
                                 )}
                             </div>

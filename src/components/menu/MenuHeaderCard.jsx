@@ -66,21 +66,31 @@ export default function MenuHeaderCard({
 
             <div className="flex flex-[1] flex-col items-start justify-center gap-2 text-lg font-semibold sm:items-center">
                 <span>Azioni</span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center">
                     <button
-                        className="text-brand-primary font-semibold"
+                        className="rounded-md bg-brand-warning/25 p-1.5"
                         onClick={onClickEditMenu}
                         type="button"
                     >
-                        ✏
+                        <img
+                            src="/icons/pencil-giallo.png"
+                            alt="Modifica"
+                            className="h-5 w-5 shrink-0"
+                            draggable={false}
+                        />
                     </button>
 
                     <button
-                        className="text-red-500"
+                        className="ml-4 rounded-md bg-brand-error/25 p-1.5"
                         onClick={onClickDeleteMenu}
                         type="button"
                     >
-                        🗑
+                        <img
+                            src="/icons/delete-1-rosso.png"
+                            alt="Elimina"
+                            className="h-5 w-5 shrink-0"
+                            draggable={false}
+                        />
                     </button>
                 </div>
             </div>

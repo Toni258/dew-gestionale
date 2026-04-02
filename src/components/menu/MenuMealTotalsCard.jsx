@@ -1,5 +1,6 @@
 // Card component used for menu meal totals.
 import Card from '../ui/Card';
+import MacronutrientsInfoButton from '../ui/MacronutrientsInfoButton';
 
 export default function MenuMealTotalsCard({ totals }) {
     return (
@@ -18,11 +19,44 @@ export default function MenuMealTotalsCard({ totals }) {
                     <span>
                         <strong>Kcal:</strong> {totals.kcal.toFixed(2)}
                     </span>
-                    <span className="flex gap-4">
-                        <strong>Macro nutrienti:</strong>
-                        <span>🥩 {totals.proteins.toFixed(2)}g |</span>
-                        <span>🍞 {totals.carbs.toFixed(2)}g |</span>
-                        <span>🧈 {totals.fats.toFixed(2)}g</span>
+                    <span className="flex flex-wrap items-center gap-4">
+                        <span className="flex items-center gap-2">
+                            <MacronutrientsInfoButton />
+                            <strong>Macro nutrienti:</strong>
+                        </span>
+
+                        <span className="flex items-center">
+                            <img
+                                src="/icons/steak.png"
+                                alt="Proteine"
+                                title="Proteine"
+                                className="mr-1 h-5 w-5 cursor-help select-none"
+                                draggable={false}
+                            />
+                            {totals.proteins.toFixed(2)}g
+                        </span>
+
+                        <span className="flex items-center">
+                            <img
+                                src="/icons/bread.png"
+                                alt="Carboidrati"
+                                title="Carboidrati"
+                                className="mr-1 h-5 w-5 cursor-help select-none"
+                                draggable={false}
+                            />
+                            {totals.carbs.toFixed(2)}g
+                        </span>
+
+                        <span className="flex items-center">
+                            <img
+                                src="/icons/butter.png"
+                                alt="Grassi"
+                                title="Grassi"
+                                className="mr-1 h-5 w-5 cursor-help select-none"
+                                draggable={false}
+                            />
+                            {totals.fats.toFixed(2)}g
+                        </span>
                     </span>
                 </div>
             </Card>
