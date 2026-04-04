@@ -1,4 +1,3 @@
-
 // Service layer for dish CRUD operations.
 // It validates payloads, coordinates repository calls and handles uploaded images.
 import { pool } from '../db/db.js';
@@ -93,7 +92,6 @@ function normalizeDishPayload(body = {}) {
         allergy_notes: normalizeAllergyNotes(body.allergy_notes),
     };
 }
-
 
 // Builds the data needed for active suspension replacements.
 function mapActiveSuspensionReplacements(rows = []) {
@@ -232,9 +230,15 @@ export async function getDishByIdData(dishIdRaw) {
         throw new HttpError(404, 'Piatto non trovato');
     }
 
-    const suspension = await findCurrentOrFutureSuspensionByFoodId(pool, dishId);
+    const suspension = await findCurrentOrFutureSuspensionByFoodId(
+        pool,
+        dishId,
+    );
     const trackedReplacementRows = suspension
-        ? await listTrackedReplacementRowsByAvailability(pool, suspension.id_avail)
+        ? await listTrackedReplacementRowsByAvailability(
+              pool,
+              suspension.id_avail,
+          )
         : [];
 
     return {
@@ -302,4 +306,3 @@ export async function updateDishData(dishIdRaw, body = {}, file = null) {
         throw error;
     }
 }
-

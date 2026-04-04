@@ -39,10 +39,12 @@ export default function BackofficeUsersTable({
                             </th>
                             <th className="px-4 py-3 text-left">CREATO IL</th>
                             <th className="px-4 py-3 text-left">
-                                ULTIMO AGGIORNAMENTO
+                                ULTIMA MODIFICA
                             </th>
                             {isSuperUser && (
-                                <th className="px-4 py-3 text-left">AZIONI</th>
+                                <th className="w-[220px] min-w-[220px] px-4 py-3 text-left">
+                                    AZIONI
+                                </th>
                             )}
                         </tr>
                     </thead>
@@ -65,7 +67,7 @@ export default function BackofficeUsersTable({
                             return (
                                 <tr key={user.id} className="border-b">
                                     <td className="px-4 py-3">
-                                        <div className="flex flex-wrap items-center gap-2">
+                                        <div className="flex flex-row items-center gap-2">
                                             <span>
                                                 {user.role === 'super_user'
                                                     ? 'Super user'
@@ -75,7 +77,7 @@ export default function BackofficeUsersTable({
                                             {user.status ===
                                                 'password_reset_requested' && (
                                                 <span className="inline-flex items-center rounded-full border border-brand-error/25 bg-brand-error/10 px-3 py-1 text-xs font-semibold text-brand-error">
-                                                    Richiesta urgente
+                                                    Urgente
                                                 </span>
                                             )}
                                         </div>
@@ -109,10 +111,10 @@ export default function BackofficeUsersTable({
                                     </td>
 
                                     {isSuperUser && (
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center">
+                                        <td className="w-[220px] min-w-[220px] px-4 py-3 whitespace-nowrap">
+                                            <div className="flex items-center flex-nowrap">
                                                 <button
-                                                    className="rounded-md bg-brand-warning/25 p-1.5"
+                                                    className="shrink-0 rounded-md bg-brand-warning/25 p-1.5 "
                                                     onClick={() => onEdit(user)}
                                                     type="button"
                                                 >
@@ -125,7 +127,7 @@ export default function BackofficeUsersTable({
                                                 </button>
 
                                                 <button
-                                                    className="ml-3 rounded-md bg-slate-200 p-1.5"
+                                                    className="shrink-0 ml-3 rounded-md bg-slate-200 p-1.5"
                                                     onClick={() =>
                                                         onResetPassword(user)
                                                     }
@@ -141,7 +143,7 @@ export default function BackofficeUsersTable({
 
                                                 {isDisabled && !isMe && (
                                                     <button
-                                                        className="ml-3 rounded-md bg-brand-error/25 p-1.5"
+                                                        className="shrink-0 ml-3 rounded-md bg-brand-error/25 p-1.5"
                                                         onClick={() =>
                                                             onEnable(user)
                                                         }
@@ -158,7 +160,7 @@ export default function BackofficeUsersTable({
 
                                                 {!isDisabled && !isMe && (
                                                     <button
-                                                        className="ml-3 rounded-md bg-brand-error/25 p-1.5"
+                                                        className="shrink-0 ml-3 rounded-md bg-brand-error/25 p-1.5"
                                                         onClick={() =>
                                                             onSuspend(user)
                                                         }
@@ -175,7 +177,7 @@ export default function BackofficeUsersTable({
 
                                                 {!isMe && (
                                                     <button
-                                                        className="ml-3 rounded-md bg-brand-error/25 p-1.5"
+                                                        className="shrink-0 ml-3 rounded-md bg-brand-error/25 p-1.5"
                                                         onClick={() =>
                                                             onDelete(user)
                                                         }

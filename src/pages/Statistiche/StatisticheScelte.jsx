@@ -571,11 +571,11 @@ export default function StatisticheScelte() {
                                                 options={[
                                                     {
                                                         value: '',
-                                                        label: 'Tutti i pazienti',
+                                                        label: 'Tutti gli ospiti',
                                                     },
                                                     ...(options.patients || []),
                                                 ]}
-                                                placeholder="Tutti i pazienti"
+                                                placeholder="Tutti gli ospiti"
                                                 loading={false}
                                                 className="w-full"
                                             />
@@ -615,7 +615,7 @@ export default function StatisticheScelte() {
             </div>
 
             {/* KPI cards */}
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 min-[1800px]:grid-cols-6">
                 <StatsKpiCard
                     iconSrc="/icons/checklist-secondary.png"
                     iconAlt="Scelte totali"
@@ -672,12 +672,12 @@ export default function StatisticheScelte() {
             <div className="mt-4 text-sm text-brand-textSecondary">
                 Tasso di scelta = scelte registrate / opportunità stimate. Le
                 opportunità stimate sono calcolate come apparizioni del piatto
-                nel menù × pazienti nel perimetro filtrato (
+                nel menù × ospiti nel perimetro filtrato (
                 {fmtInt(kpi.patient_scope_count)}).
             </div>
 
             {/* Ranking cards */}
-            <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-6 min-[1800px]:grid-cols-3">
                 <StatsRankCard
                     title="Piatti più richiesti"
                     iconSrc="/icons/star primary.png"
@@ -790,7 +790,7 @@ export default function StatisticheScelte() {
                                         Apparizioni
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
-                                        Pazienti
+                                        Ospiti
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-right font-semibold">
                                         Opportunità
@@ -929,7 +929,7 @@ export default function StatisticheScelte() {
                                         Data
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
-                                        Paziente
+                                        Ospite
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Locazione
@@ -1102,7 +1102,7 @@ export default function StatisticheScelte() {
                     {
                         label: 'Opportunità stimate',
                         description:
-                            'Numero teorico di occasioni di scelta: apparizioni del piatto nel menù × pazienti nel perimetro filtrato.',
+                            'Numero teorico di occasioni di scelta: apparizioni del piatto nel menù × ospiti nel perimetro filtrato.',
                     },
                     {
                         label: 'Tasso %',
@@ -1110,7 +1110,7 @@ export default function StatisticheScelte() {
                             'Rapporto tra scelte registrate e opportunità stimate.',
                     },
                 ]}
-                note={`Il numero di pazienti considerato nel calcolo corrente è ${fmtInt(
+                note={`Il numero di ospiti considerato nel calcolo corrente è ${fmtInt(
                     kpi.patient_scope_count,
                 )}.`}
             />
@@ -1127,14 +1127,14 @@ export default function StatisticheScelte() {
                             'Quante volte il piatto compare nel menù nel periodo filtrato.',
                     },
                     {
-                        label: 'Pazienti',
+                        label: 'Ospiti',
                         description:
-                            'Numero di pazienti considerati dal filtro applicato.',
+                            'Numero di ospiti considerati dal filtro applicato.',
                     },
                     {
                         label: 'Opportunità',
                         description:
-                            'Apparizioni × pazienti, cioè occasioni teoriche di scelta per quel piatto.',
+                            'Apparizioni × ospiti, cioè occasioni teoriche di scelta per quel piatto.',
                     },
                     {
                         label: 'Scelte',

@@ -43,14 +43,16 @@ export default function CreateDish() {
                     asyncValidate={{
                         name: async (value) => {
                             const normalizedValue = (value ?? '').trim();
-                            if (!normalizedValue || normalizedValue.length < 3) {
+                            if (
+                                !normalizedValue ||
+                                normalizedValue.length < 3
+                            ) {
                                 return null;
                             }
 
                             try {
-                                const data = await checkDishNameExists(
-                                    normalizedValue,
-                                );
+                                const data =
+                                    await checkDishNameExists(normalizedValue);
                                 return data.exists
                                     ? 'Questo nome è già in uso'
                                     : null;

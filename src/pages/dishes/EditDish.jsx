@@ -1,4 +1,3 @@
-
 // Page used to edit an existing dish.
 // The page keeps only the high-level workflow, while the suspension preview
 // and form helpers live in dedicated modules.
@@ -224,10 +223,7 @@ export default function EditDish() {
                 asyncValidate={{
                     name: async (value) => {
                         const normalizedValue = (value ?? '').trim();
-                        if (
-                            !normalizedValue ||
-                            normalizedValue.length < 3
-                        ) {
+                        if (!normalizedValue || normalizedValue.length < 3) {
                             return null;
                         }
 
@@ -277,10 +273,11 @@ export default function EditDish() {
                 onToggleMenu={toggleMenu}
                 onSelectReplacement={setReplacementForPairing}
                 onClose={closeSuspensionPreview}
-                onSaveWithoutReplacement={handleSaveSuspensionWithoutReplacement}
+                onSaveWithoutReplacement={
+                    handleSaveSuspensionWithoutReplacement
+                }
                 onSaveAndReplace={handleSaveSuspensionWithReplacement}
             />
         </AppLayout>
     );
 }
-

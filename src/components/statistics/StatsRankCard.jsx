@@ -100,7 +100,7 @@ export default function StatsRankCard({
                                             {fmtInt(row.availability_count)}{' '}
                                             apparizioni nel menù ·{' '}
                                             {fmtInt(row.patient_scope_count)}{' '}
-                                            pazienti
+                                            ospiti
                                         </div>
                                     </>
                                 ) : (
@@ -119,7 +119,7 @@ export default function StatsRankCard({
                                             {fmtInt(row.availability_count)}{' '}
                                             apparizioni nel menù ·{' '}
                                             {fmtInt(row.patient_scope_count)}{' '}
-                                            pazienti
+                                            ospiti
                                         </div>
                                     </>
                                 )}

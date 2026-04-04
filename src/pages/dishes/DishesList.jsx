@@ -128,7 +128,10 @@ export default function DishesList() {
                             />
                         </FormGroup>
 
-                        <FormGroup name="allergeni" className="w-full sm:w-[180px]">
+                        <FormGroup
+                            name="allergeni"
+                            className="w-full sm:w-[180px]"
+                        >
                             <MultiSelectCheckbox
                                 name="allergeni"
                                 placeholder="Allergeni esclusi"
@@ -138,7 +141,10 @@ export default function DishesList() {
                             />
                         </FormGroup>
 
-                        <FormGroup name="tipologia" className="w-full sm:w-[145px]">
+                        <FormGroup
+                            name="tipologia"
+                            className="w-full sm:w-[145px]"
+                        >
                             <CustomSelect
                                 name="tipologia"
                                 placeholder="Tutti i tipi"

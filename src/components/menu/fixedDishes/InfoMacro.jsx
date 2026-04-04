@@ -14,7 +14,7 @@ export default function InfoMacro({ food }) {
                 <span className="w-1/3">
                     Peso: {Number(food.grammage_tot || 0).toFixed(2)} g
                 </span>
-                <span className="w-1/3">
+                <span className="w-2/3">
                     Energia: {Number(food.kcal_tot || 0).toFixed(2)} kcal
                 </span>
             </div>

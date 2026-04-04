@@ -36,7 +36,7 @@ export default function DishFormFields({ existingImageUrl }) {
 
             <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-center">
                 <div className="w-full xl:w-1/5">
-                    <FormGroup label="Immagine" name="img">
+                    <FormGroup label="Immagine" name="img" required>
                         <ImageUploader
                             name="img"
                             initialUrl={existingImageUrl}

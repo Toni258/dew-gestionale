@@ -594,11 +594,11 @@ export default function StatisticheConsumi() {
                                                 options={[
                                                     {
                                                         value: '',
-                                                        label: 'Tutti i pazienti',
+                                                        label: 'Tutti gli ospiti',
                                                     },
                                                     ...(options.patients || []),
                                                 ]}
-                                                placeholder="Tutti i pazienti"
+                                                placeholder="Tutti gli ospiti"
                                                 loading={false}
                                                 className="w-full"
                                             />
@@ -725,7 +725,7 @@ export default function StatisticheConsumi() {
                                         Data
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
-                                        Paziente
+                                        Ospite
                                     </th>
                                     <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                         Locazione
@@ -878,7 +878,7 @@ export default function StatisticheConsumi() {
                                             Data
                                         </th>
                                         <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
-                                            Paziente
+                                            Ospite
                                         </th>
                                         <th className="bg-black/[0.03] px-3 py-3 text-left font-semibold">
                                             Locazione
