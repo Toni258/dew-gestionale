@@ -195,7 +195,7 @@ export default function DishSuspensionConflictsModal({
                                                                                 conflict.course_type
                                                                             }
                                                                         </td>
-                                                                        <td className="w-[380px] p-1">
+                                                                        <td className="w-[380px] p-1 ">
                                                                             <SearchableSelect
                                                                                 value={
                                                                                     replacementByPairing[

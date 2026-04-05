@@ -35,7 +35,7 @@ export default function DishFormFields({ existingImageUrl }) {
             </div>
 
             <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-center">
-                <div className="w-full xl:w-1/5">
+                <div className="w-full lg:flex-[2] xl:flex-[1]">
                     <FormGroup label="Immagine" name="img" required>
                         <ImageUploader
                             name="img"
@@ -44,7 +44,7 @@ export default function DishFormFields({ existingImageUrl }) {
                     </FormGroup>
                 </div>
 
-                <div className="flex w-full flex-col gap-4 xl:w-4/5">
+                <div className="flex w-full flex-col gap-4 xl:flex-[3]">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <FormGroup
                             label="Grammatura"

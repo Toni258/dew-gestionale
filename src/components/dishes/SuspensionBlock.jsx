@@ -59,7 +59,7 @@ export default function SuspensionBlock({ initialSuspension }) {
                 )}
 
                 <div className="relative z-5 flex flex-col gap-6 lg:flex-row">
-                    <div className="flex w-full flex-col gap-4 lg:w-1/4 xl:w-1/6">
+                    <div className="flex w-full flex-col gap-4 lg:flex-[1] flex-[1]">
                         <FormGroup label="Data inizio" required={enabled}>
                             <DatePicker name="start_date" disabled={!enabled} />
                         </FormGroup>
@@ -68,7 +68,7 @@ export default function SuspensionBlock({ initialSuspension }) {
                         </FormGroup>
                     </div>
 
-                    <div className="w-full lg:w-3/4 xl:w-5/6">
+                    <div className="w-full lg:flex-[3] flex-[4]">
                         <FormGroup label="Motivo">
                             <TextArea
                                 name="reason"
