@@ -6,6 +6,8 @@ import { dayIndexToWeekDay } from '../../utils/dayIndex';
 
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import AlertBox from '../../components/ui/AlertBox';
+import ResourceNotFoundState from '../../components/ui/ResourceNotFoundState';
 
 import { useEditMenuMeal } from '../../hooks/menus/useEditMenuMeal';
 
@@ -29,6 +31,8 @@ export default function EditMenuMeal() {
         data,
         loading,
         saving,
+        error,
+        notFound,
         foodOptions,
         selectedFoods,
         pageLabel,
@@ -46,6 +50,10 @@ export default function EditMenuMeal() {
         ).map((course) => course.label.toLowerCase());
     }, [COURSE_TYPES, selectedFoods]);
 
+    const requestedMealLabel = [seasonType, dayIndex, mealType]
+        .filter(Boolean)
+        .join(' / ');
+
     // Handles the logic for confirm save.
     async function handleConfirmSave() {
         const result = await withLoaderNotify({
@@ -55,11 +63,11 @@ export default function EditMenuMeal() {
             errorTitle: 'Errore salvataggio',
             errorMessage: 'Impossibile salvare le modifiche.',
             fn: async () => {
-                const r = await save();
-                if (!r?.ok) {
-                    throw new Error(r?.message || 'Errore salvataggio');
+                const response = await save();
+                if (!response?.ok) {
+                    throw new Error(response?.message || 'Errore salvataggio');
                 }
-                return r;
+                return response;
             },
         });
 
@@ -77,10 +85,48 @@ export default function EditMenuMeal() {
         );
     }
 
-    if (!data) {
+    if (notFound || (!data && !error)) {
         return (
             <AppLayout title="GESTIONE MENÙ">
-                <p>Errore</p>
+                <ResourceNotFoundState
+                    title="Pasto non disponibile"
+                    description="Il pasto richiesto non esiste più oppure il menù a cui appartiene non è disponibile."
+                    requestedLabel="Risorsa richiesta"
+                    requestedValue={requestedMealLabel}
+                    note="Il menù potrebbe essere stato eliminato oppure il link potrebbe contenere parametri non più validi."
+                    secondaryLabel="Vai all'elenco menù"
+                    onSecondaryClick={() => navigate('/menu')}
+                />
+            </AppLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <AppLayout title="GESTIONE MENÙ">
+                <div className="w-full max-w-2xl mx-auto">
+                    <AlertBox variant="error" title="Impossibile caricare il pasto">
+                        {error?.message || 'Si è verificato un errore inatteso durante il caricamento.'}
+                    </AlertBox>
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                        <Button
+                            variant="secondary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate('/menu')}
+                        >
+                            Vai all'elenco menù
+                        </Button>
+
+                        <Button
+                            variant="primary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate(-1)}
+                        >
+                            Torna indietro
+                        </Button>
+                    </div>
+                </div>
             </AppLayout>
         );
     }

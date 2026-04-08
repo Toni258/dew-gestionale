@@ -3,6 +3,7 @@ import { CHEESE_IDS } from '../../../shared/constants.js';
 // Contiene tutta la logica: load (options + fixed + cheeses + rotation), regole duplicate, calcoli allFilled, e save().
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { getAvailableFoodsForMenu, getCheeses } from '../../services/foodsApi';
+import { isNotFoundError } from '../../services/apiClient';
 import {
     getMenuFixedDishes,
     upsertMenuFixedDishes,
@@ -29,6 +30,8 @@ export function useFixedDishesMenu(seasonTypeRaw) {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
+    const [notFound, setNotFound] = useState(false);
 
     const [selectedFoods, setSelectedFoods] = useState(makeEmptySelected);
     const [options, setOptions] = useState({
@@ -107,6 +110,8 @@ export function useFixedDishesMenu(seasonTypeRaw) {
         // Loads the data used by all.
         async function loadAll() {
             setLoading(true);
+            setError(null);
+            setNotFound(false);
             try {
                 // 1) load options per ogni riga/pasto
                 const toLoad = [];
@@ -207,9 +212,7 @@ export function useFixedDishesMenu(seasonTypeRaw) {
                     if (!nextSelected[meal][course]) continue;
                     if (meal === 'pranzo' && course === 'speciale') continue;
 
-                    const isCheese = CHEESE_IDS.includes(
-                        Number(dish.id_food),
-                    );
+                    const isCheese = CHEESE_IDS.includes(Number(dish.id_food));
                     if (isCheese) continue;
 
                     const arr = nextSelected[meal][course];
@@ -234,6 +237,29 @@ export function useFixedDishesMenu(seasonTypeRaw) {
                 setSelectedFoods(nextSelected);
             } catch (e) {
                 console.error(e);
+                if (!alive) return;
+                setOptions({
+                    pranzo: {
+                        primo: [],
+                        secondo: [],
+                        contorno: [],
+                        ultimo: [],
+                        coperto: [],
+                    },
+                    cena: {
+                        primo: [],
+                        secondo: [],
+                        contorno: [],
+                        ultimo: [],
+                        coperto: [],
+                        speciale: [],
+                    },
+                });
+                setSelectedFoods(makeEmptySelected());
+                setCheeseOptions([]);
+                setCheeseRotation(makeEmptyCheeseRotation());
+                setError(e);
+                setNotFound(isNotFoundError(e));
             } finally {
                 if (alive) setLoading(false);
             }
@@ -337,6 +363,8 @@ export function useFixedDishesMenu(seasonTypeRaw) {
 
         loading,
         saving,
+        error,
+        notFound,
 
         selectedFoods,
         options,

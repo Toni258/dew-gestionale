@@ -3,6 +3,8 @@ import AppLayout from '../../components/layout/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import Button from '../../components/ui/Button';
+import AlertBox from '../../components/ui/AlertBox';
+import ResourceNotFoundState from '../../components/ui/ResourceNotFoundState';
 import FixedDishesGrid from '../../components/menu/fixedDishes/FixedDishesGrid';
 import { useFixedDishesMenu } from '../../hooks/menus/useFixedDishesMenu';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
@@ -16,6 +18,8 @@ export default function MenuPiattiFissi() {
 
         loading,
         saving,
+        error,
+        notFound,
 
         options,
         selectedFoods,
@@ -41,9 +45,11 @@ export default function MenuPiattiFissi() {
             errorTitle: 'Errore salvataggio',
             errorMessage: 'Impossibile salvare i piatti fissi.',
             fn: async () => {
-                const r = await save();
-                if (!r.ok) throw new Error(r.message || 'Errore salvataggio');
-                return r;
+                const response = await save();
+                if (!response.ok) {
+                    throw new Error(response.message || 'Errore salvataggio');
+                }
+                return response;
             },
         });
 
@@ -57,6 +63,52 @@ export default function MenuPiattiFissi() {
             <AppLayout title="GESTIONE MENÙ">
                 <h1 className="text-3xl font-semibold">Scelta piatti fissi</h1>
                 <div className="mx-0 my-6 overflow-x-auto">Caricamento…</div>
+            </AppLayout>
+        );
+    }
+
+    if (notFound) {
+        return (
+            <AppLayout title="GESTIONE MENÙ">
+                <ResourceNotFoundState
+                    title="Menù non trovato"
+                    description="I piatti fissi richiesti non sono disponibili perché il menù non esiste più oppure il link non è valido."
+                    requestedLabel="Menù richiesto"
+                    requestedValue={decodedSeasonType}
+                    note="Il menù potrebbe essere stato eliminato oppure il link potrebbe puntare a una risorsa non più disponibile."
+                    secondaryLabel="Vai all'elenco menù"
+                    onSecondaryClick={() => navigate('/menu')}
+                />
+            </AppLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <AppLayout title="GESTIONE MENÙ">
+                <div className="w-full max-w-2xl mx-auto">
+                    <AlertBox variant="error" title="Impossibile caricare i piatti fissi">
+                        {error?.message || 'Si è verificato un errore inatteso durante il caricamento.'}
+                    </AlertBox>
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                        <Button
+                            variant="secondary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate('/menu')}
+                        >
+                            Vai all'elenco menù
+                        </Button>
+
+                        <Button
+                            variant="primary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate(-1)}
+                        >
+                            Torna indietro
+                        </Button>
+                    </div>
+                </div>
             </AppLayout>
         );
     }

@@ -1,6 +1,7 @@
 // Custom hook used to manage edit menu meal.
 import { useEffect, useMemo, useState } from 'react';
 import { getAvailableFoodsForMenu } from '../../services/foodsApi';
+import { isNotFoundError } from '../../services/apiClient';
 import {
     getMenuMealComposition,
     upsertMenuMealComposition,
@@ -38,6 +39,8 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
     // Main state used by the page
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [notFound, setNotFound] = useState(false);
 
     const [foodOptions, setFoodOptions] = useState({
         primo: [],
@@ -61,9 +64,9 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         async function loadAllFoods() {
             try {
                 const results = await Promise.all(
-                    COURSE_TYPES.map((c) =>
+                    COURSE_TYPES.map((course) =>
                         getAvailableFoodsForMenu({
-                            type: c.key,
+                            type: course.key,
                             season_type: seasonType,
                             meal_type: mealType,
                         }),
@@ -71,13 +74,16 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
                 );
 
                 const map = {};
-                COURSE_TYPES.forEach((c, i) => {
-                    map[c.key] = results[i]?.data ?? [];
+                COURSE_TYPES.forEach((course, index) => {
+                    map[course.key] = results[index]?.data ?? [];
                 });
 
                 if (alive) setFoodOptions(map);
             } catch (err) {
                 console.error('Errore caricamento foods:', err);
+                if (!alive || !isNotFoundError(err)) return;
+                setError(err);
+                setNotFound(true);
             }
         }
 
@@ -94,6 +100,9 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         // Loads the current data.
         async function load() {
             setLoading(true);
+            setError(null);
+            setNotFound(false);
+
             try {
                 const json = await getMenuMealComposition(
                     seasonType,
@@ -106,15 +115,22 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
                 setData(json);
 
                 const nextSelected = { ...EMPTY_SELECTED };
-                (json?.dishes ?? []).forEach((d) => {
-                    nextSelected[d.type] = d;
+                (json?.dishes ?? []).forEach((dish) => {
+                    nextSelected[dish.type] = dish;
                 });
 
                 setSelectedFoods(nextSelected);
                 setInitialFoodIds(makeInitialFoodIdsFromSelected(nextSelected));
             } catch (err) {
                 console.error(err);
-                if (alive) setData(null);
+                if (!alive) return;
+                setData(null);
+                setSelectedFoods({ ...EMPTY_SELECTED });
+                setInitialFoodIds(
+                    makeInitialFoodIdsFromSelected(EMPTY_SELECTED),
+                );
+                setError(err);
+                setNotFound(isNotFoundError(err));
             } finally {
                 if (alive) setLoading(false);
             }
@@ -129,7 +145,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
 
     const hasSomethingSaved = useMemo(() => {
         const dishes = data?.dishes ?? [];
-        const types = new Set(dishes.map((d) => d.type));
+        const types = new Set(dishes.map((dish) => dish.type));
         return (
             types.has('primo') ||
             types.has('secondo') ||
@@ -138,18 +154,11 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         );
     }, [data]);
 
-    // Selezione completa (tutti i corsi hanno un piatto selezionato)
-    // const allSelectedNow = useMemo(() => {
-    // return COURSE_TYPES.every((c) =>
-    // Boolean(selectedFoods[c.key]?.id_food),
-    // );
-    // }, [selectedFoods]);
-
     const hasChanges = useMemo(() => {
-        return COURSE_TYPES.some((c) => {
-            const now = selectedFoods[c.key]?.id_food ?? null;
-            const init = initialFoodIds[c.key] ?? null;
-            return now !== init;
+        return COURSE_TYPES.some((course) => {
+            const currentId = selectedFoods[course.key]?.id_food ?? null;
+            const initialId = initialFoodIds[course.key] ?? null;
+            return currentId !== initialId;
         });
     }, [selectedFoods, initialFoodIds]);
 
@@ -159,9 +168,6 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
     const buttonLabel = hasSomethingSaved ? 'Salva modifica' : 'Aggiungi pasto';
 
     const disableSave = saving || !hasChanges;
-
-    // Con controllo se tutti i piatti sono stati selezionati
-    // const disableSave = saving || !allSelectedNow || (hasSomethingSaved && !hasChanges);
 
     const totals = useMemo(() => {
         return COURSE_TYPES.reduce(
@@ -192,7 +198,7 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         const idFood = Number(idFoodStr);
         const list = foodOptions?.[courseKey] ?? [];
 
-        const fullFood = list.find((f) => Number(f.id_food) === idFood) ?? null;
+        const fullFood = list.find((food) => Number(food.id_food) === idFood) ?? null;
 
         setSelectedFoods((prev) => ({
             ...prev,
@@ -244,6 +250,8 @@ export function useEditMenuMeal({ seasonType, dayIndex, mealType }) {
         data,
         loading,
         saving,
+        error,
+        notFound,
 
         foodOptions,
         selectedFoods,

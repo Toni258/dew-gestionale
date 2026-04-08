@@ -5,6 +5,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import AppLayout from '../../components/layout/AppLayout';
 import Form from '../../components/ui/Form';
+import Button from '../../components/ui/Button';
+import AlertBox from '../../components/ui/AlertBox';
+import ResourceNotFoundState from '../../components/ui/ResourceNotFoundState';
 import DishFormFields from '../../components/dishes/DishFormFields';
 import SuspensionBlock from '../../components/dishes/SuspensionBlock';
 import StickySaveBar from '../../components/dishes/StickySaveBar';
@@ -36,6 +39,7 @@ export default function EditDish() {
     const {
         loading,
         error,
+        notFound,
         initialValues,
         originalDish,
         initialSuspension,
@@ -205,10 +209,48 @@ export default function EditDish() {
         );
     }
 
+    if (notFound) {
+        return (
+            <AppLayout title="GESTIONE PIATTI">
+                <ResourceNotFoundState
+                    title="Piatto non trovato"
+                    description="Il piatto richiesto non esiste più oppure il collegamento non è valido."
+                    requestedLabel="ID piatto richiesto"
+                    requestedValue={dishId}
+                    note="Il piatto potrebbe essere stato eliminato oppure il link potrebbe riferirsi a una risorsa non più disponibile."
+                    secondaryLabel="Vai all'elenco piatti"
+                    onSecondaryClick={() => navigate('/dishes')}
+                />
+            </AppLayout>
+        );
+    }
+
     if (error) {
         return (
             <AppLayout title="GESTIONE PIATTI">
-                <div className="text-brand-error">{error}</div>
+                <div className="w-full max-w-2xl mx-auto">
+                    <AlertBox variant="error" title="Impossibile caricare il piatto">
+                        {error?.message || 'Si è verificato un errore inatteso durante il caricamento.'}
+                    </AlertBox>
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                        <Button
+                            variant="secondary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate('/dishes')}
+                        >
+                            Vai all'elenco piatti
+                        </Button>
+
+                        <Button
+                            variant="primary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate(-1)}
+                        >
+                            Torna indietro
+                        </Button>
+                    </div>
+                </div>
             </AppLayout>
         );
     }

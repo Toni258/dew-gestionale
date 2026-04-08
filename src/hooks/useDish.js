@@ -1,17 +1,17 @@
-
 // Custom hook used to manage dish.
 // Caricamento dish + mapping in initialValues/originalDish/initialSuspension
 
 import { useEffect, useState } from 'react';
 import { clientConfig } from '../config/appConfig';
-import { buildApiUrl } from '../services/apiClient';
+import { buildApiUrl, isNotFoundError } from '../services/apiClient';
 import { getDishById } from '../services/dishesApi';
 
 // Manages the state and side effects for dish.
 export function useDish(dishId) {
     // Main state used by the page
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(null);
+    const [notFound, setNotFound] = useState(false);
     const [dish, setDish] = useState(null);
 
     const [initialValues, setInitialValues] = useState(null);
@@ -26,7 +26,9 @@ export function useDish(dishId) {
         // Loads the current data.
         async function load() {
             setLoading(true);
-            setError('');
+            setError(null);
+            setNotFound(false);
+
             try {
                 const data = await getDishById(dishId);
 
@@ -95,7 +97,8 @@ export function useDish(dishId) {
                 });
             } catch (e) {
                 if (!alive) return;
-                setError(e.message || 'Impossibile caricare il piatto');
+                setError(e);
+                setNotFound(isNotFoundError(e));
             } finally {
                 if (alive) setLoading(false);
             }
@@ -110,6 +113,7 @@ export function useDish(dishId) {
     return {
         loading,
         error,
+        notFound,
         dish,
         initialValues,
         originalDish,
@@ -117,4 +121,3 @@ export function useDish(dishId) {
         existingImageUrl,
     };
 }
-

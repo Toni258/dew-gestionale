@@ -5,6 +5,13 @@ import { decodeTrim, parseIntStrict, oneOf } from '../utils/params.js';
 import * as repo from '../repositories/archivedMenusRepo.js';
 import { CHEESE_IDS } from '../../shared/constants.js';
 
+// Verifies that the requested archived menu exists before loading nested resources.
+async function assertArchivedMenuExists(idArchMenu) {
+    const menu = await repo.findMenuByID(pool, idArchMenu);
+    if (!menu) throw new HttpError(404, 'Menù archiviato non trovato');
+    return menu;
+}
+
 // Returns the data used by menus.
 export async function getMenus() {
     return repo.listMenus(pool);
@@ -27,6 +34,7 @@ export async function getArchivedMenuMealsStatus(id_arch_menu_param) {
         message: 'id_arch_menu non valido',
     });
 
+    await assertArchivedMenuExists(idArchMenu);
     return repo.getArchivedMealsStatus(pool, idArchMenu);
 }
 
@@ -36,6 +44,7 @@ export async function getArchivedMenuFixedDishes(idArchMenuRaw) {
         message: 'id_arch_menu non valido',
     });
 
+    await assertArchivedMenuExists(idArchMenu);
     const rows = await repo.getArchivedMenuFixedDishes(pool, idArchMenu);
     return { data: rows };
 }
@@ -45,6 +54,8 @@ export async function getArchivedMenuFixedCheesesRotation(idArchMenuRaw) {
     const idArchMenu = parseIntStrict(idArchMenuRaw, {
         message: 'id_arch_menu non valido',
     });
+
+    await assertArchivedMenuExists(idArchMenu);
     const rows = await repo.getArchivedFixedCheesesRotation(
         pool,
         idArchMenu,
@@ -90,6 +101,8 @@ export async function getArchivedMenuMealComposition({
         ['pranzo', 'cena'],
         'Tipo pasto non valido',
     );
+
+    await assertArchivedMenuExists(idArchMenu);
 
     const dishes = await repo.getArchivedMealComposition(pool, {
         idArchMenu,

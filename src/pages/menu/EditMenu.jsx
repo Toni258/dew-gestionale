@@ -8,8 +8,12 @@ import ModifyMenuModal from '../../components/modals/ModifyMenuModal';
 
 import MenuHeaderCard from '../../components/menu/MenuHeaderCard';
 import MenuGrid from '../../components/menu/MenuGrid';
+import AlertBox from '../../components/ui/AlertBox';
+import Button from '../../components/ui/Button';
+import ResourceNotFoundState from '../../components/ui/ResourceNotFoundState';
 
 import { withLoaderNotify } from '../../services/withLoaderNotify';
+import { isNotFoundError } from '../../services/apiClient';
 
 import { useEditMenu } from '../../hooks/menus/useEditMenu';
 import { updateMenu, deleteMenu } from '../../services/menusApi';
@@ -24,7 +28,7 @@ export default function EditMenu() {
         [seasonType],
     );
 
-    const { menu, mealsByDay, loading, setMenu } =
+    const { menu, mealsByDay, loading, error, setMenu } =
         useEditMenu(decodedSeasonType);
     // Main state used by the page
 
@@ -54,8 +58,59 @@ export default function EditMenu() {
         );
     }, [location.pathname, location.search, menu, navigate]);
 
-    if (loading) return <p>Caricamento…</p>;
-    if (!menu) return <p>Menù non trovato</p>;
+    if (loading) {
+        return (
+            <AppLayout title="GESTIONE MENÙ">
+                <p>Caricamento…</p>
+            </AppLayout>
+        );
+    }
+
+    if (isNotFoundError(error) || (!menu && !error)) {
+        return (
+            <AppLayout title="GESTIONE MENÙ">
+                <ResourceNotFoundState
+                    title="Menù non trovato"
+                    description="Il menù richiesto non esiste più oppure il collegamento non è valido."
+                    requestedLabel="Menù richiesto"
+                    requestedValue={decodedSeasonType}
+                    note="Il menù potrebbe essere stato eliminato, rinominato oppure il link potrebbe essere stato copiato in modo incompleto."
+                    secondaryLabel="Vai all'elenco menù"
+                    onSecondaryClick={() => navigate('/menu')}
+                />
+            </AppLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <AppLayout title="GESTIONE MENÙ">
+                <div className="w-full max-w-2xl mx-auto">
+                    <AlertBox variant="error" title="Impossibile caricare il menù">
+                        {error?.message || 'Si è verificato un errore inatteso durante il caricamento.'}
+                    </AlertBox>
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                        <Button
+                            variant="secondary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate('/menu')}
+                        >
+                            Vai all'elenco menù
+                        </Button>
+
+                        <Button
+                            variant="primary"
+                            className="w-full sm:w-[220px]"
+                            onClick={() => navigate(-1)}
+                        >
+                            Torna indietro
+                        </Button>
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout title="GESTIONE MENÙ">
@@ -87,7 +142,7 @@ export default function EditMenu() {
             <DeleteMenuModal
                 menu={menuToDelete}
                 onClose={() => setMenuToDelete(null)}
-                onConfirm={async (m) => {
+                onConfirm={async (menuItem) => {
                     const res = await withLoaderNotify({
                         message: 'Eliminazione menù…',
                         mode: 'blocking',
@@ -95,7 +150,7 @@ export default function EditMenu() {
                         errorTitle: 'Errore eliminazione menù',
                         errorMessage: 'Impossibile eliminare il menù.',
                         fn: async () => {
-                            await deleteMenu(m.season_type);
+                            await deleteMenu(menuItem.season_type);
                             setMenuToDelete(null);
                             navigate('/menu');
                             return true;

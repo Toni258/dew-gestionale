@@ -30,21 +30,23 @@ async function safeJson(res) {
 }
 
 // Helper function used by request.
-async function request(url, { method = 'GET', body, headers, credentials = 'include' } = {}) {
-    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+async function request(
+    url,
+    { method = 'GET', body, headers, credentials = 'include' } = {},
+) {
+    const isFormData =
+        typeof FormData !== 'undefined' && body instanceof FormData;
 
     const res = await fetch(buildApiUrl(url), {
         method,
         credentials,
         headers: {
-            ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+            ...(body && !isFormData
+                ? { 'Content-Type': 'application/json' }
+                : {}),
             ...(headers ?? {}),
         },
-        body: body
-            ? isFormData
-                ? body
-                : JSON.stringify(body)
-            : undefined,
+        body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
 
     const data = await safeJson(res);
@@ -90,4 +92,9 @@ export function putForm(url, formData, options) {
 // Helper function used by del json.
 export function delJson(url, options) {
     return request(url, { ...(options ?? {}), method: 'DELETE' });
+}
+
+// Checks whether the request failed because the resource does not exist.
+export function isNotFoundError(error) {
+    return Number(error?.status) === 404;
 }

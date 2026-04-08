@@ -11,6 +11,12 @@ import {
 import * as repo from '../repositories/menusRepo.js';
 import { CHEESE_IDS } from '../../shared/constants.js';
 
+// Verifies that the requested menu exists before loading nested resources.
+async function assertMenuExists(poolOrConn, seasonType) {
+    const exists = await repo.menuExistsBySeasonType(poolOrConn, seasonType);
+    if (!exists) throw new HttpError(404, 'Menù non trovato');
+}
+
 // Returns the data used by menus.
 export async function getMenus() {
     return repo.listMenus(pool);
@@ -80,6 +86,7 @@ export async function getMenuMealsStatus(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
 
+    await assertMenuExists(pool, seasonType);
     return repo.getMealsStatus(pool, seasonType);
 }
 
@@ -175,6 +182,8 @@ export async function getMenuMealComposition({
         'Tipo pasto non valido',
     );
 
+    await assertMenuExists(pool, seasonType);
+
     const dishes = await repo.getMealComposition(pool, {
         seasonType,
         dayIndex,
@@ -255,6 +264,7 @@ export async function getMenuFixedDishes(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
 
+    await assertMenuExists(pool, seasonType);
     const rows = await repo.getMenuFixedDishes(pool, seasonType);
     return { data: rows };
 }
@@ -264,6 +274,7 @@ export async function getFixedCheesesRotation(season_type_param) {
     const seasonType = decodeTrim(season_type_param);
     if (!seasonType) throw new HttpError(400, 'season_type non valido');
 
+    await assertMenuExists(pool, seasonType);
     const rows = await repo.getFixedCheesesRotation(
         pool,
         seasonType,

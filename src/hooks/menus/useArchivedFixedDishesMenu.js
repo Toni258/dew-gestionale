@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CHEESE_IDS } from '../../../shared/constants.js';
 import { getCheeses } from '../../services/foodsApi';
+import { isNotFoundError } from '../../services/apiClient';
 import {
     getArchivedMenuFixedDishes,
     getArchivedFixedCheesesRotation,
@@ -15,19 +16,16 @@ import {
 
 // Manages the state and side effects for archived fixed dishes menu.
 export function useArchivedFixedDishesMenu(idArchMenuRaw) {
-    const idArchMenu = useMemo(
-        () => String(idArchMenuRaw ?? ''),
-        [idArchMenuRaw],
-    );
+    const idArchMenu = useMemo(() => String(idArchMenuRaw ?? ''), [idArchMenuRaw]);
     // Main state used by the page
 
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [notFound, setNotFound] = useState(false);
 
     const [selectedFoods, setSelectedFoods] = useState(makeEmptySelected);
     const [cheeseOptions, setCheeseOptions] = useState([]);
-    const [cheeseRotation, setCheeseRotation] = useState(
-        makeEmptyCheeseRotation,
-    );
+    const [cheeseRotation, setCheeseRotation] = useState(makeEmptyCheeseRotation);
     // Load data when the component opens
 
     useEffect(() => {
@@ -36,6 +34,9 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
         // Loads the current data.
         async function load() {
             setLoading(true);
+            setError(null);
+            setNotFound(false);
+
             try {
                 const [fixedJson, cheesesJson, rotJson] = await Promise.all([
                     getArchivedMenuFixedDishes(idArchMenu),
@@ -62,9 +63,8 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
                     if (isCheese) continue;
 
                     const arr = nextSelected[meal][course];
-                    const firstNull = arr.findIndex((x) => x === null);
+                    const firstNull = arr.findIndex((entry) => entry === null);
                     if (firstNull !== -1) {
-                        // dish qui è “aggregato” (ripetizioni). A noi basta id_food + name ecc.
                         nextSelected[meal][course][firstNull] = dish;
                     }
                 }
@@ -73,16 +73,18 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
 
                 setCheeseOptions(cheeses);
                 setCheeseRotation({
-                    pranzo: (rot.pranzo ?? []).map((x) => x ?? null),
-                    cena: (rot.cena ?? []).map((x) => x ?? null),
+                    pranzo: (rot.pranzo ?? []).map((entry) => entry ?? null),
+                    cena: (rot.cena ?? []).map((entry) => entry ?? null),
                 });
                 setSelectedFoods(nextSelected);
-            } catch (e) {
-                console.error(e);
+            } catch (err) {
+                console.error(err);
                 if (!alive) return;
                 setCheeseOptions([]);
                 setCheeseRotation(makeEmptyCheeseRotation());
                 setSelectedFoods(makeEmptySelected());
+                setError(err);
+                setNotFound(isNotFoundError(err));
             } finally {
                 if (alive) setLoading(false);
             }
@@ -112,8 +114,10 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
 
     return {
         loading,
-        selectedFoods,
+        error,
+        notFound,
         rows,
+        selectedFoods,
         cheeseOptions,
         cheeseRotation,
     };

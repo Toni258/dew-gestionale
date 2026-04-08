@@ -47,6 +47,7 @@ const CreateUserGestionale = lazy(
     () => import('../pages/users/CreateUserGestionale'),
 );
 const Forbidden = lazy(() => import('../pages/Forbidden'));
+const NotFound = lazy(() => import('../pages/NotFound'));
 
 function RouteFallback() {
     return (
@@ -150,6 +151,8 @@ export default function AppRouter() {
                                     element={<CreateUserGestionale />}
                                 />
                             </Route>
+
+                            <Route path="*" element={<NotFound />} />
                         </Route>
                     </Routes>
                 </Suspense>
