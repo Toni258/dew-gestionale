@@ -219,6 +219,7 @@ export async function getArchivedMealComposition(
               AND m2.type = ?
               AND m2.first_choice = 0
               AND dp2.used = 1
+              AND f2.type <> 'coperto'
             GROUP BY m2.id_meal
         ) stats
             ON stats.id_meal = m.id_meal
@@ -227,6 +228,7 @@ export async function getArchivedMealComposition(
           AND m.type = ?
           AND m.first_choice = 0
           AND dp.used = 1
+          AND f.type <> 'coperto'
         ORDER BY f.type ASC, f.name ASC
         `,
         [idArchMenu, dayIndex, mealType, idArchMenu, dayIndex, mealType],

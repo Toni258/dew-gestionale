@@ -8,6 +8,7 @@ import Form from '../../components/ui/Form';
 import FormGroup from '../../components/ui/FormGroup';
 import Button from '../../components/ui/Button';
 import DishesTable from '../../components/dishes/DishesTable';
+import DishDeleteConflictsModal from '../../components/dishes/DishDeleteConflictsModal';
 
 import DeleteDishModal from '../../components/modals/DeleteDishModal';
 import AllergensModal from '../../components/modals/AllergensModal';
@@ -15,11 +16,16 @@ import DishStatusInfoModal from '../../components/modals/DishStatusInfoModal';
 
 import { withLoader } from '../../services/withLoader';
 import { withLoaderNotify } from '../../services/withLoaderNotify';
-import { deleteDish, getDishes } from '../../services/dishesApi';
+import {
+    deleteDish,
+    getDishDeletePreview,
+    getDishes,
+} from '../../services/dishesApi';
 
 import { ALLERGEN_OPTIONS } from '../../domain/allergens';
 import { TIPOLOGIA_OPTIONS } from '../../domain/tipologia';
 import { STATO_OPTIONS } from '../../domain/stato';
+import { groupDishConflictsBySeason } from '../../utils/dishes/dishSuspension';
 
 export default function DishesList() {
     // Main state used by the page
@@ -33,6 +39,9 @@ export default function DishesList() {
     const [showStatusInfo, setShowStatusInfo] = useState(false);
     const [showAllergensInfo, setShowAllergensInfo] = useState(false);
     const [dishToDelete, setDishToDelete] = useState(null);
+    const [deletePreview, setDeletePreview] = useState(null);
+    const [expandedDeletePreviewMenus, setExpandedDeletePreviewMenus] =
+        useState({});
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -60,6 +69,12 @@ export default function DishesList() {
         }),
         [query, appliedFilters, page, pageSize],
     );
+
+    const groupedDeleteConflicts = useMemo(() => {
+        return deletePreview
+            ? groupDishConflictsBySeason(deletePreview.conflicts)
+            : [];
+    }, [deletePreview]);
     // Memoized handler used by the page
 
     const fetchDishes = useCallback(async () => {
@@ -94,6 +109,46 @@ export default function DishesList() {
         });
         setPage(1);
     };
+
+    function closeDeletePreview() {
+        setDeletePreview(null);
+        setExpandedDeletePreviewMenus({});
+    }
+
+    function toggleDeletePreviewMenu(seasonType) {
+        setExpandedDeletePreviewMenus((prev) => ({
+            ...prev,
+            [seasonType]: !prev[seasonType],
+        }));
+    }
+
+    async function handleDeleteRequest(dish) {
+        const previewResult = await withLoaderNotify({
+            message: 'Verifica conflitti eliminazione…',
+            mode: 'blocking',
+            errorTitle: 'Errore verifica eliminazione',
+            errorMessage: 'Impossibile verificare i conflitti del piatto.',
+            fn: async () => getDishDeletePreview(dish.id_food),
+        });
+
+        if (!previewResult.ok) return;
+
+        const preview = previewResult.data;
+        const conflicts = preview?.conflicts ?? [];
+
+        if (conflicts.length === 0) {
+            setDishToDelete(preview?.dish ?? dish);
+            return;
+        }
+
+        const grouped = groupDishConflictsBySeason(conflicts);
+        setExpandedDeletePreviewMenus(
+            Object.fromEntries(
+                grouped.map((menu) => [menu.season_type, true]),
+            ),
+        );
+        setDeletePreview(preview);
+    }
 
     return (
         <AppLayout title="GESTIONE PIATTI">
@@ -175,9 +230,24 @@ export default function DishesList() {
                 pageSize={pageSize}
                 onPageChange={setPage}
                 onPageSizeChange={handlePageSizeChange}
-                onDelete={(dish) => setDishToDelete(dish)}
+                onDelete={handleDeleteRequest}
                 onShowStatusInfo={() => setShowStatusInfo(true)}
                 onShowAllergensInfo={() => setShowAllergensInfo(true)}
+            />
+
+            <DishDeleteConflictsModal
+                preview={deletePreview}
+                groupedConflicts={groupedDeleteConflicts}
+                expandedMenus={expandedDeletePreviewMenus}
+                onToggleMenu={toggleDeletePreviewMenu}
+                onClose={closeDeletePreview}
+                onContinue={() => {
+                    const dish = deletePreview?.dish ?? null;
+                    closeDeletePreview();
+                    if (dish) {
+                        setDishToDelete(dish);
+                    }
+                }}
             />
 
             <DeleteDishModal
@@ -193,6 +263,7 @@ export default function DishesList() {
                         fn: async () => {
                             await deleteDish(dish.id_food);
                             setDishToDelete(null);
+                            closeDeletePreview();
                             await fetchDishes();
                             return true;
                         },

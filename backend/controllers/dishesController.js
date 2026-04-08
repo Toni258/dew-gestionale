@@ -5,6 +5,7 @@ import {
     deleteDishData,
     getDishByIdData,
     getFilteredDishesData,
+    previewDeleteDishData,
     updateDishData,
 } from '../services/dishesService.js';
 import {
@@ -50,6 +51,16 @@ export async function createDish(req, res, next) {
     try {
         const result = await createDishData(req.body || {}, req.file || null);
         return res.status(201).json(result);
+    } catch (error) {
+        return handleServiceError(res, next, error);
+    }
+}
+
+// Returns the data used by delete dish preview.
+export async function previewDeleteDish(req, res, next) {
+    try {
+        const result = await previewDeleteDishData(req.params.id);
+        return res.json(result);
     } catch (error) {
         return handleServiceError(res, next, error);
     }

@@ -6,6 +6,7 @@ import {
     createDish,
     deleteDish,
     getDishById,
+    previewDeleteDish,
     updateDish,
     suspendDish,
     disableDishSuspension,
@@ -21,6 +22,7 @@ router.get('/exists', checkDishName);
 router.post('/:id/suspend', suspendDish);
 router.post('/:id/unsuspend', disableDishSuspension);
 
+router.get('/:id/delete-preview', previewDeleteDish);
 router.get('/:id', getDishById);
 router.post('/', uploadFoodImage.single('img'), createDish);
 router.put('/:id', uploadFoodImage.single('img'), updateDish);

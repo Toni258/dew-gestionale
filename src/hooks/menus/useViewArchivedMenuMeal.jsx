@@ -45,6 +45,7 @@ export function useViewArchivedMenuMeal({ id_arch_menu, dayIndex, mealType }) {
 
                 const nextSelected = { ...EMPTY_SELECTED };
                 (json?.dishes ?? []).forEach((d) => {
+                    if (!(d.type in nextSelected)) return;
                     nextSelected[d.type] = d;
                 });
 
@@ -65,9 +66,11 @@ export function useViewArchivedMenuMeal({ id_arch_menu, dayIndex, mealType }) {
     // Derived data used by the UI
 
     const totals = useMemo(() => {
-        return Object.values(selectedFoods).reduce(
-            (acc, f) => {
+        return COURSE_TYPES.reduce(
+            (acc, course) => {
+                const f = selectedFoods[course.key];
                 if (!f) return acc;
+
                 acc.weight += Number(f.grammage_tot || 0);
                 acc.kcal += Number(f.kcal_tot || 0);
                 acc.proteins += Number(f.proteins || 0);

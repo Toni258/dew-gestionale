@@ -361,6 +361,51 @@ export async function listDishConflictsForPeriod(
     return rows;
 }
 
+// Returns the list used by delete preview conflicts.
+export async function listDishDeletionConflicts(poolOrConn, { dishId }) {
+    const [rows] = await poolOrConn.query(
+        `
+            SELECT
+                dp.id_dish_pairing,
+                dp.season_type,
+                dp.id_meal,
+                dp.used,
+                m.day_index,
+                m.type AS meal_type,
+                m.first_choice,
+                f.type AS course_type,
+                f.name AS food_name,
+                DATE_FORMAT(s.start_date, '%Y-%m-%d') AS season_start,
+                DATE_FORMAT(s.end_date, '%Y-%m-%d') AS season_end,
+                CASE
+                    WHEN CURDATE() BETWEEN s.start_date AND s.end_date THEN 1
+                    ELSE 0
+                END AS is_menu_active_today,
+                CASE
+                    WHEN s.start_date > CURDATE() THEN 1
+                    ELSE 0
+                END AS is_future_menu
+            FROM dish_pairing dp
+            JOIN season s ON s.season_type = dp.season_type
+            JOIN meal m ON m.id_meal = dp.id_meal
+            JOIN food f ON f.id_food = dp.id_food
+            WHERE dp.id_food = ?
+              AND dp.used = 1
+            ORDER BY
+                is_menu_active_today DESC,
+                is_future_menu DESC,
+                s.start_date ASC,
+                dp.season_type ASC,
+                m.first_choice DESC,
+                m.day_index ASC,
+                FIELD(m.type, 'pranzo', 'cena') ASC
+        `,
+        [dishId],
+    );
+
+    return rows;
+}
+
 // Disables the data used by dish pairings by ids.
 export async function disableDishPairingsByIds(
     poolOrConn,

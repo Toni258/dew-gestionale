@@ -61,8 +61,11 @@ function mealSlotLabel(dayIndex, mealType) {
 // Builds the data needed for menu routes.
 function buildMenuRoutes(seasonType) {
     const encoded = encodeURIComponent(seasonType);
+    const baseMenuPath = `/menu/edit/${encoded}`;
+
     return {
-        menu: `/menu/edit/${encoded}?openModifyMenu=1`,
+        menu: baseMenuPath,
+        menu_modify: `${baseMenuPath}?openModifyMenu=1`,
         fixed_dishes: `/menu/edit/${encoded}/piatti_fissi`,
         menus_list: '/menu',
         create_menu: '/menu/create',
@@ -231,7 +234,7 @@ function buildAlerts({
                 action: {
                     type: 'navigate',
                     label: 'Apri menù',
-                    target: currentMenu.routes.menu,
+                    target: currentMenu.routes.menu_modify,
                 },
             });
         }

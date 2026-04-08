@@ -112,6 +112,7 @@ export function useArchivedFixedDishesMenu(idArchMenuRaw) {
 
     return {
         loading,
+        selectedFoods,
         rows,
         cheeseOptions,
         cheeseRotation,

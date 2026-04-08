@@ -15,6 +15,7 @@ import {
     findCurrentOrFutureSuspensionByFoodId,
     findDishSummaryById,
     insertDish,
+    listDishDeletionConflicts,
     listFilteredDishes,
     listTrackedReplacementRowsByAvailability,
     updateDish,
@@ -109,6 +110,42 @@ function mapActiveSuspensionReplacements(rows = []) {
         );
 }
 
+// Builds the summary used by delete preview conflicts.
+function summarizeDeleteConflicts(conflicts = []) {
+    const menuKeys = new Set();
+    let activeMenus = 0;
+    let futureMenus = 0;
+    let fixedOccurrences = 0;
+
+    for (const conflict of conflicts) {
+        const menuKey = String(conflict.season_type ?? '').trim();
+        if (menuKey) {
+            if (!menuKeys.has(menuKey)) {
+                menuKeys.add(menuKey);
+                if (Number(conflict.is_menu_active_today) === 1) {
+                    activeMenus += 1;
+                }
+                if (Number(conflict.is_future_menu) === 1) {
+                    futureMenus += 1;
+                }
+            }
+        }
+
+        if (Number(conflict.first_choice) === 1) {
+            fixedOccurrences += 1;
+        }
+    }
+
+    return {
+        occurrences_count: conflicts.length,
+        menus_count: menuKeys.size,
+        active_menus_count: activeMenus,
+        future_menus_count: futureMenus,
+        fixed_occurrences: fixedOccurrences,
+        daily_occurrences: conflicts.length - fixedOccurrences,
+    };
+}
+
 // Returns the data used by filtered dishes data.
 export async function getFilteredDishesData(query = {}) {
     const search = String(query.search ?? '').trim();
@@ -186,6 +223,28 @@ export async function createDishData(body = {}, file = null) {
 
         throw error;
     }
+}
+
+// Returns the data used by delete dish preview.
+export async function previewDeleteDishData(dishIdRaw) {
+    const dishId = toNumericDishId(dishIdRaw);
+    const dish = await findDishSummaryById(pool, dishId);
+
+    if (!dish) {
+        throw new HttpError(404, 'Piatto non trovato');
+    }
+
+    const conflicts = await listDishDeletionConflicts(pool, { dishId });
+
+    return {
+        dish: {
+            id_food: dish.id_food,
+            name: dish.name,
+            type: dish.type,
+        },
+        conflicts,
+        summary: summarizeDeleteConflicts(conflicts),
+    };
 }
 
 // Deletes the data for dish data.

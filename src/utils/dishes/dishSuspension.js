@@ -39,11 +39,11 @@ export function groupDishConflictsBySeason(conflicts = []) {
         const group = map.get(conflict.season_type);
         group.total_occurrences += 1;
 
-        if (conflict.first_choice === 1) {
+        if (Number(conflict.first_choice) === 1) {
             group.fixed_occurrences += 1;
         }
 
-        if (conflict.is_menu_active_today === 1) {
+        if (Number(conflict.is_menu_active_today) === 1) {
             group.is_active_menu = true;
         }
 

@@ -40,6 +40,11 @@ export function updateDish(dishId, formData) {
     return putForm(`/api/dishes/${dishId}`, formData);
 }
 
+// Returns the data used by delete dish preview.
+export function getDishDeletePreview(dishId) {
+    return getJson(`/api/dishes/${dishId}/delete-preview`);
+}
+
 // Deletes the data for dish.
 export function deleteDish(dishId) {
     return delJson(`/api/dishes/${dishId}`);

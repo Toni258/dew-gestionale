@@ -37,11 +37,11 @@ export default function FixedDishesGrid({
     loading,
     readOnly = false,
 
-    options,
-    selectedFoods,
+    options = { pranzo: {}, cena: {} },
+    selectedFoods = { pranzo: {}, cena: {} },
 
-    cheeseOptions,
-    cheeseRotation,
+    cheeseOptions = [],
+    cheeseRotation = { pranzo: [], cena: [] },
     cheeseFilled,
 
     onSelectFood,
