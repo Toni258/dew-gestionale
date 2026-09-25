@@ -1,6 +1,14 @@
+# Dependencies
+node_modules/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
 # Logs
-logs/*
-!logs/.gitkeep
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -8,28 +16,38 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Runtime storage
-storage/*
-!storage/.gitkeep
-storage/food-images/*
-!storage/food-images/.gitkeep
+# Runtime / uploaded files
+storage/
+uploads/
 
-node_modules
-dist
-dist-ssr
+# Database dumps / local database files
+*.sql
+*.sql.gz
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+
+# Build output
+dist/
+dist-ssr/
 *.local
-.env
-backend/.env
-_chatgpt_exports
-scripts
 
-# Editor directories and files
+# Temporary / generated files
+_chatgpt_exports/
+scripts/
+
+# Editor / OS files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Optional local tooling files
+*.tmp
+*.temp
