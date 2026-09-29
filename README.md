@@ -1,166 +1,93 @@
 # DEW Gestionale RSA
 
-A full-stack web application I built during my bachelor's internship/thesis project for a residential care facility (RSA).
+A full-stack web application developed during my bachelor's internship and thesis project for a residential care facility (RSA).
 
-The goal of the project was to build an internal management platform for menus, dishes, users, dish suspensions, and food-related reports, while working with a real shared database already used by a separate mobile app.
+The application provides an internal backoffice for managing **menus, dishes, users, dish suspensions, and food-related reports**, while sharing an existing database with a separate mobile application.
 
-This project gave me hands-on experience with frontend development, backend APIs, authentication, role-based access control, SQL data handling, file uploads, production-oriented configuration, and refactoring a real codebase into a more maintainable structure.
 
-## Project overview
+## Preview
 
-The platform supports the daily management of:
+![Application preview](docs/preview.png)
 
-- menus
-- dishes
-- dish suspensions and replacements
-- backoffice users
-- mobile app users
-- operational dashboard data
-- food reports and statistics
+> 🎥 **Project demo:** [Watch the project video](https://youtu.be/PoXBFrT9blQ)
 
-The application is meant for internal staff use, so the focus was not only on features, but also on protected access, maintainability, data consistency, and compatibility with an existing system.
+The video shows the main workflows and the application in use.
 
-## Why this project was meaningful for me
+## What I built
 
-While working on this project, I had to deal with:
+The project covers several areas of the application's day-to-day management:
 
-- a real relational database
-- protected backoffice access with multiple user roles
-- a shared schema already used by another application
-- business rules around menu composition and dish availability
-- image upload and static file handling
-- reporting/statistics pages with non-trivial backend queries
-- environment-based configuration for local and Linux VM deployment
-- refactoring large files into more maintainable modules
+- Menu creation and management
+- Dish management, including nutritional information, allergens and images
+- Temporary dish suspensions and replacements
+- Backoffice and mobile-app user management
+- Dashboard, reports and food-consumption statistics
+- Authentication and role-based access control
 
-One of the most important parts of the work was learning how to improve the application while respecting existing constraints, especially the database compatibility required by the mobile app.
+## Technical highlights
 
-## Main features
+One of the main challenges was working with an **existing relational database shared with another application**. The web application therefore had to integrate with the existing data model without breaking the mobile app.
 
-### Authentication and protected access
+Some of the technical decisions I implemented include:
 
-- Login/logout flow for backoffice users
-- HTTP-only cookie-based session handling
-- JWT signed on the backend
-- Session validation on protected requests by reloading the current user from the database
-- Role-based route protection
-- Password reset request and forced password change flow
+- **Layered backend architecture** with routes, controllers, services and repositories
+- **JWT-based authentication** with HTTP-only cookies
+- **Database-backed authorization**, so protected requests validate the current user rather than relying only on information stored in the token
+- **Image upload handling** with file type and size restrictions
+- **Scheduled backend tasks** protected by MySQL named locks to prevent concurrent execution
+- A dedicated tracking structure for **dish replacement and restoration workflows**, without modifying shared core tables
 
-### Dish management
-
-- Create, edit, and delete dishes
-- Upload dish images
-- Store nutritional values, allergens, and dish type
-- Suspend dishes for a date range
-- Preview menu conflicts before applying a suspension
-- Safely replace suspended dishes in menus
-
-### Menu management
-
-- Create, edit, and delete active menus
-- Manage daily meal composition
-- Manage fixed dishes and cheese rotation
-- Archive completed menus
-- Read archived menus in a dedicated read-only area
-
-### User management
-
-- Manage backoffice users
-- Manage users connected to the mobile app
-- Suspend, reactivate, and remove users
-- Admin password reset flows
-
-### Dashboard and reporting
-
-- Dashboard with operational alerts and useful shortcuts
-- Overview of active dish suspensions
-- Menu-related progress and checks
-- Reports and statistics for food consumption and user choices
+The project also involved refactoring parts of the original codebase into smaller and more maintainable modules.
 
 ## Tech stack
 
-### Frontend
+**Frontend**
 
 - React
-- React Router
 - Vite
+- React Router
 - Tailwind CSS
-- Reusable custom UI components
-- Hooks-based state management
 
-### Backend
+**Backend**
 
 - Node.js
 - Express
 - MySQL
 - JWT
-- Multer for uploads
-- Cron jobs / scheduled tasks
+- Multer
+- Cron jobs
+
+**Deployment**
+
+- Linux
+- Nginx
+- PM2
 
 ## Architecture
 
-The codebase follows a layered structure to keep responsibilities separated.
+The application is organized into separate layers and reusable modules.
 
-### Backend
+```text
+backend/
+├── routes/
+├── controllers/
+├── services/
+├── repositories/
+├── middlewares/
+├── db/
+├── config/
+└── utils/
 
-- `routes`
-- `controllers`
-- `services`
-- `repositories`
-- `db`
-- `middlewares`
-- `config`
-- `utils`
+frontend/
+├── pages/
+├── components/
+├── hooks/
+├── services/
+├── context/
+└── utils/
+```
 
-### Frontend
-
-- `pages`
-- `components`
-- `hooks`
-- `services`
-- `context`
-- `utils`
-
-During the refactor phase, I focused on reducing oversized files, moving business logic out of heavier controllers/pages, and introducing reusable pieces where that improved readability without overcomplicating the project.
-
-## Design and implementation choices
-
-Some implementation choices that were especially important in this project:
-
-- JWTs are signed on the backend using a secret from environment variables
-- Protected requests do not trust stale role/status information from the token alone: the current user is reloaded from the database
-- Uploads are restricted to supported image types and a configured size limit
-- Static file storage is configurable through environment variables
-- Background scheduler execution is protected with a MySQL named lock, so the same job does not run concurrently across multiple backend processes
-
-## A business constraint I had to respect
-
-One important part of the project was working with a database that was already shared with a separate mobile application.
-
-That meant I could not freely redesign existing shared tables just to make the web app cleaner.
-
-Instead, I had to:
-
-- understand the existing schema
-- keep compatibility with the mobile app
-- introduce safer improvements only where they were compatible
-- add new support structures when necessary instead of breaking existing behavior
-
-A good example is the dish suspension workflow: to make suspension restore logic safer, I added a dedicated tracking table for replacement pairings instead of changing shared core tables.
-
-## What I learned from this project
-
-This project helped me improve in several areas at the same time:
-
-- building end-to-end full-stack features
-- translating business requirements into code
-- working with an existing schema and real constraints
-- reasoning about authentication and protected access
-- writing and debugging SQL
-- refactoring an existing codebase instead of starting from scratch
-- thinking about maintainability and deployability, not only correctness
-
-## Local setup
+## Running locally
 
 ### Frontend
 
@@ -177,55 +104,10 @@ npm install
 npm run dev
 ```
 
-## Environment variables
+Environment variables are documented in the provided `.env.example` files.
 
-The project uses environment variables for:
+## Project context
 
-- API configuration
-- database connection
-- authentication
-- static file storage
-- scheduler behavior
+This project was developed as part of my **BSc in Computer Science for Digital Communication at the University of Milan**, during an internship and thesis project.
 
-Example values are provided in:
-
-- `.env.example`
-- `backend/.env.example`
-
-The complete list is documented in the example env files and in `DEPLOY.md`.
-
-## Database notes
-
-This project works on top of an existing database already used by a mobile app.
-
-For a fresh local setup, the general flow is:
-
-1. import the base SQL dump
-2. apply the project patch
-
-## Runtime folders
-
-The project uses runtime folders such as:
-
-- `storage/food-images/`
-- `logs/`
-
-These are intentionally configurable so the same codebase can work both locally and in a Linux deployment environment.
-
-## Deploy notes
-
-The backend exposes:
-
-- `GET /health`
-
-The repository also includes deploy-oriented material such as:
-
-- `DEPLOY.md`
-- PM2 configuration
-- Nginx configuration
-
-## Final note
-
-This project was a very important part of my bachelor's path because it gave me the opportunity to work on software with real constraints, real users, and real maintenance concerns.
-
-More than anything, it helped me understand that good software is not only about implementing features, but also about making reasonable technical decisions, respecting constraints, and leaving the project in a state that another developer can understand and continue.
+It was my first experience working on a full-stack application connected to an existing production-oriented system, and it gave me practical experience with software architecture, databases, authentication, deployment and maintaining an evolving codebase.
