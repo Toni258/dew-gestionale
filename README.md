@@ -5,17 +5,9 @@ A full-stack web application developed during my bachelor's internship and thesi
 The application provides an internal backoffice for managing **menus, dishes, users, dish suspensions, and food-related reports**, while sharing an existing database with a separate mobile application.
 
 
-## Preview
-
-![Application preview](docs/preview.png)
-
-> 🎥 **Project demo:** [Watch the project video](https://youtu.be/PoXBFrT9blQ)
-
-The video shows the main workflows and the application in use.
-
 ## Project Demo
 
-[![DEW Gestionale RSA — Project Demo](https://img.youtube.com/vi/PoXBFrT9blQ/maxresdefault.jpg)](https://youtu.be/PoXBFrT9blQ)
+[![DEW Gestionale RSA — Project Demo](docs/Copertina-GIT.png)](https://youtu.be/PoXBFrT9blQ)
 
 A short demo showcasing menu management, dish suspension and replacement, and food consumption statistics.
 
