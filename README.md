@@ -13,6 +13,12 @@ The application provides an internal backoffice for managing **menus, dishes, us
 
 The video shows the main workflows and the application in use.
 
+## Project Demo
+
+[![DEW Gestionale RSA — Project Demo](https://img.youtube.com/vi/PoXBFrT9blQ/maxresdefault.jpg)](https://youtu.be/PoXBFrT9blQ)
+
+A short demo showcasing menu management, dish suspension and replacement, and food consumption statistics.
+
 ## What I built
 
 The project covers several areas of the application's day-to-day management:
